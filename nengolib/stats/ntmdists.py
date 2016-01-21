@@ -22,7 +22,7 @@ class SphericalCoords(Distribution):
 
     def pdf(self, x):
         return (np.pi * np.sin(np.pi * x) ** (self.m-1) /
-            beta(self.m / 2.0, 0.5))
+                beta(self.m / 2.0, 0.5))
 
     def cdf(self, x):
         y = 0.5 * betainc(self.m / 2.0, 0.5, np.sin(np.pi * x) ** 2)
