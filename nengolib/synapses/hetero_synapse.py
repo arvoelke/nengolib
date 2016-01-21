@@ -50,16 +50,16 @@ class HeteroSynapse(object):
         self.B = block_diag(*self.B) if elementwise else np.vstack(self.B)
         self.C = block_diag(*self.C)
         self.D = block_diag(*self.D) if elementwise else np.vstack(self.D)
+        # TODO: shape validation
 
-        self._x = None  # set by __call__ once size of u is known
+        self._x = np.zeros((len(self.A)))[:, None]
 
     def __call__(self, t, u):
-        # TODO: shape validation
         u = u[:, None] if self.elementwise else u[None, :]
-        if self._x is None:
-            self._x = np.zeros((len(self.A), u.shape[1]))
         y = np.dot(self.C, self._x) + np.dot(self.D, u)
         self._x = np.dot(self.A, self._x) + np.dot(self.B, u)
+        # Return the y from the previous timestep to compensate for the fact
+        # that this is usually used within a Node, which delays one timestep.
         return self.to_vector(y)
 
     def to_vector(self, y):
