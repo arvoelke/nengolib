@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 
-import imp
 import os
-
+import imp
 from distutils.core import setup
 
 name = 'nengolib'
 root = os.path.dirname(os.path.realpath(__file__))
 version_module = imp.load_source(
     'version', os.path.join(root, name, 'version.py'))
+
+submodules = ['linalg', 'stats', 'synapses']
+packages = [name] + ['%s/%s' % (name, d) for d in submodules]
 
 setup(
     name=name,
@@ -17,5 +19,5 @@ setup(
     author="Aaron Voelker",
     author_email="arvoelke@gmail.com",
     url="https://github.com/arvoelke/%s" % name,
-    packages=[name],
+    packages=packages,
 )
