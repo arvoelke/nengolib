@@ -1,7 +1,7 @@
 from nengo import Network as BaseNetwork
 from nengo import Ensemble
 
-from nengolib.stats import ScatteredHypersphere
+from nengolib.stats.ntmdists import ScatteredHypersphere
 
 _all__ = ['Network']
 
