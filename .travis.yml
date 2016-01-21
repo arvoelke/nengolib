@@ -1,0 +1,59 @@
+language: c
+sudo: false
+notifications:
+  email:
+    - arvoelke@gmail.com
+
+env:
+  global:
+    - TEST_CMD="py.test nengolib"
+    - PIP_DEPS="pytest==2.7.3 pytest-xdist"
+    - PYTHON="2.7"
+
+matrix:
+  include:
+    - env: >
+        TEST_CMD=""
+        PIP_DEPS=""
+        EXTRA_CMD="flake8 -v nengolib"
+        CONDA_DEPS="flake8"
+    - env: >
+        NUMPY="1.10"
+        SCIPY="0.16.0"
+        NENGO="https://github.com/nengo/nengo/archive/master.tar.gz"
+
+# Setup Miniconda
+before_install:
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda info -a
+  - conda create -q -n test python=$PYTHON pip
+  - source activate test
+
+# Install packages with conda, then pip
+install:
+  - if [[ -n $NUMPY ]]; then export CONDA_DEPS="$CONDA_DEPS numpy=$NUMPY"; fi
+  - if [[ -n $SCIPY ]]; then export CONDA_DEPS="$CONDA_DEPS scipy=$SCIPY"; fi
+  - if [[ -n $CONDA_DEPS ]]; then conda install $CONDA_DEPS; fi
+  - if [[ -n $PIP_DEPS ]]; then eval pip install "$PIP_DEPS"; fi
+  - if [[ -n $NENGO ]]; then
+      wget $NENGO;
+      tar -xzvf master.tar.gz;
+      cd nengo-master;
+      python setup.py -q install;
+      cd ../;
+    fi
+
+# Run the tests
+script:
+  - if [[ -n $TEST_CMD ]]; then
+      python -c "import numpy; numpy.show_config()";
+      python -c "import scipy; scipy.show_config()";
+      python -c "import nengo; print nengo.__version__";
+      python setup.py -q install;
+      eval $TEST_CMD;
+    fi
+  - if [[ -n $EXTRA_CMD ]]; then $EXTRA_CMD; fi
