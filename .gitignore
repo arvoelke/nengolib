@@ -1,2 +1,3 @@
 *.py[co]
 build
+.ipynb_checkpoints
