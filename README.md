@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/arvoelke/nengolib.svg?branch=master)](https://travis-ci.org/arvoelke/nengolib)
+
 # Nengo Library
 Additional extensions for large-scale brain modelling with Nengo.
 
