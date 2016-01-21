@@ -2,6 +2,7 @@ import numpy as np
 from scipy.special import beta, betainc, betaincinv
 
 from nengo.dists import Distribution, UniformHypersphere
+from nengo.utils.compat import is_integer
 from nengo.utils.numpy import norm
 
 from nengolib.linalg.ortho import random_orthogonal
@@ -38,7 +39,10 @@ class SphericalCoords(Distribution):
 class Sobol(Distribution):
 
     def sample(self, num, d=None, rng=np.random):
-        if d is None or d < 1 or d > 40:  # TODO: also check if integer
+        if d == 1:
+            # Tile the points optimally. TODO: refactor
+            return np.linspace(1./num, 1, num)[:, None]
+        if d is None or not is_integer(d) or d < 1 or d > 40:
             # TODO: this should be raised when the ensemble is created
             raise ValueError("d (%d) must be integer in range [1, 40]" % d)
         num, d = self._sample_shape(num, d)
@@ -48,14 +52,9 @@ class Sobol(Distribution):
 class ScatteredHypersphere(UniformHypersphere):
 
     def sample(self, num, d=1, rng=np.random, ntm=Sobol()):
-        if d == 1:
-            if self.surface:
-                # Only 2 possible values to choose from: {-1, 1}
-                return super(ScatteredHypersphere, self).sample(num, d, rng)
-            else:
-                # Can tile the points optimally
-                tiled = np.linspace(-1, 1, num)
-                return rng.permutation(tiled)
+        if d == 1 and self.surface:
+            # Only 2 possible values to choose from: {-1, 1}
+            return super(ScatteredHypersphere, self).sample(num, d, rng)
 
         if self.surface:
             cube = ntm.sample(num, d-1)
@@ -69,13 +68,14 @@ class ScatteredHypersphere(UniformHypersphere):
             cube[:, j] = SphericalCoords(d-1-j).ppf(cube[:, j])
 
         # spherical coordinate transform
-        i = np.ones(d-1)
-        i[-1] = 2.0
-        s = np.sin(i[None, :] * np.pi * cube)
-        c = np.cos(i[None, :] * np.pi * cube)
         mapped = np.ones((num, d))
-        mapped[:, 1:] = np.cumprod(s, axis=1)
-        mapped[:, :-1] *= c
+        if d > 1:
+            i = np.ones(d-1)
+            i[-1] = 2.0
+            s = np.sin(i[None, :] * np.pi * cube)
+            c = np.cos(i[None, :] * np.pi * cube)
+            mapped[:, 1:] = np.cumprod(s, axis=1)
+            mapped[:, :-1] *= c
         assert np.allclose(norm(mapped, axis=1, keepdims=True), 1)
 
         # radius adjustment for ball versus sphere, and rotate
