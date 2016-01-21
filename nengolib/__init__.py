@@ -10,3 +10,5 @@ from .version import version as __version__
 
 import linalg
 import stats
+
+from .network import Network

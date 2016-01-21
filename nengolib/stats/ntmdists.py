@@ -38,7 +38,8 @@ class SphericalCoords(Distribution):
 class Sobol(Distribution):
 
     def sample(self, num, d=None, rng=np.random):
-        if d is None or d < 1 or d > 40: # TODO: also check if integer
+        if d is None or d < 1 or d > 40:  # TODO: also check if integer
+            # TODO: this should be raised when the ensemble is created
             raise ValueError("d (%d) must be integer in range [1, 40]" % d)
         num, d = self._sample_shape(num, d)
         return i4_sobol_generate(d, num, skip=0)
