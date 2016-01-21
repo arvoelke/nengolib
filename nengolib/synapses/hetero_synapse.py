@@ -1,8 +1,10 @@
 import numpy as np
 from scipy.linalg import block_diag
-from scipy.signal import cont2discrete, tf2ss
+from scipy.signal import cont2discrete
 
-from nengo.synapses import Synapse
+from nengo.utils.compat import is_iterable
+
+from nengolib.signal.system import sys2ss
 
 __all__ = ['HeteroSynapse']
 
@@ -24,10 +26,10 @@ class HeteroSynapse(object):
     different synapse for each neuron.
     """
 
-    def __init__(self, synapses, dt, elementwise=False, method='zoh'):
-        if isinstance(synapses, Synapse):
-            synapses = [synapses]
-        self.synapses = synapses
+    def __init__(self, systems, dt=None, elementwise=False, method='zoh'):
+        if not is_iterable(systems):
+            systems = [systems]
+        self.systems = systems
         self.dt = dt
         self.elementwise = elementwise
 
@@ -35,9 +37,10 @@ class HeteroSynapse(object):
         self.B = []
         self.C = []
         self.D = []
-        for synapse in synapses:
-            A, B, C, D, _ = cont2discrete(
-                tf2ss(synapse.num, synapse.den), dt, method=method)
+        for sys in systems:
+            A, B, C, D = sys2ss(sys)
+            if dt is not None:
+                A, B, C, D, _ = cont2discrete((A, B, C, D), dt, method=method)
             self.A.append(A)
             self.B.append(B)
             self.C.append(C)
@@ -60,7 +63,7 @@ class HeteroSynapse(object):
         return self.to_vector(y)
 
     def to_vector(self, y):
-        return y.flatten(order='F')
+        return y.flatten(order='C')
 
     def from_vector(self, x):
-        return x.reshape(*self._x.shape, order='F')
+        return x.reshape(*self._x.shape, order='C')

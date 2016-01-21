@@ -2,7 +2,7 @@ import numpy as np
 from scipy.linalg import solve_lyapunov, solve_discrete_lyapunov
 from scipy.signal import cont2discrete
 
-from nengolib.signal import sys2ss
+from nengolib.signal.system import sys2ss
 
 __all__ = ['stateH2']
 

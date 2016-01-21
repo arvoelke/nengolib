@@ -47,7 +47,16 @@ class Sobol(Distribution):
 
 class ScatteredHypersphere(UniformHypersphere):
 
-    def sample(self, num, d=1.0, rng=np.random, ntm=Sobol()):
+    def sample(self, num, d=1, rng=np.random, ntm=Sobol()):
+        if d == 1:
+            if self.surface:
+                # Only 2 possible values to choose from: {-1, 1}
+                return super(ScatteredHypersphere, self).sample(num, d, rng)
+            else:
+                # Can tile the points optimally
+                tiled = np.linspace(-1, 1, num)
+                return rng.permutation(tiled)
+
         if self.surface:
             cube = ntm.sample(num, d-1)
             radius = 1.0
