@@ -6,8 +6,8 @@ notifications:
 
 env:
   global:
-    - TEST_CMD="py.test nengolib"
-    - PIP_DEPS="pytest==2.7.3 pytest-xdist"
+    - TEST_CMD="py.test --cov=nengolib"
+    - PIP_DEPS="pytest-cov"
     - PYTHON="2.7"
 
 matrix:
@@ -61,4 +61,4 @@ script:
 
 # Report test code coverage
 after_success:
-  - codecov
+  - if [[ -n $TEST_CMD ]]; then codecov; fi
