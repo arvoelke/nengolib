@@ -7,7 +7,7 @@ notifications:
 env:
   global:
     - TEST_CMD="py.test --cov=nengolib"
-    - PIP_DEPS="pytest-cov"
+    - PIP_DEPS="pytest-cov pytest==2.7.3 pytest-xdist"
     - PYTHON="2.7"
 
 matrix:
