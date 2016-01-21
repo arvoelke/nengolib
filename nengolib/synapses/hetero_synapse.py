@@ -52,7 +52,7 @@ class HeteroSynapse(object):
         self.D = block_diag(*self.D) if elementwise else np.vstack(self.D)
         # TODO: shape validation
 
-        self._x = np.zeros((len(self.A)))[:, None]
+        self._x = np.zeros(len(self.A))[:, None]
 
     def __call__(self, t, u):
         u = u[:, None] if self.elementwise else u[None, :]

@@ -18,7 +18,7 @@ class StateSpaceStep(BaseLinearFilter.Step):
     def __init__(self, ss, output):
         self.output = output
         self._A, self._B, self._C, self._D = ss
-        self._x = np.zeros((len(self._A)))[:, None]
+        self._x = np.zeros(len(self._A))[:, None]
 
     def __call__(self, signal):
         u = signal[None, :]
