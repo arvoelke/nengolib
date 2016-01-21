@@ -5,6 +5,8 @@ import numpy as np
 from nengo import LinearFilter
 from nengo.utils.compat import is_number
 
+__all__ = ['bandpass', 'notch', 'highpass']
+
 
 def bandpass(freq, Q):
     """Q-bandpass filter."""

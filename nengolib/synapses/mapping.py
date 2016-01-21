@@ -5,6 +5,8 @@ from nengo.synapses import Lowpass
 
 from nengolib.signal.system import sys2ss
 
+__all__ = ['ss2sim']
+
 
 def ss2sim(sys, synapse, dt=0):
     """Maps an LTI system to the synaptic dynamics in state-space."""

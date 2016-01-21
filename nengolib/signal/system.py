@@ -3,6 +3,8 @@ from scipy.signal import cont2discrete, zpk2ss, tf2ss, ss2tf, zpk2tf
 
 from nengo.synapses import Synapse
 
+__all__ = ['sys2ss', 'sys2tf', 'tfmul', 'impulse']
+
 
 def sys2ss(sys):
     """Converts an LTI system in any form to state-space."""
