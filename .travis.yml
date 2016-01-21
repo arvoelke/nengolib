@@ -32,6 +32,7 @@ before_install:
   - conda info -a
   - conda create -q -n test python=$PYTHON pip
   - source activate test
+  - pip install codecov
 
 # Install packages with conda, then pip
 install:
@@ -57,3 +58,7 @@ script:
       eval $TEST_CMD;
     fi
   - if [[ -n $EXTRA_CMD ]]; then $EXTRA_CMD; fi
+
+# Report test code coverage
+after_success:
+  - codecov
