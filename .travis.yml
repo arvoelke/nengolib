@@ -6,8 +6,8 @@ notifications:
 
 env:
   global:
-    - TEST_CMD="py.test --cov=nengolib"
-    - PIP_DEPS="pytest-cov pytest==2.7.3 pytest-xdist"
+    - TEST_CMD="py.test nengolib --cov=nengolib"
+    - PIP_DEPS="codecov pytest-cov pytest==2.7.3 pytest-xdist"
     - PYTHON="2.7"
 
 matrix:
@@ -32,7 +32,6 @@ before_install:
   - conda info -a
   - conda create -q -n test python=$PYTHON pip
   - source activate test
-  - pip install codecov
 
 # Install packages with conda, then pip
 install:
