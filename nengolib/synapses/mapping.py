@@ -3,7 +3,7 @@ from scipy.signal import cont2discrete
 
 from nengo.synapses import Lowpass
 
-from nengolib.signal.system import sys2ss
+from nengolib.signal import sys2ss
 
 __all__ = ['ss2sim']
 
