@@ -8,7 +8,9 @@ from nengo.utils.numpy import norm
 from nengolib.linalg.ortho import random_orthogonal
 from nengolib.stats._sobol_seq import i4_sobol_generate
 
-__all__ = ['SphericalCoords', 'Sobol', 'ScatteredHypersphere']
+__all__ = [
+    'SphericalCoords', 'Sobol', 'ScatteredHypersphere',
+    'sphere', 'ball']
 
 
 class SphericalCoords(Distribution):
@@ -81,3 +83,7 @@ class ScatteredHypersphere(UniformHypersphere):
         # radius adjustment for ball versus sphere, and rotate
         rotation = random_orthogonal(d, rng=rng)
         return np.dot(mapped * radius, rotation)
+
+
+sphere = ScatteredHypersphere(surface=True)
+ball = ScatteredHypersphere(surface=False)
