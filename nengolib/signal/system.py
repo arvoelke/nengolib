@@ -1,9 +1,17 @@
 import numpy as np
-from scipy.signal import cont2discrete, zpk2ss, tf2ss, ss2tf, zpk2tf, lfilter
+from scipy.signal import (
+    cont2discrete, zpk2ss, ss2tf, tf2ss, zpk2tf, lfilter, normalize)
 
 from nengo.synapses import Synapse
 
-__all__ = ['sys2ss', 'sys2tf', 'tfmul', 'impulse', 'is_exp_stable', 'ss_radii']
+__all__ = [
+    'sys2ss', 'sys2tf', 'tfmul', 'impulse', 'is_exp_stable', 'scale_state']
+
+
+def _raise_invalid_sys():
+    raise ValueError(
+        "sys must be an instance of Synapse, or a tuple of 2 (tf), "
+        "3 (zpk), or 4 (ss) arrays.")
 
 
 def sys2ss(sys):
@@ -15,11 +23,9 @@ def sys2ss(sys):
     elif len(sys) == 3:
         return zpk2ss(*sys)
     elif len(sys) == 4:
-        return map(np.array, sys)
+        return tuple(map(np.array, sys))
     else:
-        raise ValueError(
-            "sys must be an instance of Synapse, or a tuple of 2 (tf), "
-            "3 (zpk), or 4 (ss) arrays.")
+        _raise_invalid_sys()
 
 
 def sys2tf(sys):
@@ -27,15 +33,23 @@ def sys2tf(sys):
     if isinstance(sys, Synapse):
         return (sys.num, sys.den)
     elif len(sys) == 2:
-        return map(np.array, sys)
+        return tuple(map(np.array, sys))
     elif len(sys) == 3:
         return zpk2tf(*sys)
     elif len(sys) == 4:
         return ss2tf(*sys)
     else:
-        raise ValueError(
-            "sys must be an instance of Synapse, or a tuple of 2 (tf), "
-            "3 (zpk), or 4 (ss) arrays.")
+        _raise_invalid_sys()
+
+
+def check_sys_equal(sys1, sys2):
+    """Returns true iff sys1 and sys2 have the same transfer functions."""
+    tf1 = normalize(*sys2tf(sys1))
+    tf2 = normalize(*sys2tf(sys2))
+    for t1, t2 in zip(tf1, tf2):
+        if not np.allclose(t1, t2):
+            return False
+    return True
 
 
 def tfmul(sys1, sys2):
@@ -61,13 +75,17 @@ def impulse(sys, dt, length):
     return np.asarray([lfilter(num, den, impulse) for num in nums]).T
 
 
-def is_exp_stable(A):
-    """Returns true iff system is exponentially stable."""
+def _is_exp_stable(A):
     w, v = np.linalg.eig(A)
     return (w.real < 0).all()  # <=> e^(At) goes to 0
 
 
-def ss_radii(A, B, C, D, radii=1.0):
+def is_exp_stable(sys):
+    """Returns true iff system is exponentially stable."""
+    return _is_exp_stable(sys2ss(sys)[0])
+
+
+def scale_state(A, B, C, D, radii=1.0):
     """Scales the system to compensate for radii of the state."""
     r = np.asarray(radii, dtype=np.float64)
     if r.ndim > 1:
@@ -75,6 +93,9 @@ def ss_radii(A, B, C, D, radii=1.0):
             radii,))
     elif r.ndim == 0:
         r = np.ones(len(A)) * r
+    elif len(r) != len(A):
+        raise ValueError("radii (%s) length must match state dimension %d" % (
+            radii, len(A)))
     A = A / r[:, None] * r
     B = B / r[:, None]
     C = C * r
