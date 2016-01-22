@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 import nengo
 from nengo.builder.ensemble import get_activities
@@ -65,3 +66,8 @@ def test_pes_learning_rate(Simulator, plt, seed):
     plt.figure()
     plt.plot(sim.trange(), sim.data[p], lw=5, alpha=0.5)
     plt.plot(sim.trange(), desired - error, linestyle='--', lw=5, alpha=0.5)
+
+
+def test_pes_learning_rate_fail():
+    with pytest.raises(ValueError):
+        pes_learning_rate(0.1, [[1, 2], [3, 4]], 1)

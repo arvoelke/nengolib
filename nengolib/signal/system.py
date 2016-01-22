@@ -46,16 +46,19 @@ def tfmul(sys1, sys2):
     return (np.polymul(p1, p2), np.polymul(q1, q2))
 
 
-def impulse(sys, dt, length, discretized=False):
+def impulse(sys, dt, length):
     """Simulates sys on a delta impulse for length timesteps of width dt."""
-    tf = sys2tf(sys)
-    if discretized:
-        num, den = tf
-    else:
-        (num,), den, _ = cont2discrete(tf, dt)
+    ss = sys2ss(sys)
+    if dt is not None:
+        # need to discretize before converting to transfer function, due to
+        # bug in SciPy: https://github.com/scipy/scipy/issues/5753
+        # however this still won't work in the case where the input sys
+        # is a SIMO transfer function
+        ss = cont2discrete(ss, dt)[:-1]
+    nums, den = ss2tf(*ss)
     impulse = np.zeros(length)
     impulse[0] = 1
-    return lfilter(num, den, impulse)
+    return np.asarray([lfilter(num, den, impulse) for num in nums]).T
 
 
 def is_exp_stable(A):
