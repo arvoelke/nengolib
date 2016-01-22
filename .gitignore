@@ -3,3 +3,4 @@ build
 .ipynb_checkpoints
 .cache
 .coverage
+coverage.xml
