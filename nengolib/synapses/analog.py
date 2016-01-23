@@ -2,8 +2,9 @@
 
 import numpy as np
 
-from nengo import LinearFilter
 from nengo.utils.compat import is_integer
+
+from nengolib.synapses.simulate import LinearFilter
 
 __all__ = ['bandpass', 'highpass']
 

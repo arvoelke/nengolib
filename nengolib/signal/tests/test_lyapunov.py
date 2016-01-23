@@ -2,11 +2,11 @@ import numpy as np
 import pytest
 from scipy.signal import cont2discrete
 
-from nengo import Alpha
 from nengo.utils.numpy import norm
 
-from nengolib.signal import sys2ss, impulse
 from nengolib.signal.lyapunov import _H2P, state_norm
+from nengolib.signal import sys2ss, impulse
+from nengolib import Alpha
 
 
 def test_lyapunov():

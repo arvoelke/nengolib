@@ -1,9 +1,8 @@
 import numpy as np
 from scipy.signal import cont2discrete
 
-from nengo.synapses import Lowpass
-
 from nengolib.signal.system import sys2ss
+from nengolib.synapses.simulate import Lowpass
 
 __all__ = ['ss2sim']
 
