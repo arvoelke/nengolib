@@ -3,14 +3,12 @@ from scipy.special import beta, betainc, betaincinv
 
 from nengo.dists import Distribution, UniformHypersphere
 from nengo.utils.compat import is_integer
-from nengo.utils.numpy import norm
 
 from nengolib.linalg.ortho import random_orthogonal
 from nengolib.stats._sobol_seq import i4_sobol_generate
 
 __all__ = [
-    'SphericalCoords', 'Sobol', 'ScatteredHypersphere',
-    'sphere', 'ball']
+    'SphericalCoords', 'Sobol', 'ScatteredHypersphere', 'sphere', 'ball']
 
 
 class SphericalCoords(Distribution):
@@ -78,7 +76,6 @@ class ScatteredHypersphere(UniformHypersphere):
             c = np.cos(i[None, :] * np.pi * cube)
             mapped[:, 1:] = np.cumprod(s, axis=1)
             mapped[:, :-1] *= c
-        assert np.allclose(norm(mapped, axis=1, keepdims=True), 1)
 
         # radius adjustment for ball versus sphere, and rotate
         rotation = random_orthogonal(d, rng=rng)
