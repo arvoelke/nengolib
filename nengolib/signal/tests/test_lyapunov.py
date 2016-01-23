@@ -32,14 +32,14 @@ def test_state_norm(plt):
     C = np.eye(len(A))
     D = np.zeros((len(A), B.shape[1]))
 
-    discrete = cont2discrete((A, B, C, D), dt)[:-1]
-
-    # Simulate the state vector
-    response = impulse(discrete, None, length)
+    response = np.empty((length, len(C)))
+    for i in range(len(C)):
+        # Simulate the state vector
+        response[:, i] = impulse((A, B, C[i, :], D[i, :]), dt, length)
 
     # Check that the power of each state equals the H2-norm of each state
     # The analog case is the same after scaling since dt is approx 0.
-    h2 = state_norm(discrete, analog=False)
+    h2 = state_norm(cont2discrete((A, B, C, D), dt)[:-1], analog=False)
     assert np.allclose(h2, norm(response, axis=0))
     assert np.allclose(h2, state_norm(sys, analog=True) / np.sqrt(length))
 

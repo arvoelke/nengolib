@@ -5,7 +5,8 @@ from scipy.signal import (
 from nengo.synapses import Synapse
 
 __all__ = [
-    'sys2ss', 'sys2tf', 'tfmul', 'impulse', 'is_exp_stable', 'scale_state']
+    'sys2ss', 'sys2tf', 'tfmul', 'apply_filter', 'impulse', 'is_exp_stable',
+    'scale_state']
 
 
 def _raise_invalid_sys():
@@ -37,7 +38,10 @@ def sys2tf(sys):
     elif len(sys) == 3:
         return zpk2tf(*sys)
     elif len(sys) == 4:
-        return ss2tf(*sys)
+        # TODO: properly handle SIMO systems
+        # https://github.com/scipy/scipy/issues/5753
+        (num,), den = ss2tf(*sys)
+        return (num, den)
     else:
         _raise_invalid_sys()
 
@@ -60,19 +64,21 @@ def tfmul(sys1, sys2):
     return (np.polymul(p1, p2), np.polymul(q1, q2))
 
 
-def impulse(sys, dt, length):
-    """Simulates sys on a delta impulse for length timesteps of width dt."""
-    ss = sys2ss(sys)
+def apply_filter(u, sys, dt, axis=-1):
+    """Simulates sys on u for length timesteps of width dt."""
+    # TODO: properly handle SIMO systems
+    # https://github.com/scipy/scipy/issues/5753
+    num, den = sys2tf(sys)
     if dt is not None:
-        # need to discretize before converting to transfer function, due to
-        # bug in SciPy: https://github.com/scipy/scipy/issues/5753
-        # however this still won't work in the case where the input sys
-        # is a SIMO transfer function
-        ss = cont2discrete(ss, dt)[:-1]
-    nums, den = ss2tf(*ss)
+        (num,), den, _ = cont2discrete((num, den), dt)
+    return lfilter(num, den, u, axis)
+
+
+def impulse(sys, dt, length, axis=-1):
+    """Simulates sys on a delta impulse for length timesteps of width dt."""
     impulse = np.zeros(length)
     impulse[0] = 1
-    return np.asarray([lfilter(num, den, impulse) for num in nums]).T
+    return apply_filter(impulse, sys, dt, axis)
 
 
 def _is_exp_stable(A):

@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.signal import cont2discrete
 
+from nengo import Lowpass as BaseLowpass
+
 from nengolib.signal.system import sys2ss
 from nengolib.synapses.simulate import Lowpass
 
@@ -10,7 +12,7 @@ __all__ = ['ss2sim']
 def ss2sim(sys, synapse, dt=None):
     """Maps an LTI system to the synaptic dynamics in state-space."""
     A, B, C, D = sys2ss(sys)
-    if not isinstance(synapse, Lowpass):
+    if not isinstance(synapse, (Lowpass, BaseLowpass)):
         # TODO: support other synapses
         raise TypeError("synapse (%s) must be Lowpass" % (synapse,))
     if dt is None:
