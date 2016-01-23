@@ -50,8 +50,8 @@ def test_mapping(Simulator, plt):
 
 
 def test_unsupported_synapse():
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         ss2sim(sys=Lowpass(0.1), synapse=Alpha(0.1))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         ss2sim(sys=Lowpass(0.1), synapse=Triangle(0.1), dt=0.001)
