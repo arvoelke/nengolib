@@ -4,8 +4,8 @@ import pytest
 import nengo
 from nengo.builder.ensemble import get_activities
 
+from nengolib.signal.learning import pes_learning_rate
 from nengolib import Network
-from nengolib.signal import pes_learning_rate
 
 
 def test_pes_learning_rate(Simulator, plt, seed):

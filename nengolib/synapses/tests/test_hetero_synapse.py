@@ -2,7 +2,7 @@ import numpy as np
 
 import nengo
 
-from nengolib.synapses import HeteroSynapse
+from nengolib.synapses.hetero_synapse import HeteroSynapse
 from nengolib import Network
 from nengolib.stats import sphere
 from nengolib.synapses import Lowpass, Alpha

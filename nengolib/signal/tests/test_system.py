@@ -7,8 +7,8 @@ from nengo.synapses import filt
 from nengolib import Lowpass, Alpha, LinearFilter
 from nengolib.signal import state_norm
 from nengolib.signal.system import (
-    sys2ss, sys2tf, check_sys_equal, tfmul, impulse, is_exp_stable,
-    scale_state)
+    sys2ss, sys2tf, sys_equal, impulse, is_exp_stable, scale_state,
+    LinearSystem)
 
 
 def test_sys_conversions():
@@ -17,15 +17,15 @@ def test_sys_conversions():
     tf = sys2tf(sys)
     ss = sys2ss(sys)
 
-    assert check_sys_equal(sys2ss(tf), ss)
-    assert check_sys_equal(sys2ss(ss), ss)  # unchanged
-    assert check_sys_equal(sys2tf(tf), tf)  # unchanged
-    assert check_sys_equal(sys2tf(ss), tf)
+    assert sys_equal(sys2ss(tf), ss)
+    assert sys_equal(sys2ss(ss), ss)  # unchanged
+    assert sys_equal(sys2tf(tf), tf)  # unchanged
+    assert sys_equal(sys2tf(ss), tf)
 
     zpk = ss2zpk(*ss)
-    assert check_sys_equal(tf2zpk(*tf), zpk)  # sanity check
-    assert check_sys_equal(sys2tf(zpk), tf)
-    assert check_sys_equal(sys2ss(zpk), ss)
+    assert sys_equal(tf2zpk(*tf), zpk)  # sanity check
+    assert sys_equal(sys2tf(zpk), tf)
+    assert sys_equal(sys2ss(zpk), ss)
 
     with pytest.raises(ValueError):
         sys2ss(np.zeros(5))
@@ -35,13 +35,14 @@ def test_sys_conversions():
 
 
 def test_check_sys_equal():
-    assert not check_sys_equal(np.zeros(2), np.zeros(3))
+    assert not sys_equal(np.zeros(2), np.zeros(3))
 
 
 def test_tfmul():
     # Check that alpha is just two lowpass multiplied together
-    assert check_sys_equal(
-        tfmul(Lowpass(0.1), Lowpass(0.1)), sys2tf(Alpha(0.1)))
+    assert sys_equal(
+        LinearSystem(Lowpass(0.1)) * LinearSystem(Lowpass(0.1)),
+        LinearSystem(Alpha(0.1)))
 
 
 def test_impulse():
@@ -74,7 +75,7 @@ def test_scale_state():
     scaled = scale_state(*ss, radii=2)
 
     # Check that it's still the same stystem, even though different matrices
-    assert check_sys_equal(ss, scaled)
+    assert sys_equal(ss, scaled)
     assert not np.allclose(ss[1], scaled[1])
 
     # Check that the state vectors have half the power

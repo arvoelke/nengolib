@@ -4,7 +4,7 @@ import pytest
 import nengo
 
 from nengolib.synapses.mapping import ss2sim
-from nengolib import Network, Lowpass, Alpha, Triangle
+from nengolib import Network, Lowpass, Alpha, LinearFilter
 from nengolib.signal import apply_filter
 
 
@@ -54,4 +54,4 @@ def test_unsupported_synapse():
         ss2sim(sys=Lowpass(0.1), synapse=Alpha(0.1))
 
     with pytest.raises(TypeError):
-        ss2sim(sys=Lowpass(0.1), synapse=Triangle(0.1), dt=0.001)
+        ss2sim(sys=Lowpass(0.1), synapse=LinearFilter([1, 2], [2, 1]), dt=0.01)

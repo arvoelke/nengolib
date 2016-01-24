@@ -1,13 +1,14 @@
 import numpy as np
 import pytest
 
-from nengolib.signal import impulse
-from nengolib.synapses.analog import bandpass, highpass
+from nengolib.synapses.analog import Bandpass, Highpass
+from nengolib.signal import impulse, LinearSystem
+from nengolib.synapses import Lowpass
 
 
 @pytest.mark.parametrize("freq,Q", [(5, 2), (50, 50), (200, 4)])
 def test_bandpass(freq, Q):
-    sys = bandpass(freq, Q)
+    sys = Bandpass(freq, Q)
 
     length = 10000
     dt = 0.0001
@@ -23,7 +24,8 @@ def test_bandpass(freq, Q):
 
 @pytest.mark.parametrize("tau,order", [(0.01, 1), (0.2, 2), (0.0001, 5)])
 def test_highpass(tau, order):
-    sys = highpass(tau, order)
+    sys = Highpass(tau, order)
+    assert sys == (Lowpass(tau) * LinearSystem(([tau, 0], [1]))) ** order
 
     length = 1000
     dt = 0.001
@@ -39,4 +41,4 @@ def test_highpass(tau, order):
 @pytest.mark.parametrize("order", [0, 1.5])
 def test_invalid_highpass(order):
     with pytest.raises(ValueError):
-        highpass(0.01, order)
+        Highpass(0.01, order)
