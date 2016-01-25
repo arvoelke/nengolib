@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from nengo.utils.numpy import norm
+from nengo.utils.testing import warns
 
 from nengolib.stats.ntmdists import SphericalCoords, Sobol, sphere, ball
 
@@ -45,7 +46,7 @@ def test_sobol_invalid_dims():
     # check shape
     assert s1.shape == (3, 4)
 
-    with pytest.warns(UserWarning):
+    with warns(UserWarning):
         Sobol().sample(2, d=41)
 
 
