@@ -53,11 +53,6 @@ def test_sys_conversions():
 def test_check_sys_equal():
     assert not sys_equal(np.zeros(2), np.zeros(3))
 
-    assert sys_equal(nengo.LinearFilter([1], [1, 0]),
-                     LinearSystem((1, [1, 0])))
-    assert sys_equal(nengo.Lowpass(0.1), Lowpass(0.1))
-    assert sys_equal(nengo.Alpha(0.1), Alpha(0.1))
-
 
 def test_impulse():
     dt = 0.001

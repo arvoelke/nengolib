@@ -1,13 +1,14 @@
 """Classical analog linear filters."""
 
 import numpy as np
+from scipy.misc import pade, factorial
 
 from nengo.utils.compat import is_integer
 
 from nengolib.signal.system import LinearSystem
 
 __all__ = [
-    'LinearFilter', 'Lowpass', 'Alpha', 'Bandpass', 'Highpass']
+    'LinearFilter', 'Lowpass', 'Alpha', 'Bandpass', 'Highpass', 'PadeDelay']
 
 
 class LinearFilter(LinearSystem):
@@ -49,3 +50,12 @@ class Highpass(LinearFilter):
             raise ValueError("order (%s) must be integer >= 1" % order)
         num, den = map(np.poly1d, ([tau, 0], [tau, 1]))
         super(Highpass, self).__init__(num**order, den**order)
+
+
+class PadeDelay(LinearFilter):
+
+    def __init__(self, p, q, c=1.0):
+        i = np.arange(1, p+q+1)
+        taylor = np.append([1.0], (-c)**i / factorial(i))
+        num, den = pade(taylor, q)
+        super(PadeDelay, self).__init__(num, den)

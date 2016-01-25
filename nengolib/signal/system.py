@@ -88,7 +88,7 @@ def apply_filter(u, sys, dt, axis=-1):
     """Simulates sys on u for length timesteps of width dt."""
     # TODO: properly handle SIMO systems
     # https://github.com/scipy/scipy/issues/5753
-    num, den = sys2tf(sys)
+    num, den = LinearSystem(sys).tf
     if dt is not None:
         (num,), den, _ = cont2discrete((num, den), dt)
     return lfilter(num, den, u, axis)
