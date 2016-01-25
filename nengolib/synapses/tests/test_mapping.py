@@ -24,7 +24,6 @@ def test_mapping(Simulator, plt):
         dout = nengo.Node(size_in=1)
 
         for X, (A, B, C, D), Y in ((x, ss, out), (dx, dss, dout)):
-            print A, B, C, D
             nengo.Connection(stim, X, transform=B, synapse=synapse)
             nengo.Connection(X, X, transform=A, synapse=synapse)
             nengo.Connection(X, Y, transform=C, synapse=None)

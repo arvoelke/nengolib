@@ -3,7 +3,7 @@ from scipy.signal import (
     cont2discrete, zpk2ss, ss2tf, tf2ss, zpk2tf, lfilter, normalize)
 
 from nengo.synapses import LinearFilter
-from nengo.utils.compat import is_integer, is_number
+from nengo.utils.compat import is_integer, is_number, with_metaclass
 
 from nengolib.utils.meta import ReuseUnderlying
 
@@ -50,7 +50,7 @@ def _ss2tf(A, B, C, D):
 def sys2tf(sys):
     """Converts an LTI system in any form to a transfer function."""
     def _tf(num, den):
-        return map(np.poly1d, (num, den))
+        return (np.poly1d(num), np.poly1d(den))
 
     if isinstance(sys, LinearSystem):
         # use cached attribute in case already computed
@@ -159,7 +159,7 @@ class NengoLinearFilterMixin(LinearFilter):
         return _StateSpaceStep((A, B, C, D), output)
 
 
-class LinearSystem(NengoLinearFilterMixin):
+class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
     """Single-input single-output linear system with set of operations."""
 
     # Reuse the underlying system whenever it is an instance of the same
@@ -170,7 +170,6 @@ class LinearSystem(NengoLinearFilterMixin):
     #    sys2 = LinearSystem(sys1)
     #    assert sys1 is sys2  # reuses underlying instance
     #    tf2 = sys2.tf  # already been computed
-    __metaclass__ = ReuseUnderlying
 
     _tf = None
     _ss = None

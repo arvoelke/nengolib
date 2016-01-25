@@ -6,30 +6,40 @@ notifications:
 
 env:
   global:
-    - TEST_CMD="py.test nengolib --cov=nengolib"
+    - TEST_CMD="py.test nengolib"
     - PIP_DEPS="pytest==2.7.3 pytest-xdist"
-    - PYTHON="2.7"
     - NUMPY="1.10"
     - SCIPY="0.16.0"
     - NENGO="https://github.com/nengo/nengo/archive/master.tar.gz"
 
 matrix:
   include:
+    - env:
+        CODE_COV="True"
+        TEST_CMD="py.test nengolib --cov=nengolib"
+        PYTHON="2.7"
+        PIP_DEPS="$PIP_DEPS codecov pytest-cov"
     - env: >
-        TEST_CMD=""
-        PIP_DEPS=""
         EXTRA_CMD="flake8 -v nengolib"
         CONDA_DEPS="flake8"
+        PYTHON="2.7"
+        TEST_CMD=""
+        PIP_DEPS=""
         NUMPY=""
         SCIPY=""
         NENGO=""
     - env:
-        PIP_DEPS="$PIP_DEPS codecov pytest-cov"
-        CODE_COV="True"
-    - env:
         TEST_CMD="py.test nengolib -k nengolib/tests/test_notebooks.py -rw --slow"
+        PYTHON="2.7"
         PIP_DEPS="$PIP_DEPS jupyter matplotlib ipython"
         CONA_DEPS="jupyter matplotlib ipython pygments"
+    - env:
+        PYTHON="2.7"
+        NUMPY="1.9.2"
+    - env:
+        PYTHON="3.4"
+    - env:
+        PYTHON="3.5"
 
 # Setup Miniconda
 before_install:
@@ -61,7 +71,7 @@ script:
   - if [[ -n $TEST_CMD ]]; then
       python -c "import numpy; numpy.show_config()";
       python -c "import scipy; scipy.show_config()";
-      python -c "import nengo; print nengo.__version__";
+      python -c "import nengo; print(nengo.__version__)";
       python setup.py -q install;
       eval $TEST_CMD;
     fi

@@ -1,8 +1,9 @@
+from nengo.utils.compat import with_metaclass
+
 from nengolib.utils.meta import ReuseUnderlying
 
 
-class Example(object):
-    __metaclass__ = ReuseUnderlying
+class Example(with_metaclass(ReuseUnderlying)):
 
     def __init__(self, cls):
         self._cls = cls
