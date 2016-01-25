@@ -36,6 +36,17 @@ def sys2ss(sys):
         _raise_invalid_sys()
 
 
+def _ss2tf(A, B, C, D):
+    """Fix ss2tf to handle zero-order state-space models."""
+    # https://github.com/scipy/scipy/issues/5760
+    if not (len(A) or len(B) or len(C)):
+        D = np.asarray(D).flatten()
+        if len(D) != 1:
+            raise ValueError("D must be scalar for zero-order models")
+        return ((D[0],), 1.)
+    return ss2tf(A, B, C, D)
+
+
 def sys2tf(sys):
     """Converts an LTI system in any form to a transfer function."""
     def _tf(num, den):
@@ -52,7 +63,7 @@ def sys2tf(sys):
     elif len(sys) == 3:
         return _tf(*zpk2tf(*sys))
     elif len(sys) == 4:
-        nums, den = ss2tf(*sys)
+        nums, den = _ss2tf(*sys)
         if len(nums) != 1:
             # TODO: support MIMO systems
             # https://github.com/scipy/scipy/issues/5753
@@ -201,14 +212,12 @@ class LinearSystem(NengoLinearFilterMixin):
     def causal(self):
         return self.order_num <= self.order_den
 
-    @property
     def __len__(self):
         return self.order_den
 
     def __repr__(self):
-        return "%s(sys=(%r, %r))" % (self.__class__.__name__,
-                                     np.asarray(self.num),
-                                     np.asarray(self.den))
+        return "LinearSystem(sys=(%r, %r))" % (
+            np.asarray(self.num), np.asarray(self.den))
 
     def __str__(self):
         return "(%s, %s)" % (np.asarray(self.num), np.asarray(self.den))

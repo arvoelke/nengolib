@@ -1,4 +1,3 @@
-
 from nengolib.utils.meta import ReuseUnderlying
 
 
@@ -13,7 +12,7 @@ def test_reuse_underlying():
 
     obj1 = Example(1)
     obj2 = Example(obj1)
-    obj3 = Example(obj2)
+    obj3 = Example(cls=obj2)
     obj4 = Example(1)
 
     assert obj1 is obj2

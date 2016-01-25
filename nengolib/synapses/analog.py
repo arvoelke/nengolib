@@ -15,7 +15,7 @@ class LinearFilter(LinearSystem):
     def __init__(self, num, den):
         # Note: we don't use self.analog because that information will get
         # lost if the instance uses operations inherited from LinearSystem
-        LinearSystem.__init__(self, (num, den))
+        super(LinearFilter, self).__init__((num, den))
 
 
 class Lowpass(LinearFilter):

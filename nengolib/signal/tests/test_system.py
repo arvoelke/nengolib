@@ -1,3 +1,5 @@
+from __future__ import division
+
 import numpy as np
 import pytest
 from scipy.signal import ss2zpk, tf2zpk, cont2discrete
@@ -29,11 +31,23 @@ def test_sys_conversions():
     assert sys_equal(sys2tf(zpk), tf)
     assert sys_equal(sys2ss(zpk), ss)
 
+    # should also work with nengo's synapse types
+    assert sys_equal(sys2tf(nengo.Alpha(0.1)), tf)
+    assert sys_equal(sys2ss(nengo.Alpha(0.1)), ss)
+
+    # system can also be just a scalar
+    assert sys_equal(sys2tf(2.0), (1, 0.5))
+    assert sys_equal(sys2tf(sys2ss(5)), (5, 1))
+
     with pytest.raises(ValueError):
         sys2ss(np.zeros(5))
 
     with pytest.raises(ValueError):
         sys2tf(np.zeros(5))
+
+    with pytest.raises(ValueError):
+        # _ss2tf(...): passthrough must be single element
+        sys2tf(([], [], [], [1, 2]))
 
 
 def test_check_sys_equal():
@@ -43,11 +57,6 @@ def test_check_sys_equal():
                      LinearSystem((1, [1, 0])))
     assert sys_equal(nengo.Lowpass(0.1), Lowpass(0.1))
     assert sys_equal(nengo.Alpha(0.1), Alpha(0.1))
-
-
-def test_sys_multiplication():
-    # Check that alpha is just two lowpass multiplied together
-    assert Lowpass(0.1) * Lowpass(0.1) == Alpha(0.1)
 
 
 def test_impulse():
@@ -123,3 +132,77 @@ def test_simulation(Simulator, plt):
     plt.plot(sim.trange(), sim.data[p_old])
 
     assert np.allclose(sim.data[p_new], sim.data[p_old])
+
+
+def test_sys_multiplication():
+    # Check that alpha is just two lowpass multiplied together
+    assert Lowpass(0.1) * Lowpass(0.1) == Alpha(0.1)
+
+
+def test_sim_new_synapse(Simulator):
+    # Create a new synapse object and simulate it
+    with Network() as model:
+        stim = nengo.Node(output=np.sin)
+        x = nengo.Node(size_in=1)
+        nengo.Connection(stim, x, synapse=Lowpass(0.1) - Lowpass(0.01))
+    sim = Simulator(model)
+    sim.run(0.1)
+
+
+def test_linear_system():
+    tau = 0.05
+    sys = Lowpass(tau)
+
+    # Test representations
+    assert sys == (1, [tau, 1])
+    assert sys_equal(sys.tf, sys)
+    assert sys_equal(sys.ss, sys)
+
+    # Test attributes
+    assert np.allclose(sys.num, (1,))
+    assert np.allclose(sys.den, (tau, 1))
+    assert sys.causal
+
+    assert sys.order_num == 0
+    assert sys.order_den == 1
+    assert len(sys) == 1  # order_den
+
+    # Test multiplication and squaring
+    assert sys*2 == 2*sys
+    assert (0.4*sys) + (0.6*sys) == sys
+    assert sys + sys == 2*sys
+    assert sys * sys == sys**2
+
+    # Test pow
+    with pytest.raises(TypeError):
+        sys**0.5
+    assert sys**0 == LinearSystem(1)
+
+    # Test inversion
+    inv = ~sys
+    assert inv == ([tau, 1], 1)
+    assert not inv.causal
+
+    assert inv == 1 / sys
+    assert inv == sys**(-1)
+
+    # Test repr/str
+    copy = eval(
+        repr(sys), {}, {'LinearSystem': LinearSystem, 'array': np.array})
+    assert copy == sys
+    assert str(copy) == str(sys)
+
+    # Test addition/subtraction
+    assert sys + 2 == ((2*tau, 3), (tau, 1))
+    assert (4 - sys) + 2 == (-sys) + 6
+    assert np.allclose((sys - sys).num, 0)
+
+    # Test division
+    assert sys / 2 == sys * 0.5
+    assert 2 / sys == 2 * inv
+
+    cancel = sys / sys
+    assert np.allclose(cancel.num, cancel.den)
+
+    # Test inequality
+    assert sys != (sys*2)
