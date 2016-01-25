@@ -3,10 +3,19 @@
 # Nengo Library
 Additional extensions for large-scale brain modelling with Nengo.
 
+![img](http://i.imgur.com/moZPzUi.png)
+
 ### Highlights
  - `nengolib.Network(...)` serves as a drop-in replacement for `nengo.Network(...)` to improve the performance of an ensemble and the accuracy of its decoders.
+ - `nengolib.HeteroSynapse(...)` allows one to connect to an ensemble using a different synapse per dimension or per neuron.
  - `nengolib.LinearFilter(...)` serves as a drop-in replacement for `nengo.LinearFilter(...)` to improve the efficiency of simulations for high-order synapse models.
- - `nengolib.HeteroSynapse(...)` allows one to connect to an ensemble using a different synapse per dimension or neuron.
+ - `nengolib.{Lowpass,Alpha,LinearFilter}` are synapses with rich semantics. These linear systems can be scaled, added, multiplied, inverted, compared, and converted between various standard formats. These synapses can also be simulated easily within `Nengo`. For example, to use a double-exponential synapse:
+
+    ```
+synapse = tau1/(tau1 - tau2) * nengolib.Lowpass(tau1) - tau2/(tau1 - tau2) * nengolib.Lowpass(tau2)
+nengo.Connection(a, b, synapse=synapse)
+```
+
 
 ### Installation
 
