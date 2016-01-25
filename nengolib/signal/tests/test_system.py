@@ -2,13 +2,15 @@ import numpy as np
 import pytest
 from scipy.signal import ss2zpk, tf2zpk, cont2discrete
 
+import nengo
 from nengo.synapses import filt
 
-from nengolib import Lowpass, Alpha, LinearFilter
-from nengolib.signal import state_norm
 from nengolib.signal.system import (
     sys2ss, sys2tf, sys_equal, impulse, is_exp_stable, scale_state,
     LinearSystem)
+from nengolib import Network, Lowpass, Alpha, LinearFilter
+from nengolib.signal import state_norm
+from nengolib.synapses import Highpass
 
 
 def test_sys_conversions():
@@ -37,12 +39,15 @@ def test_sys_conversions():
 def test_check_sys_equal():
     assert not sys_equal(np.zeros(2), np.zeros(3))
 
+    assert sys_equal(nengo.LinearFilter([1], [1, 0]),
+                     LinearSystem((1, [1, 0])))
+    assert sys_equal(nengo.Lowpass(0.1), Lowpass(0.1))
+    assert sys_equal(nengo.Alpha(0.1), Alpha(0.1))
 
-def test_tfmul():
+
+def test_sys_multiplication():
     # Check that alpha is just two lowpass multiplied together
-    assert sys_equal(
-        LinearSystem(Lowpass(0.1)) * LinearSystem(Lowpass(0.1)),
-        LinearSystem(Alpha(0.1)))
+    assert Lowpass(0.1) * Lowpass(0.1) == Alpha(0.1)
 
 
 def test_impulse():
@@ -94,3 +99,27 @@ def test_invalid_scale_state():
 
     with pytest.raises(ValueError):
         scale_state(*ss, radii=[1, 2])
+
+
+def test_simulation(Simulator, plt):
+    new_sys = Highpass(0.01, order=3)
+    old_sys = nengo.LinearFilter(new_sys.num, new_sys.den)
+    assert new_sys == old_sys
+
+    with Network() as model:
+        stim = nengo.Node(output=nengo.processes.WhiteSignal(1.0))
+        out_new = nengo.Node(size_in=1)
+        out_old = nengo.Node(size_in=1)
+        nengo.Connection(stim, out_new, synapse=new_sys)
+        nengo.Connection(stim, out_old, synapse=old_sys)
+        p_new = nengo.Probe(out_new)
+        p_old = nengo.Probe(out_old)
+
+    sim = Simulator(model)
+    sim.run(1.0)
+
+    plt.figure()
+    plt.plot(sim.trange(), sim.data[p_new])
+    plt.plot(sim.trange(), sim.data[p_old])
+
+    assert np.allclose(sim.data[p_new], sim.data[p_old])

@@ -14,4 +14,5 @@ import linalg  # noqa: F401
 import signal  # noqa: F401
 import stats  # noqa: F401
 import synapses  # noqa: F401
+import utils  # noqa: F401
 from synapses import LinearFilter, Lowpass, Alpha, HeteroSynapse  # noqa: F401

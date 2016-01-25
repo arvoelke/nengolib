@@ -56,10 +56,9 @@ class HeteroSynapse(object):
 
     def __call__(self, t, u):
         u = u[:, None] if self.elementwise else u[None, :]
+        # TODO: duplicates code in synapses.system._StateSpaceStep
         y = np.dot(self.C, self._x) + np.dot(self.D, u)
         self._x = np.dot(self.A, self._x) + np.dot(self.B, u)
-        # Return the y from the previous timestep to compensate for the fact
-        # that this is usually used within a Node, which delays one timestep.
         return self.to_vector(y)
 
     def to_vector(self, y):

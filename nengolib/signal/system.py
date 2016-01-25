@@ -5,6 +5,8 @@ from scipy.signal import (
 from nengo.synapses import Synapse, LinearFilter
 from nengo.utils.compat import is_integer, is_number
 
+from nengolib.utils.meta import ReuseUnderlying
+
 __all__ = [
     'sys2ss', 'sys2tf', 'sys_equal', 'apply_filter', 'impulse',
     'is_exp_stable', 'scale_state', 'NengoLinearFilterMixin', 'LinearSystem']
@@ -124,8 +126,9 @@ class _StateSpaceStep(LinearFilter.Step):
 
     def __call__(self, signal):
         u = signal[None, :]
+        y = np.dot(self._C, self._x) + np.dot(self._D, u)
         self._x = np.dot(self._A, self._x) + np.dot(self._B, u)
-        self.output[...] = np.dot(self._C, self._x) + np.dot(self._D, u)
+        self.output[...] = y
 
 
 class NengoLinearFilterMixin(LinearFilter):
@@ -147,20 +150,21 @@ class NengoLinearFilterMixin(LinearFilter):
 class LinearSystem(NengoLinearFilterMixin):
     """Single-input single-output linear system with set of operations."""
 
-    _initialized = False
+    # Reuse the underlying system whenever it is an instance of the same
+    # class. This allows us to avoid recomputing the tf/ss for the same
+    # instance, i.e.
+    #    sys1 = LinearSystem(...)
+    #    tf1 = sys1.tf  # computes once
+    #    sys2 = LinearSystem(sys1)
+    #    assert sys1 is sys2  # reuses underlying instance
+    #    tf2 = sys2.tf  # already been computed
+    __metaclass__ = ReuseUnderlying
+
     _tf = None
     _ss = None
 
-    def __new__(cls, sys, *args, **kwargs):
-        if isinstance(sys, cls):
-            return sys  # since immutable, return same underlying object
-        return super(LinearSystem, cls).__new__(cls, sys, *args, **kwargs)
-
     def __init__(self, sys):
-        if self._initialized:  # invoked by __new__ for second time
-            return
-        assert not isinstance(sys, LinearSystem)
-        self._initialized = True
+        assert not isinstance(sys, LinearSystem)  # guaranteed by metaclass
         self._sys = sys
         # Don't initialize superclass so that it uses this num/den instead
 
