@@ -53,6 +53,7 @@ def sys2tf(sys):
         return map(np.poly1d, (num, den))
 
     if isinstance(sys, LinearSystem):
+        # use cached attribute in case already computed
         return sys.tf  # _tf called via recursion to sys2tf
     elif isinstance(sys, Synapse):
         return _tf(sys.num, sys.den)
@@ -76,8 +77,8 @@ def sys2tf(sys):
 def sys_equal(sys1, sys2):
     """Returns true iff sys1 and sys2 have the same transfer functions."""
     # TODO: doesn't do pole-zero cancellation
-    tf1 = normalize(*LinearSystem(sys1).tf)
-    tf2 = normalize(*LinearSystem(sys2).tf)
+    tf1 = normalize(*sys2tf(sys1))
+    tf2 = normalize(*sys2tf(sys2))
     for t1, t2 in zip(tf1, tf2):
         if not np.allclose(t1, t2):
             return False
@@ -88,7 +89,7 @@ def apply_filter(u, sys, dt, axis=-1):
     """Simulates sys on u for length timesteps of width dt."""
     # TODO: properly handle SIMO systems
     # https://github.com/scipy/scipy/issues/5753
-    num, den = LinearSystem(sys).tf
+    num, den = sys2tf(sys)
     if dt is not None:
         (num,), den, _ = cont2discrete((num, den), dt)
     return lfilter(num, den, u, axis)
