@@ -12,10 +12,9 @@ Additional extensions for large-scale brain modelling with Nengo.
  - `nengolib.{Lowpass,Alpha,LinearFilter}` are synapses with rich semantics. These linear systems can be scaled, added, multiplied, inverted, compared, and converted between various standard formats. These synapses can also be simulated easily within `Nengo`. For example, to use a double-exponential synapse:
 
     ```
-synapse = tau1/(tau1 - tau2) * nengolib.Lowpass(tau1) - tau2/(tau1 - tau2) * nengolib.Lowpass(tau2)
+synapse = (tau1 * nengolib.Lowpass(tau1) - tau2 * nengolib.Lowpass(tau2)) / (tau1 - tau2)
 nengo.Connection(a, b, synapse=synapse)
 ```
-
 
 ### Installation
 
