@@ -2,7 +2,7 @@ import numpy as np
 from scipy.signal import (
     cont2discrete, zpk2ss, ss2tf, tf2ss, zpk2tf, lfilter, normalize)
 
-from nengo.synapses import Synapse, LinearFilter
+from nengo.synapses import LinearFilter
 from nengo.utils.compat import is_integer, is_number
 
 from nengolib.utils.meta import ReuseUnderlying
@@ -22,7 +22,7 @@ def sys2ss(sys):
     """Converts an LTI system in any form to state-space."""
     if isinstance(sys, LinearSystem):
         return sys.ss
-    elif isinstance(sys, Synapse):
+    elif isinstance(sys, LinearFilter):
         return tf2ss(sys.num, sys.den)
     elif is_number(sys):
         return tf2ss(sys, 1)
@@ -55,7 +55,7 @@ def sys2tf(sys):
     if isinstance(sys, LinearSystem):
         # use cached attribute in case already computed
         return sys.tf  # _tf called via recursion to sys2tf
-    elif isinstance(sys, Synapse):
+    elif isinstance(sys, LinearFilter):
         return _tf(sys.num, sys.den)
     elif is_number(sys):
         return _tf(sys, 1)

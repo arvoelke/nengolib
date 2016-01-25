@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from scipy.special import beta, betainc, betaincinv
 
@@ -39,13 +41,17 @@ class SphericalCoords(Distribution):
 class Sobol(Distribution):
 
     def sample(self, num, d=None, rng=np.random):
+        num, d = self._sample_shape(num, d)
         if d == 1:
             # Tile the points optimally. TODO: refactor
             return np.linspace(1./num, 1, num)[:, None]
-        if d is None or not is_integer(d) or d < 1 or d > 40:
+        if d is None or not is_integer(d) or d < 1:
             # TODO: this should be raised when the ensemble is created
-            raise ValueError("d (%d) must be integer in range [1, 40]" % d)
-        num, d = self._sample_shape(num, d)
+            raise ValueError("d (%d) must be positive integer" % d)
+        if d > 40:
+            warnings.warn("i4_sobol_generate does not support d > 40; "
+                          "falling back to monte-carlo method", UserWarning)
+            return np.random.uniform(size=(num, d))
         return i4_sobol_generate(d, num, skip=0)
 
 

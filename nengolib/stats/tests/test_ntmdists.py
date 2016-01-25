@@ -45,8 +45,11 @@ def test_sobol_invalid_dims():
     # check shape
     assert s1.shape == (3, 4)
 
+    with pytest.warns(UserWarning):
+        Sobol().sample(2, d=41)
 
-@pytest.mark.parametrize("d", [1, 2, 4, 16])
+
+@pytest.mark.parametrize("d", [1, 2, 4, 16, 64])
 def test_ball(d, rng):
     n = 200
     x = ball.sample(n, d, rng)
@@ -54,7 +57,7 @@ def test_ball(d, rng):
     assert (norm(x, axis=1) <= 1).all()
 
 
-@pytest.mark.parametrize("d", [1, 2, 4, 16])
+@pytest.mark.parametrize("d", [1, 2, 4, 16, 64])
 def test_sphere(d, rng):
     n = 200
     x = sphere.sample(n, d, rng)
