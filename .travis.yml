@@ -7,8 +7,11 @@ notifications:
 env:
   global:
     - TEST_CMD="py.test nengolib --cov=nengolib"
-    - PIP_DEPS="codecov pytest-cov pytest==2.7.3 pytest-xdist"
+    - PIP_DEPS="pytest==2.7.3 pytest-xdist"
     - PYTHON="2.7"
+    - NUMPY="1.10"
+    - SCIPY="0.16.0"
+    - NENGO="https://github.com/nengo/nengo/archive/master.tar.gz"
 
 matrix:
   include:
@@ -17,10 +20,16 @@ matrix:
         PIP_DEPS=""
         EXTRA_CMD="flake8 -v nengolib"
         CONDA_DEPS="flake8"
-    - env: >
-        NUMPY="1.10"
-        SCIPY="0.16.0"
-        NENGO="https://github.com/nengo/nengo/archive/master.tar.gz"
+        NUMPY=""
+        SCIPY=""
+        NENGO=""
+    - env:
+        PIP_DEPS="$PIP_DEPS codecov pytest-cov"
+        CODE_COV="True"
+    - env:
+        TEST_CMD="py.test nengolib -k nengolib/tests/test_notebooks.py -rw --slow"
+        PIP_DEPS="$PIP_DEPS jupyter matplotlib ipython"
+        CONA_DEPS="jupyter matplotlib ipython pygments"
 
 # Setup Miniconda
 before_install:
@@ -60,4 +69,4 @@ script:
 
 # Report test code coverage
 after_success:
-  - if [[ -n $TEST_CMD ]]; then codecov; fi
+  - if [[ -n $CODE_COV ]]; then codecov; fi

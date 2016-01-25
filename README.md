@@ -41,6 +41,6 @@ For other operating systems, we refer the user to the [SciPy installation guide]
 
 Examples and lectures can be found in `doc/notebooks` by running:
 ```
-pip install jyupter 
+pip install jupyter
 ipython notebook
 ```
