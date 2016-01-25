@@ -4,18 +4,19 @@ import numpy as np
 
 from nengo.utils.numpy import norm
 
-from nengolib.stats.leech import leech_kissing, _leech_kissing_cache_file
+from nengolib.stats.leech import leech_kissing
 
 
-def test_leech_kissing():
-    x = leech_kissing()
+def test_leech_kissing(tmpdir):
+    cache_file = os.path.join(str(tmpdir), "leech_kissing.npy")
+    x = leech_kissing(cache_file)
 
     assert x.shape == (196560, 24)
     assert np.allclose(norm(x, axis=1, keepdims=True), 1)
     assert len(set(map(tuple, x))) == len(x)  # no duplicates
-    assert os.path.exists(_leech_kissing_cache_file)
+    assert os.path.exists(cache_file)
 
-    x_cached = leech_kissing()
+    x_cached = leech_kissing(cache_file)
     assert np.allclose(x, x_cached)
 
     s = np.random.choice(len(x), 1000, replace=False)

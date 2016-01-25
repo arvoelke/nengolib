@@ -7,12 +7,10 @@ from nengo.utils.paths import cache_dir
 
 __all__ = ['leech_kissing']
 
-_leech_kissing_cache_file = os.path.join(cache_dir, "leech_kissing.npy")
 
-
-def leech_kissing():
-    if os.path.exists(_leech_kissing_cache_file):
-        return np.load(_leech_kissing_cache_file)
+def leech_kissing(cache_file=os.path.join(cache_dir, "leech_kissing.npy")):
+    if os.path.exists(cache_file):
+        return np.load(cache_file)
 
     # https://en.wikipedia.org/wiki/Golay_Code
     # http://www.markronan.com/mathematics/symmetry-corner/the-golay-code/
@@ -79,5 +77,5 @@ def leech_kissing():
         witt_group + corner_group + golay_group, dtype=np.float64)
     kissing /= np.sqrt(32)
 
-    np.save(_leech_kissing_cache_file, kissing)
+    np.save(cache_file, kissing)
     return kissing
