@@ -153,7 +153,7 @@ class NengoLinearFilterMixin(LinearFilter):
             # Note: bug in nengo where subclasses don't pass method=method
             return super(NengoLinearFilterMixin, self).make_step(dt, output)
         A, B, C, D = sys2ss(self)
-        if self.analog:
+        if self.analog:  # pragma: no cover
             A, B, C, D, _ = cont2discrete((A, B, C, D), dt, method=method)
         return _StateSpaceStep((A, B, C, D), output)
 

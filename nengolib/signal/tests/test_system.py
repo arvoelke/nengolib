@@ -194,6 +194,7 @@ def test_linear_system():
 
     # Test addition/subtraction
     assert sys + 2 == ((2*tau, 3), (tau, 1))
+    assert 3 + sys == (-sys)*(-1) + 3
     assert (4 - sys) + 2 == (-sys) + 6
     assert np.allclose((sys - sys).num, 0)
 
