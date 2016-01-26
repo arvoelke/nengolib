@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/arvoelke/nengolib.svg?branch=master)](https://travis-ci.org/arvoelke/nengolib) [![codecov.io](https://codecov.io/github/arvoelke/nengolib/coverage.svg?branch=master)](https://codecov.io/github/arvoelke/nengolib?branch=master)
 
-#  &nbsp; <img src="http://i.imgur.com/wSjRUi4.png" width="96" height="96" valign="middle" /> Nengo Library
+#  <img src="http://i.imgur.com/wSjRUi4.png" width="64" height="64" valign="middle" /> Nengo Library
 Additional extensions for large-scale brain modelling with Nengo.
 
 ### Highlights
