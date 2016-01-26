@@ -20,11 +20,16 @@ def test_discrete(sys):
         assert np.allclose(sys.ss[2], rsys.ss[2])
         assert np.allclose(sys.ss[3], rsys.ss[3])
 
-    with pytest.raises(ValueError):
-        discrete2cont(dsys, dt=dt, method='gbt', alpha=1.1)
+
+def test_invalid_discrete():
+    dt = 0.001
+    sys = cont2discrete(Lowpass(0.1), dt=dt)
 
     with pytest.raises(ValueError):
-        discrete2cont(dsys, dt=0)
+        discrete2cont(sys, dt=dt, method='gbt', alpha=1.1)
 
     with pytest.raises(ValueError):
-        discrete2cont(dsys, dt=dt, method=None)
+        discrete2cont(sys, dt=0)
+
+    with pytest.raises(ValueError):
+        discrete2cont(sys, dt=dt, method=None)

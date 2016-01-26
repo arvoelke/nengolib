@@ -8,12 +8,12 @@ from nengolib.signal.system import sys2ss, LinearSystem
 __all__ = ['cont2discrete', 'discrete2cont']
 
 
-def cont2discrete(sys, dt, method="zoh", alpha=None):
+def cont2discrete(sys, dt, method='zoh', alpha=None):
     return LinearSystem(
         _cont2discrete(sys2ss(sys), dt=dt, method=method, alpha=alpha)[:-1])
 
 
-def discrete2cont(sys, dt, method="zoh", alpha=None):
+def discrete2cont(sys, dt, method='zoh', alpha=None):
     if dt <= 0:
         raise ValueError("dt (%s) must be positive" % (dt,))
 
@@ -27,21 +27,20 @@ def discrete2cont(sys, dt, method="zoh", alpha=None):
 
         I = np.eye(n)
         ar = solve(alpha*dt*ad.T + (1-alpha)*dt*I, ad.T - I).T
-
         M = I - alpha*dt*ar
 
-        br = np.dot(M, bd)/dt
+        br = np.dot(M, bd) / dt
         cr = np.dot(cd, M)
         dr = dd - alpha*np.dot(cr, bd)
 
-    elif method == 'bilinear' or method == 'tustin':
-        return discrete2cont(sys, dt, method="gbt", alpha=0.5)
+    elif method in ('bilinear', 'tustin'):
+        return discrete2cont(sys, dt, method='gbt', alpha=0.5)
 
-    elif method == 'euler' or method == 'forward_diff':
-        return discrete2cont(sys, dt, method="gbt", alpha=0.0)
+    elif method in ('euler', 'forward_diff'):
+        return discrete2cont(sys, dt, method='gbt', alpha=0.0)
 
     elif method == 'backward_diff':
-        return discrete2cont(sys, dt, method="gbt", alpha=1.0)
+        return discrete2cont(sys, dt, method='gbt', alpha=1.0)
 
     elif method == 'zoh':
         M = np.zeros((m, m))
@@ -56,6 +55,6 @@ def discrete2cont(sys, dt, method="zoh", alpha=None):
         dr = dd
 
     else:
-        raise ValueError("Unknown transformation method '%s'" % method)
+        raise ValueError("invalid method: '%s'" % (method,))
 
     return LinearSystem((ar, br, cr, dr))
