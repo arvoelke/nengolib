@@ -14,8 +14,8 @@ __all__ = [
 
 def _raise_invalid_sys():
     raise ValueError(
-        "sys must be an instance of Synapse, or a tuple of 2 (tf), "
-        "3 (zpk), or 4 (ss) arrays.")
+        "sys must be an instance of LinearSystem, a scalar, or a tuple of "
+        "2 (tf), 3 (zpk), or 4 (ss) arrays.")
 
 
 def sys2ss(sys):
