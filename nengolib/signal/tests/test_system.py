@@ -8,11 +8,10 @@ import nengo
 from nengo.synapses import filt
 
 from nengolib.signal.system import (
-    sys2ss, sys2tf, sys_equal, impulse, is_exp_stable, scale_state,
+    sys2ss, sys2tf, canonical, sys_equal, impulse, is_exp_stable, scale_state,
     LinearSystem)
 from nengolib import Network, Lowpass, Alpha, LinearFilter
 from nengolib.signal import state_norm
-from nengolib.synapses import Highpass
 
 
 def test_sys_conversions():
@@ -52,6 +51,33 @@ def test_sys_conversions():
 
 def test_check_sys_equal():
     assert not sys_equal(np.zeros(2), np.zeros(3))
+
+
+def test_canonical():
+    sys = ([1], [1], [1], [0])
+    assert sys_equal(canonical(sys), sys)
+
+    sys = ([[1, 0], [1, 0]], [[1], [0]], [[1, 1]], [0])
+    assert sys_equal(canonical(sys), sys)
+
+    sys = ([[1, 0], [0, 1]], [[0], [1]], [[1, 1]], [0])
+    assert sys_equal(canonical(sys), sys)
+
+    sys = ([[1, 0], [0, 1]], [[1], [0]], [[1, 1]], [0])
+    assert sys_equal(canonical(sys), sys)
+
+    sys = ([[1, 0], [0, 0]], [[1], [0]], [[1, 1]], [0])
+    assert sys_equal(canonical(sys), sys)
+
+    sys = ([[1, 0], [0, 0]], [[0], [1]], [[1, 1]], [0])
+    assert sys_equal(canonical(sys), sys)
+
+    sys = ([[1, 0, 1], [0, 1, 1], [1, 0, 0]], [[0], [1], [-1]],
+           [[1, 1, 1]], [0])
+    assert sys_equal(canonical(sys), sys)
+
+    sys = nengo.Alpha(0.1)
+    assert sys_equal(canonical(sys), sys)
 
 
 def test_impulse():
@@ -105,17 +131,18 @@ def test_invalid_scale_state():
         scale_state(*ss, radii=[1, 2])
 
 
-def test_simulation(Simulator, plt):
-    new_sys = Highpass(0.01, order=3)
-    old_sys = nengo.LinearFilter(new_sys.num, new_sys.den)
-    assert new_sys == old_sys
+@pytest.mark.parametrize("sys", [Lowpass(0.01), Alpha(0.2)])
+def test_simulation(sys, Simulator, plt):
+    assert isinstance(sys, LinearSystem)
+    old_sys = nengo.LinearFilter(sys.num, sys.den)
+    assert sys == old_sys
 
     with Network() as model:
         stim = nengo.Node(output=nengo.processes.WhiteSignal(1.0))
-        out_new = nengo.Node(size_in=1)
-        out_old = nengo.Node(size_in=1)
-        nengo.Connection(stim, out_new, synapse=new_sys)
-        nengo.Connection(stim, out_old, synapse=old_sys)
+        out_new = nengo.Node(size_in=2)
+        out_old = nengo.Node(size_in=2)
+        nengo.Connection(stim, out_new, transform=[[1], [-1]], synapse=sys)
+        nengo.Connection(stim, out_old, transform=[[1], [-1]], synapse=old_sys)
         p_new = nengo.Probe(out_new)
         p_old = nengo.Probe(out_old)
 

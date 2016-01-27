@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.signal import (
-    cont2discrete, zpk2ss, ss2tf, tf2ss, zpk2tf, lfilter, normalize)
+    cont2discrete, zpk2ss, ss2tf, tf2ss, zpk2tf, lfilter, normalize,
+    abcd_normalize)
 
 from nengo.synapses import LinearFilter
 from nengo.utils.compat import is_integer, is_number, with_metaclass
@@ -8,7 +9,7 @@ from nengo.utils.compat import is_integer, is_number, with_metaclass
 from nengolib.utils.meta import ReuseUnderlying
 
 __all__ = [
-    'sys2ss', 'sys2tf', 'sys_equal', 'apply_filter', 'impulse',
+    'sys2ss', 'sys2tf', 'canonical', 'sys_equal', 'apply_filter', 'impulse',
     'is_exp_stable', 'scale_state', 'NengoLinearFilterMixin', 'LinearSystem']
 
 
@@ -74,6 +75,28 @@ def sys2tf(sys):
         _raise_invalid_sys()
 
 
+def _is_canonical(A, B, C, D):
+    """Returns true iff (A, B, C, D) is in controllable canonical form."""
+    n = len(A)
+    if not np.allclose(B[0], 1.0):
+        return False
+    if n <= 1:
+        return True
+    return (np.allclose(B[1:], 0) and
+            np.allclose(A[1:, :-1], np.eye(n-1)) and
+            np.allclose(A[1:, -1], 0))
+
+
+def canonical(sys):
+    """Converts SISO to controllable canonical form."""
+    # TODO: raise nicer error if not SISO
+    ss = abcd_normalize(*sys2ss(sys))
+    if not _is_canonical(*ss):
+        ss = sys2ss(sys2tf(ss))
+        assert _is_canonical(*ss)
+    return LinearSystem(ss)
+
+
 def sys_equal(sys1, sys2):
     """Returns true iff sys1 and sys2 have the same transfer functions."""
     # TODO: doesn't do pole-zero cancellation
@@ -129,18 +152,23 @@ def scale_state(A, B, C, D, radii=1.0):
     return A, B, C, D
 
 
-class _StateSpaceStep(LinearFilter.Step):
+class _CanonicalStep(LinearFilter.Step):
 
-    def __init__(self, ss, output):
+    def __init__(self, sys, output):
+        A, B, C, D = canonical(sys).ss
+        self._a = A[0, :]
+        assert len(C) == 1
+        self._c = C[0, :]
+        assert D.size == 1
+        self._d = D.flatten()[0]
+        self._x = np.zeros((len(self._a), len(np.atleast_1d(output))))
         self.output = output
-        self._A, self._B, self._C, self._D = ss
-        self._x = np.zeros(len(self._A))[:, None]
 
-    def __call__(self, signal):
-        u = signal[None, :]
-        y = np.dot(self._C, self._x) + np.dot(self._D, u)
-        self._x = np.dot(self._A, self._x) + np.dot(self._B, u)
-        self.output[...] = y
+    def __call__(self, u):
+        r = np.dot(self._a, self._x)
+        self._x[1:, :] = self._x[:-1, :]
+        self._x[0, :] = r + u
+        self.output[...] = np.dot(self._c, self._x) + self._d*u
 
 
 class NengoLinearFilterMixin(LinearFilter):
@@ -150,13 +178,10 @@ class NengoLinearFilterMixin(LinearFilter):
     analog = True
 
     def make_step(self, dt, output, method='zoh'):
-        if len(self.den) <= 2:  # fall back to reference implementation
-            # Note: bug in nengo where subclasses don't pass method=method
-            return super(NengoLinearFilterMixin, self).make_step(dt, output)
         A, B, C, D = sys2ss(self)
         if self.analog:  # pragma: no cover
             A, B, C, D, _ = cont2discrete((A, B, C, D), dt, method=method)
-        return _StateSpaceStep((A, B, C, D), output)
+        return _CanonicalStep((A, B, C, D), output)
 
 
 class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):

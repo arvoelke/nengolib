@@ -46,6 +46,11 @@ class HeteroSynapse(object):
             self.C.append(C)
             self.D.append(D)
 
+        # Note: ideally we could put this into CCF to reduce the A mapping
+        # to a single dot product and a shift operation. But in general
+        # since this is MIMO it is not controllable from a single input.
+        # Instead we might want to consider balanced reduction to
+        # improve efficiency.
         self.A = block_diag(*self.A)
         self.B = block_diag(*self.B) if elementwise else np.vstack(self.B)
         self.C = block_diag(*self.C)
@@ -56,7 +61,6 @@ class HeteroSynapse(object):
 
     def __call__(self, t, u):
         u = u[:, None] if self.elementwise else u[None, :]
-        # TODO: duplicates code in synapses.system._StateSpaceStep
         y = np.dot(self.C, self._x) + np.dot(self.D, u)
         self._x = np.dot(self.A, self._x) + np.dot(self.B, u)
         return self.to_vector(y)
