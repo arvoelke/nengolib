@@ -103,7 +103,7 @@ def sys_equal(sys1, sys2):
     tf1 = normalize(*sys2tf(sys1))
     tf2 = normalize(*sys2tf(sys2))
     for t1, t2 in zip(tf1, tf2):
-        if not np.allclose(t1, t2):
+        if len(t1) != len(t2) or not np.allclose(t1, t2):
             return False
     return True
 
@@ -269,7 +269,7 @@ class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
     def __add__(self, other):
         n1, d1 = self.tf
         n2, d2 = LinearSystem(other).tf
-        if np.allclose(d1, d2):
+        if len(d1) == len(d2) and np.allclose(d1, d2):
             # short-cut to avoid needing pole-zero cancellation
             return LinearSystem((n1 + n2, d1))
         # TODO: pole-zero cancellation

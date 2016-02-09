@@ -194,6 +194,7 @@ def test_linear_system():
     assert (0.4*sys) + (0.6*sys) == sys
     assert sys + sys == 2*sys
     assert sys * sys == sys**2
+    assert sys_equal(sys + sys*sys, sys*sys + sys)
 
     # Test pow
     with pytest.raises(TypeError):

@@ -46,6 +46,10 @@ class HeteroSynapse(object):
             self.C.append(C)
             self.D.append(D)
 
+        # TODO: If all of the synapses are single order, than A is diagonal
+        # and so np.dot(self.A, self._x) is trivial. But perhaps
+        # block_diag is already optimized for this.
+
         # Note: ideally we could put this into CCF to reduce the A mapping
         # to a single dot product and a shift operation. But in general
         # since this is MIMO it is not controllable from a single input.
