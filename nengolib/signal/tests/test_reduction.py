@@ -2,10 +2,12 @@ import numpy as np
 import pytest
 
 from nengo.utils.numpy import rmse
+from nengo.utils.testing import warns
 
 from nengolib.signal.reduction import (
     minreal, similarity_transform, balreal, modred, balred)
-from nengolib.signal import sys2ss, sys_equal, LinearSystem, apply_filter
+from nengolib.signal import (
+    sys2ss, sys_equal, LinearSystem, apply_filter, control_gram, observe_gram)
 from nengolib import Lowpass, Alpha
 
 
@@ -51,8 +53,22 @@ def test_balreal():
     assert balsys == sys
 
     assert np.all(S >= 0)
-    assert np.all(S[0] > 0.1)
-    assert np.all(S[1:] < 0.01)
+    assert np.all(S[0] > 0.3)
+    assert np.all(S[1:] < 0.05)
+    assert np.allclose(sorted(S, reverse=True), S)
+
+    P = control_gram(balsys)
+    Q = observe_gram(balsys)
+
+    diag = np.diag_indices(len(P))
+    offdiag = np.ones_like(P, dtype=bool)
+    offdiag[diag] = False
+    offdiag = np.where(offdiag)
+
+    assert np.allclose(P[diag], S)
+    assert np.allclose(P[offdiag], 0)
+    assert np.allclose(Q[diag], S)
+    assert np.allclose(Q[offdiag], 0)
 
 
 def test_modred(rng):
@@ -95,11 +111,14 @@ def test_balred(rng):
 
     def check(order, within, tol, method='del'):
         redsys = balred(sys, order, method=method)
+        assert redsys.order_den <= order
         actual = apply_filter(u, redsys, dt)
         assert abs(rmse(expected, actual) - within) < tol
 
-    check(4, 0, 1e-13)
-    check(3, 0, 1e-13)
+    with warns(UserWarning):
+        check(4, 0, 1e-13)
+    with warns(UserWarning):
+        check(3, 0, 1e-13)
     check(2, 0.03, 0.01)
     check(1, 0.3, 0.1)
 

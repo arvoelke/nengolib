@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 
 from scipy.linalg import cholesky, svd, inv
@@ -29,9 +31,10 @@ def minreal(sys, tol=1e-8):
     return LinearSystem((z[mz], p[mp], k))
 
 
-def similarity_transform(A, B, C, D, T):
+def similarity_transform(A, B, C, D, T, Tinv=None):
     """Changes basis of state-space (A, B, C, D) to T."""
-    Tinv = inv(T)
+    if Tinv is None:
+        Tinv = inv(T)
     TA = np.dot(Tinv, np.dot(A, T))
     TB = np.dot(Tinv, B)
     TC = np.dot(C, T)
@@ -43,24 +46,28 @@ def balreal(sys):
     """Computes the balanced realization of sys and returns its eigenvalues.
 
     References:
-        https://people.kth.se/~hsan/modred_files/L4.pdf
-        http://www.mathworks.com/help/control/ref/balreal.html
+        [1] http://www.mathworks.com/help/control/ref/balreal.html
+
+        [2] Laub, A.J., M.T. Heath, C.C. Paige, and R.C. Ward, "Computation of
+            System Balancing Transformations and Other Applications of
+            Simultaneous Diagonalization Algorithms," *IEEE Trans. Automatic
+            Control*, AC-32 (1987), pp. 115-122.
     """
     sys = LinearSystem(sys)  # cast first to memoize sys2ss
 
-    P = control_gram(sys)
-    Q = observe_gram(sys)
+    R = control_gram(sys)
+    O = observe_gram(sys)
 
-    R = cholesky(P, lower=True)
-    assert np.allclose(P, np.dot(R, R.T))
+    LR = cholesky(R, lower=True)
+    LO = cholesky(O, lower=True)
 
-    M = np.dot(np.dot(R.T, Q), R)
-    U, S, V = svd(M)  # note: squared
+    U, S, V = svd(np.dot(LO.T, LR))
 
-    T = np.dot(R, U) * S ** (-1. / 2)
+    T = np.dot(LR, V.T) * S ** (-1. / 2)
+    Tinv = (S ** (-1. / 2))[:, None] * np.dot(U.T, LO.T)
 
     A, B, C, D = sys2ss(sys)
-    TA, TB, TC, TD = similarity_transform(A, B, C, D, T)
+    TA, TB, TC, TD = similarity_transform(A, B, C, D, T, Tinv)
 
     return LinearSystem((TA, TB, TC, TD)), S
 
@@ -114,5 +121,8 @@ def balred(sys, order, method='del'):
     sys, s = balreal(sys)
     if order < 1:
         raise ValueError("Invalid order (%s), must be at least 1" % (order,))
-    keep_states = np.argsort(s)[:-order-1:-1]  # keep largest eigenvalues
+    if order >= len(sys.ss[0]):
+        warnings.warn("Model is already of given order")
+        return sys
+    keep_states = np.arange(order)  # keep largest eigenvalues
     return modred(sys, keep_states, method)
