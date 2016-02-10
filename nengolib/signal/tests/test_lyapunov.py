@@ -4,9 +4,10 @@ from scipy.signal import cont2discrete
 
 from nengo.utils.numpy import norm
 
-from nengolib.signal.lyapunov import _H2P, state_norm
+from nengolib.signal.lyapunov import (
+    _H2P, state_norm, control_gram, observe_gram)
 from nengolib.signal import sys2ss, impulse
-from nengolib import Alpha
+from nengolib import Lowpass, Alpha
 
 
 def test_lyapunov():
@@ -53,3 +54,17 @@ def test_state_norm(plt):
 def test_invalid_state_norm():
     with pytest.raises(ValueError):
         state_norm(Alpha(0.1), method=None)
+
+
+def test_grams():
+    sys = 0.6*Alpha(0.01) + 0.4*Lowpass(0.05)
+
+    A, B, C, D = sys2ss(sys)
+
+    P = control_gram(sys)
+    assert np.allclose(np.dot(A, P) + np.dot(P, A.T), -np.dot(B, B.T))
+    assert np.linalg.matrix_rank(P) == len(P)  # controllable
+
+    Q = observe_gram(sys)
+    assert np.allclose(np.dot(A.T, Q) + np.dot(Q, A), -np.dot(C.T, C))
+    assert np.linalg.matrix_rank(Q) == len(Q)  # observable

@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.signal import (
-    cont2discrete, zpk2ss, ss2tf, tf2ss, zpk2tf, lfilter, normalize,
-    abcd_normalize)
+    cont2discrete, zpk2ss, ss2tf, ss2zpk, tf2ss, tf2zpk, zpk2tf, lfilter,
+    normalize, abcd_normalize)
 
 from nengo.synapses import LinearFilter
 from nengo.utils.compat import is_integer, is_number, with_metaclass
@@ -9,8 +9,9 @@ from nengo.utils.compat import is_integer, is_number, with_metaclass
 from nengolib.utils.meta import ReuseUnderlying
 
 __all__ = [
-    'sys2ss', 'sys2tf', 'canonical', 'sys_equal', 'apply_filter', 'impulse',
-    'is_exp_stable', 'scale_state', 'NengoLinearFilterMixin', 'LinearSystem']
+    'sys2ss', 'sys2tf', 'sys2zpk', 'canonical', 'sys_equal', 'apply_filter',
+    'impulse', 'is_exp_stable', 'scale_state',
+    'NengoLinearFilterMixin', 'LinearSystem']
 
 
 def _raise_invalid_sys():
@@ -33,6 +34,24 @@ def sys2ss(sys):
         return zpk2ss(*sys)
     elif len(sys) == 4:
         return sys
+    else:
+        _raise_invalid_sys()
+
+
+def sys2zpk(sys):
+    """Converts an LTI system in any form to zero-pole form."""
+    if isinstance(sys, LinearSystem):
+        return sys.zpk
+    elif isinstance(sys, LinearFilter):
+        return tf2zpk(sys.num, sys.den)
+    elif is_number(sys):
+        return tf2zpk(sys, 1)
+    elif len(sys) == 2:
+        return tf2zpk(*sys)
+    elif len(sys) == 3:
+        return sys
+    elif len(sys) == 4:
+        return ss2zpk(*sys)
     else:
         _raise_invalid_sys()
 
@@ -97,13 +116,13 @@ def canonical(sys):
     return LinearSystem(ss)
 
 
-def sys_equal(sys1, sys2):
+def sys_equal(sys1, sys2, rtol=1e-05, atol=1e-08):
     """Returns true iff sys1 and sys2 have the same transfer functions."""
     # TODO: doesn't do pole-zero cancellation
     tf1 = normalize(*sys2tf(sys1))
     tf2 = normalize(*sys2tf(sys2))
     for t1, t2 in zip(tf1, tf2):
-        if len(t1) != len(t2) or not np.allclose(t1, t2):
+        if len(t1) != len(t2) or not np.allclose(t1, t2, rtol=rtol, atol=atol):
             return False
     return True
 
@@ -126,6 +145,7 @@ def impulse(sys, dt, length, axis=-1):
 
 
 def _is_exp_stable(A):
+    # TODO: we can avoid this computation if in zpk form
     w, v = np.linalg.eig(A)
     return (w.real < 0).all()  # <=> e^(At) goes to 0
 
@@ -137,6 +157,7 @@ def is_exp_stable(sys):
 
 def scale_state(A, B, C, D, radii=1.0):
     """Scales the system to compensate for radii of the state."""
+    # TODO: move to another file
     r = np.asarray(radii, dtype=np.float64)
     if r.ndim > 1:
         raise ValueError("radii (%s) must be a 1-dim array or scalar" % (
@@ -198,6 +219,7 @@ class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
 
     _tf = None
     _ss = None
+    _zpk = None
 
     def __init__(self, sys):
         assert not isinstance(sys, LinearSystem)  # guaranteed by metaclass
@@ -218,6 +240,12 @@ class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
         return self._ss
 
     @property
+    def zpk(self):
+        if self._zpk is None:
+            self._zpk = sys2zpk(self._sys)
+        return self._zpk
+
+    @property
     def num(self):
         return self.tf[0]
 
@@ -231,6 +259,8 @@ class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
 
     @property
     def order_den(self):
+        # TODO: this can be optimized to avoid computing denominator, by
+        # looking at poles or shape of A matrix
         return len(self.den.coeffs) - 1
 
     @property

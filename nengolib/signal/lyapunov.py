@@ -3,7 +3,7 @@ from scipy.linalg import solve_lyapunov, solve_discrete_lyapunov
 
 from nengolib.signal.system import sys2ss
 
-__all__ = ['state_norm']
+__all__ = ['state_norm', 'control_gram', 'observe_gram']
 
 
 def _H2P(A, B, analog):
@@ -33,3 +33,23 @@ def state_norm(sys, analog=True, method='H2'):
     A, B, C, D = sys2ss(sys)
     P = _H2P(A, B, analog)
     return np.sqrt(P[np.diag_indices(len(P))])
+
+
+def control_gram(sys):
+    """Computes the controllability/reachability gramiam of a linear system.
+
+    Reference:
+        https://en.wikibooks.org/wiki/Control_Systems/Controllability_and_Observability  # noqa: E501
+    """
+    A, B, C, D = sys2ss(sys)
+    return _H2P(A, B, True)
+
+
+def observe_gram(sys):
+    """Computes the observability gramiam of a linear system.
+
+    Reference:
+        https://en.wikibooks.org/wiki/Control_Systems/Controllability_and_Observability  # noqa: E501
+    """
+    A, B, C, D = sys2ss(sys)
+    return _H2P(A.T, C.T, True)

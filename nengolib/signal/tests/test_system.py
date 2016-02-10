@@ -2,14 +2,14 @@ from __future__ import division
 
 import numpy as np
 import pytest
-from scipy.signal import ss2zpk, tf2zpk, cont2discrete
+from scipy.signal import cont2discrete
 
 import nengo
 from nengo.synapses import filt
 
 from nengolib.signal.system import (
-    sys2ss, sys2tf, canonical, sys_equal, impulse, is_exp_stable, scale_state,
-    LinearSystem)
+    sys2ss, sys2zpk, sys2tf, canonical, sys_equal, impulse, is_exp_stable,
+    scale_state, LinearSystem)
 from nengolib import Network, Lowpass, Alpha, LinearFilter
 from nengolib.signal import state_norm
 
@@ -25,12 +25,14 @@ def test_sys_conversions():
     assert sys_equal(sys2tf(tf), tf)  # unchanged
     assert sys_equal(sys2tf(ss), tf)
 
-    zpk = ss2zpk(*ss)
-    assert sys_equal(tf2zpk(*tf), zpk)  # sanity check
+    zpk = sys2zpk(ss)
+    assert sys_equal(sys2zpk(zpk), zpk)  # sanity check
+    assert sys_equal(sys2zpk(tf), zpk)  # sanity check
     assert sys_equal(sys2tf(zpk), tf)
     assert sys_equal(sys2ss(zpk), ss)
 
     # should also work with nengo's synapse types
+    assert sys_equal(sys2zpk(nengo.Alpha(0.1)), zpk)
     assert sys_equal(sys2tf(nengo.Alpha(0.1)), tf)
     assert sys_equal(sys2ss(nengo.Alpha(0.1)), ss)
 
@@ -40,6 +42,9 @@ def test_sys_conversions():
 
     with pytest.raises(ValueError):
         sys2ss(np.zeros(5))
+
+    with pytest.raises(ValueError):
+        sys2zpk(np.zeros(5))
 
     with pytest.raises(ValueError):
         sys2tf(np.zeros(5))
