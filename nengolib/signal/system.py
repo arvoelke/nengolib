@@ -11,7 +11,7 @@ from nengolib.utils.meta import ReuseUnderlying
 __all__ = [
     'sys2ss', 'sys2tf', 'sys2zpk', 'canonical', 'sys_equal', 'apply_filter',
     'impulse', 'is_exp_stable', 'scale_state',
-    'NengoLinearFilterMixin', 'LinearSystem']
+    'NengoLinearFilterMixin', 'LinearSystem', 's']
 
 
 def _raise_invalid_sys():
@@ -176,6 +176,13 @@ def scale_state(A, B, C, D, radii=1.0):
 class _CanonicalStep(LinearFilter.Step):
 
     def __init__(self, sys, output):
+        sys = LinearSystem(sys)
+        if not sys.has_passthrough:
+            # This makes our system behave like it does in Nengo
+            # (https://github.com/nengo/nengo/issues/938)
+            sys *= s  # discrete shift of the system to remove delay
+            assert sys.has_passthrough
+
         A, B, C, D = canonical(sys).ss
         self._a = A[0, :]
         assert len(C) == 1
@@ -187,9 +194,9 @@ class _CanonicalStep(LinearFilter.Step):
 
     def __call__(self, u):
         r = np.dot(self._a, self._x)
+        self.output[...] = np.dot(self._c, self._x) + self._d*u
         self._x[1:, :] = self._x[:-1, :]
         self._x[0, :] = r + u
-        self.output[...] = np.dot(self._c, self._x) + self._d*u
 
 
 class NengoLinearFilterMixin(LinearFilter):
@@ -220,6 +227,8 @@ class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
     _tf = None
     _ss = None
     _zpk = None
+
+    # TODO: keep an analog flag around and make discrete version of 's'
 
     def __init__(self, sys):
         assert not isinstance(sys, LinearSystem)  # guaranteed by metaclass
@@ -266,6 +275,10 @@ class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
     @property
     def causal(self):
         return self.order_num <= self.order_den
+
+    @property
+    def has_passthrough(self):
+        return self.order_num == self.order_den
 
     def __len__(self):
         return self.order_den
@@ -343,3 +356,6 @@ class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
 
     def __hash__(self):
         return hash((tuple(self.num), tuple(self.den)))
+
+
+s = LinearSystem(([1, 0], [1]))  # differential operator

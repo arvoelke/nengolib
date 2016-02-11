@@ -9,7 +9,7 @@ from nengo.synapses import filt
 
 from nengolib.signal.system import (
     sys2ss, sys2zpk, sys2tf, canonical, sys_equal, impulse, is_exp_stable,
-    scale_state, LinearSystem)
+    scale_state, LinearSystem, s)
 from nengolib import Network, Lowpass, Alpha, LinearFilter
 from nengolib.signal import state_norm
 
@@ -136,7 +136,8 @@ def test_invalid_scale_state():
         scale_state(*ss, radii=[1, 2])
 
 
-@pytest.mark.parametrize("sys", [Lowpass(0.01), Alpha(0.2)])
+@pytest.mark.parametrize("sys", [
+    Lowpass(0.01), Alpha(0.2), LinearFilter([1, 1], [0.01, 1])])
 def test_simulation(sys, Simulator, plt):
     assert isinstance(sys, LinearSystem)
     old_sys = nengo.LinearFilter(sys.num, sys.den)
@@ -189,6 +190,8 @@ def test_linear_system():
     assert np.allclose(sys.num, (1,))
     assert np.allclose(sys.den, (tau, 1))
     assert sys.causal
+    assert not sys.has_passthrough
+    assert (sys*s).has_passthrough
 
     assert sys.order_num == 0
     assert sys.order_den == 1
@@ -235,3 +238,6 @@ def test_linear_system():
 
     # Test inequality
     assert sys != (sys*2)
+
+    # Test usage of differential building block
+    assert sys == 1 / (tau*s + 1)
