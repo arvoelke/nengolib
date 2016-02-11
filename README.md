@@ -9,9 +9,14 @@ Additional extensions for large-scale brain modelling with Nengo.
  - `nengolib.LinearFilter(...)` serves as a drop-in replacement for `nengo.LinearFilter(...)` to improve the efficiency of simulations for high-order synapse models.
  - `nengolib.{Lowpass,Alpha,LinearFilter}` are synapses with rich semantics. These linear systems can be scaled, added, multiplied, inverted, compared, and converted between various standard formats. These synapses can also be simulated easily within `Nengo`. For example, to use a double-exponential synapse:
 
-    ```
+   ```
 synapse = (tau1 * nengolib.Lowpass(tau1) - tau2 * nengolib.Lowpass(tau2)) / (tau1 - tau2)
 nengo.Connection(a, b, synapse=synapse)
+```
+   To further illustrate the versatility of these semantics, we can define an equivalent expression for the `Alpha` synapse:
+   ```
+from nengolib.signal import s
+1 / (tau*s + 1)**2 == nengo.Alpha(tau)  # True
 ```
  - `nengolib.signal.{minreal,balreal,modred}` provide tools for model order reduction of linear systems using minimal and balanced realizations. See `doc/notebooks/research/linear_model_reduction.ipynb` for more information.
 
