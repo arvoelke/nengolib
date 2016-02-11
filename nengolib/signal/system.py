@@ -14,84 +14,88 @@ __all__ = [
     'NengoLinearFilterMixin', 'LinearSystem', 's']
 
 
-def _raise_invalid_sys():
-    raise ValueError(
-        "sys must be an instance of LinearSystem, a scalar, or a tuple of "
-        "2 (tf), 3 (zpk), or 4 (ss) arrays.")
+_LSYS, _LFILT, _NUM, _TF, _ZPK, _SS = range(6)
 
 
-def sys2ss(sys):
-    """Converts an LTI system in any form to state-space."""
+def _sys2form(sys):
     if isinstance(sys, LinearSystem):
-        return sys.ss
+        return _LSYS
     elif isinstance(sys, LinearFilter):
-        return tf2ss(sys.num, sys.den)
+        return _LFILT
     elif is_number(sys):
-        return tf2ss(sys, 1)
+        return _NUM
     elif len(sys) == 2:
-        return tf2ss(*sys)
+        return _TF
     elif len(sys) == 3:
-        return zpk2ss(*sys)
+        return _ZPK
     elif len(sys) == 4:
-        return sys
+        return _SS
     else:
-        _raise_invalid_sys()
+        raise ValueError(
+            "sys must be an instance of LinearSystem, a scalar, or a tuple of "
+            "2 (tf), 3 (zpk), or 4 (ss) arrays.")
 
 
-def sys2zpk(sys):
-    """Converts an LTI system in any form to zero-pole form."""
-    if isinstance(sys, LinearSystem):
-        return sys.zpk
-    elif isinstance(sys, LinearFilter):
-        return tf2zpk(sys.num, sys.den)
-    elif is_number(sys):
-        return tf2zpk(sys, 1)
-    elif len(sys) == 2:
-        return tf2zpk(*sys)
-    elif len(sys) == 3:
-        return sys
-    elif len(sys) == 4:
-        return ss2zpk(*sys)
-    else:
-        _raise_invalid_sys()
+def _tf(num, den):
+    return (np.poly1d(num), np.poly1d(den))
 
 
 def _ss2tf(A, B, C, D):
-    """Fix ss2tf to handle zero-order state-space models."""
     # https://github.com/scipy/scipy/issues/5760
     if not (len(A) or len(B) or len(C)):
         D = np.asarray(D).flatten()
         if len(D) != 1:
             raise ValueError("D must be scalar for zero-order models")
-        return ((D[0],), 1.)
-    return ss2tf(A, B, C, D)
+        return (D[0], 1.)
+    nums, den = ss2tf(A, B, C, D)
+    if len(nums) != 1:
+        # TODO: support MIMO systems
+        # https://github.com/scipy/scipy/issues/5753
+        raise NotImplementedError("System must be SISO")
+    return nums[0], den
+
+
+_sys2ss = {
+    _LSYS: lambda sys: sys.ss,
+    _LFILT: lambda sys: tf2ss(sys.num, sys.den),
+    _NUM: lambda sys: tf2ss(sys, 1),
+    _TF: lambda sys: tf2ss(*sys),
+    _ZPK: lambda sys: zpk2ss(*sys),
+    _SS: lambda sys: sys,
+}
+
+_sys2zpk = {
+    _LSYS: lambda sys: sys.zpk,
+    _LFILT: lambda sys: tf2zpk(sys.num, sys.den),
+    _NUM: lambda sys: tf2zpk(sys, 1),
+    _TF: lambda sys: tf2zpk(*sys),
+    _ZPK: lambda sys: sys,
+    _SS: lambda sys: ss2zpk(*sys),
+}
+
+_sys2tf = {
+    _LSYS: lambda sys: sys.tf,
+    _LFILT: lambda sys: _tf(sys.num, sys.den),
+    _NUM: lambda sys: _tf(sys, 1),
+    _TF: lambda sys: _tf(*sys),
+    _ZPK: lambda sys: _tf(*zpk2tf(*sys)),
+    _SS: lambda sys: _tf(*_ss2tf(*sys)),
+}
+
+
+def sys2ss(sys):
+    """Converts an LTI system in any form to state-space."""
+    return _sys2ss[_sys2form(sys)](sys)
+
+
+def sys2zpk(sys):
+    """Converts an LTI system in any form to zero-pole form."""
+    return _sys2zpk[_sys2form(sys)](sys)
 
 
 def sys2tf(sys):
     """Converts an LTI system in any form to a transfer function."""
-    def _tf(num, den):
-        return (np.poly1d(num), np.poly1d(den))
-
-    if isinstance(sys, LinearSystem):
-        # use cached attribute in case already computed
-        return sys.tf  # _tf called via recursion to sys2tf
-    elif isinstance(sys, LinearFilter):
-        return _tf(sys.num, sys.den)
-    elif is_number(sys):
-        return _tf(sys, 1)
-    elif len(sys) == 2:
-        return _tf(*sys)
-    elif len(sys) == 3:
-        return _tf(*zpk2tf(*sys))
-    elif len(sys) == 4:
-        nums, den = _ss2tf(*sys)
-        if len(nums) != 1:
-            # TODO: support MIMO systems
-            # https://github.com/scipy/scipy/issues/5753
-            raise NotImplementedError("System must be SISO")
-        return _tf(nums[0], den)
-    else:
-        _raise_invalid_sys()
+    return _sys2tf[_sys2form(sys)](sys)
 
 
 def _is_canonical(A, B, C, D):
@@ -254,6 +258,34 @@ class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
         return self._zpk
 
     @property
+    def A(self):
+        return self.ss[0]
+
+    @property
+    def B(self):
+        return self.ss[1]
+
+    @property
+    def C(self):
+        return self.ss[2]
+
+    @property
+    def D(self):
+        return self.ss[3]
+
+    @property
+    def zeros(self):
+        return self.zpk[0]
+
+    @property
+    def poles(self):
+        return self.zpk[1]
+
+    @property
+    def gain(self):
+        return self.zpk[2]
+
+    @property
     def num(self):
         return self.tf[0]
 
@@ -267,8 +299,8 @@ class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
 
     @property
     def order_den(self):
-        # TODO: this can be optimized to avoid computing denominator, by
-        # looking at poles or shape of A matrix
+        if _sys2form(self._sys) == _SS or self._ss is not None:
+            return len(self.A)  # avoids conversion to transfer function
         return len(self.den.coeffs) - 1
 
     @property
@@ -314,7 +346,6 @@ class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
         if len(d1) == len(d2) and np.allclose(d1, d2):
             # short-cut to avoid needing pole-zero cancellation
             return LinearSystem((n1 + n2, d1))
-        # TODO: pole-zero cancellation
         return LinearSystem(normalize(n1*d2 + n2*d1, d1*d2))
 
     def __radd__(self, other):

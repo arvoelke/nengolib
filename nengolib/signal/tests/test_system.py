@@ -98,7 +98,7 @@ def test_impulse():
     np.allclose(response, filt(delta, sys, dt))
 
     dss = cont2discrete(sys2ss(sys), dt=dt)[:-1]
-    np.allclose(response, impulse(dss, None, length))
+    np.allclose(response, impulse(dss, dt=None, length=length))
 
 
 def test_is_exp_stable():
@@ -196,9 +196,19 @@ def test_linear_system():
     assert not (sys*s*s).has_passthrough and not (sys*s*s).causal
     assert (sys*s*s + sys*s).has_passthrough
 
+    assert np.allclose(sys.A, -1/tau)
+    assert np.allclose(sys.B, 1)
+    assert np.allclose(sys.C, 1/tau)
+    assert np.allclose(sys.D, 0)
+
+    assert np.allclose(sys.zeros, [0])
+    assert np.allclose(sys.poles, [-1/tau])
+    assert np.allclose(sys.gain, 1/tau)
+
     assert sys.order_num == 0
     assert sys.order_den == 1
     assert len(sys) == 1  # order_den
+    assert len(LinearSystem(sys.ss)) == 1  # uses state-space rep
 
     # Test multiplication and squaring
     assert sys*2 == 2*sys

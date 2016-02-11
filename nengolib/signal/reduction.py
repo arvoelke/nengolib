@@ -121,7 +121,7 @@ def balred(sys, order, method='del'):
     sys, s = balreal(sys)
     if order < 1:
         raise ValueError("Invalid order (%s), must be at least 1" % (order,))
-    if order >= len(sys.ss[0]):
+    if order >= len(sys):
         warnings.warn("Model is already of given order")
         return sys
     keep_states = np.arange(order)  # keep largest eigenvalues
