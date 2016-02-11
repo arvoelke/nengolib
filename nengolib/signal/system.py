@@ -181,7 +181,6 @@ class _CanonicalStep(LinearFilter.Step):
             # This makes our system behave like it does in Nengo
             # (https://github.com/nengo/nengo/issues/938)
             sys *= s  # discrete shift of the system to remove delay
-            assert sys.has_passthrough
 
         A, B, C, D = canonical(sys).ss
         self._a = A[0, :]
@@ -278,7 +277,7 @@ class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
 
     @property
     def has_passthrough(self):
-        return self.order_num == self.order_den
+        return not np.allclose(self.num[self.order_den], 0)
 
     def __len__(self):
         return self.order_den

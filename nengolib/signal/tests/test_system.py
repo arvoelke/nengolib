@@ -191,7 +191,10 @@ def test_linear_system():
     assert np.allclose(sys.den, (tau, 1))
     assert sys.causal
     assert not sys.has_passthrough
+    assert not (sys/s).has_passthrough
     assert (sys*s).has_passthrough
+    assert not (sys*s*s).has_passthrough and not (sys*s*s).causal
+    assert (sys*s*s + sys*s).has_passthrough
 
     assert sys.order_num == 0
     assert sys.order_den == 1
