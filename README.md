@@ -13,6 +13,7 @@ Additional extensions for large-scale brain modelling with Nengo.
 synapse = (tau1 * nengolib.Lowpass(tau1) - tau2 * nengolib.Lowpass(tau2)) / (tau1 - tau2)
 nengo.Connection(a, b, synapse=synapse)
 ```
+ - `nengolib.signal.{minreal,balreal,modred}` provide tools for model order reduction of linear systems using minimal and balanced realizations. See `doc/notebooks/research/linear_model_reduction.ipynb` for more information.
 
 ### Installation
 
