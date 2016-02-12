@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from scipy.signal import (
     cont2discrete, zpk2ss, ss2tf, ss2zpk, tf2ss, tf2zpk, zpk2tf, lfilter,
@@ -183,8 +185,10 @@ class _CanonicalStep(LinearFilter.Step):
         sys = LinearSystem(sys)
         if not sys.has_passthrough:
             # This makes our system behave like it does in Nengo
-            # (https://github.com/nengo/nengo/issues/938)
             sys *= s  # discrete shift of the system to remove delay
+        else:
+            warnings.warn("Synapse (%s) has extra delay due to passthrough "
+                          "(https://github.com/nengo/nengo/issues/938)" % sys)
 
         A, B, C, D = canonical(sys).ss
         self._a = A[0, :]
@@ -309,7 +313,11 @@ class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
 
     @property
     def has_passthrough(self):
-        return not np.allclose(self.num[self.order_den], 0)
+        return self.num[self.order_den] != 0
+
+    @property
+    def proper(self):
+        return self.causal and not self.has_passthrough
 
     def __len__(self):
         return self.order_den
