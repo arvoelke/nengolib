@@ -5,7 +5,7 @@ import nengo
 
 from nengolib.synapses.mapping import ss2sim
 from nengolib import Network, Lowpass, Alpha, LinearFilter
-from nengolib.signal import apply_filter, s
+from nengolib.signal import apply_filter, s, q
 
 
 def test_mapping(Simulator, plt):
@@ -23,7 +23,7 @@ def test_mapping(Simulator, plt):
     idss = ss2sim(sys, isyn, dt)  # scaled integrator, discrete
 
     with Network() as model:
-        stim = nengo.Node(output=np.sin)
+        stim = nengo.Node(output=lambda t: np.sin(20*np.pi*t))
 
         probes = []
         for (A, B, C, D), synapse in ((ss, syn), (dss, syn), (gss, gsyn),
@@ -45,9 +45,8 @@ def test_mapping(Simulator, plt):
     sim = Simulator(model, dt=dt)
     sim.run(1.0)
 
-    expected = apply_filter(sim.data[p_stim], sys, dt, axis=0)
+    expected = apply_filter(sys, dt, sim.data[p_stim], axis=0)
 
-    plt.plot(sim.trange(), sim.data[p_stim], label="Stim", alpha=0.5)
     plt.plot(sim.trange(), sim.data[pss], label="Continuous", alpha=0.5)
     plt.plot(sim.trange(), sim.data[pdss], label="Discrete", alpha=0.5)
     plt.plot(sim.trange(), sim.data[pgss], label="Gain Cont.", alpha=0.5)
@@ -66,17 +65,22 @@ def test_mapping(Simulator, plt):
 
 
 def test_unsupported_synapse():
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         ss2sim(sys=Lowpass(0.1), synapse=Alpha(0.1))
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         ss2sim(sys=Lowpass(0.1), synapse=LinearFilter([1, 2], [2, 1]), dt=0.01)
 
-    with pytest.raises(TypeError):
-        ss2sim(sys=Lowpass(0.1), synapse=LinearFilter(1))
+    with pytest.raises(ValueError):
+        ss2sim(sys=Lowpass(0.1), synapse=LinearFilter(1, 1))
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         ss2sim(sys=Lowpass(0.1), synapse=LinearFilter([1, 0.01], [1]))
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         ss2sim(sys=Lowpass(0.1), synapse=LinearFilter([1], [2, 1, 1]))
+
+
+def test_unsupported_system():
+    with pytest.raises(ValueError):
+        ss2sim(sys=q, synapse=Lowpass(0.1))

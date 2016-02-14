@@ -2,18 +2,16 @@ import warnings
 
 import numpy as np
 from scipy.signal import (
-    cont2discrete, zpk2ss, ss2tf, ss2zpk, tf2ss, tf2zpk, zpk2tf, lfilter,
+    cont2discrete, zpk2ss, ss2tf, ss2zpk, tf2ss, tf2zpk, zpk2tf,
     normalize, abcd_normalize)
 
 from nengo.synapses import LinearFilter
 from nengo.utils.compat import is_integer, is_number, with_metaclass
 
-from nengolib.utils.meta import ReuseUnderlying
-
 __all__ = [
-    'sys2ss', 'sys2tf', 'sys2zpk', 'canonical', 'sys_equal', 'apply_filter',
-    'impulse', 'is_exp_stable', 'scale_state',
-    'NengoLinearFilterMixin', 'LinearSystem', 's']
+    'sys2ss', 'sys2tf', 'sys2zpk', 'canonical', 'sys_equal',
+    'is_exp_stable', 'scale_state',
+    'NengoLinearFilterMixin', 'LinearSystem', 's', 'q']
 
 
 _LSYS, _LFILT, _NUM, _TF, _ZPK, _SS = range(6)
@@ -115,11 +113,12 @@ def _is_canonical(A, B, C, D):
 def canonical(sys):
     """Converts SISO to controllable canonical form."""
     # TODO: raise nicer error if not SISO
-    ss = abcd_normalize(*sys2ss(sys))
+    sys = LinearSystem(sys)
+    ss = abcd_normalize(*sys.ss)
     if not _is_canonical(*ss):
         ss = sys2ss(sys2tf(ss))
         assert _is_canonical(*ss)
-    return LinearSystem(ss)
+    return LinearSystem(ss, sys.analog)
 
 
 def sys_equal(sys1, sys2, rtol=1e-05, atol=1e-08):
@@ -131,23 +130,6 @@ def sys_equal(sys1, sys2, rtol=1e-05, atol=1e-08):
         if len(t1) != len(t2) or not np.allclose(t1, t2, rtol=rtol, atol=atol):
             return False
     return True
-
-
-def apply_filter(u, sys, dt, axis=-1):
-    """Simulates sys on u for length timesteps of width dt."""
-    # TODO: properly handle SIMO systems
-    # https://github.com/scipy/scipy/issues/5753
-    num, den = sys2tf(sys)
-    if dt is not None:
-        (num,), den, _ = cont2discrete((num, den), dt)
-    return lfilter(num, den, u, axis)
-
-
-def impulse(sys, dt, length, axis=-1):
-    """Simulates sys on a delta impulse for length timesteps of width dt."""
-    impulse = np.zeros(length)
-    impulse[0] = 1
-    return apply_filter(impulse, sys, dt, axis)
 
 
 def _is_exp_stable(A):
@@ -179,17 +161,9 @@ def scale_state(A, B, C, D, radii=1.0):
     return A, B, C, D
 
 
-class _CanonicalStep(LinearFilter.Step):
+class _DigitalStep(LinearFilter.Step):
 
     def __init__(self, sys, output):
-        sys = LinearSystem(sys)
-        if not sys.has_passthrough:
-            # This makes our system behave like it does in Nengo
-            sys *= s  # discrete shift of the system to remove delay
-        else:
-            warnings.warn("Synapse (%s) has extra delay due to passthrough "
-                          "(https://github.com/nengo/nengo/issues/938)" % sys)
-
         A, B, C, D = canonical(sys).ss
         self._a = A[0, :]
         assert len(C) == 1
@@ -208,18 +182,47 @@ class _CanonicalStep(LinearFilter.Step):
 
 class NengoLinearFilterMixin(LinearFilter):
 
-    # Note: we don't use self.analog because that information will get
-    # lost if the instance uses operations inherited from LinearSystem
-    analog = True
-
     def make_step(self, dt, output, method='zoh'):
         A, B, C, D = sys2ss(self)
         if self.analog:  # pragma: no cover
             A, B, C, D, _ = cont2discrete((A, B, C, D), dt, method=method)
-        return _CanonicalStep((A, B, C, D), output)
+
+        sys = LinearSystem((A, B, C, D), analog=False)
+        if not sys.has_passthrough:
+            # This makes our system behave like it does in Nengo
+            sys *= q  # discrete shift of the system to remove delay
+        else:
+            warnings.warn("Synapse (%s) has extra delay due to passthrough "
+                          "(https://github.com/nengo/nengo/issues/938)" % sys)
+
+        return _DigitalStep(sys, output)
 
 
-class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
+class LinearSystemType(type):
+
+    def __call__(self, sys, analog=None):
+        # if analog argument is given, then we must check if sys already has
+        # an analog attribute (they must match)
+        if analog is not None:
+            # LinearFilter is the highest base class that contains analog
+            if isinstance(sys, LinearFilter) and analog != sys.analog:
+                raise TypeError("Cannot reuse existing instance (%s) with a "
+                                "different analog attribute." % sys)
+        else:
+            # otherwise no analog attribute to inherit and none supplied
+            analog = True  # default
+
+        # if the given system is already a LinearSystem, then we should
+        # reuse the instance. note that if an analog argument was provided
+        # then it had to match the given system.
+        if isinstance(sys, self):
+            return sys
+
+        # otherwise create a new instance with the determined analog attribute
+        return super(LinearSystemType, self).__call__(sys, analog)
+
+
+class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
     """Single-input single-output linear system with set of operations."""
 
     # Reuse the underlying system whenever it is an instance of the same
@@ -235,12 +238,16 @@ class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
     _ss = None
     _zpk = None
 
-    # TODO: keep an analog flag around and make discrete version of 's'
-
-    def __init__(self, sys):
+    def __init__(self, sys, analog):
         assert not isinstance(sys, LinearSystem)  # guaranteed by metaclass
+        assert analog is not None  # guaranteed by metaclass
         self._sys = sys
+        self._analog = analog
         # Don't initialize superclass so that it uses this num/den instead
+
+    @property
+    def analog(self):
+        return self._analog
 
     @property
     def tf(self):
@@ -323,38 +330,48 @@ class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
         return self.order_den
 
     def __repr__(self):
-        return "LinearSystem(sys=(%r, %r))" % (
-            np.asarray(self.num), np.asarray(self.den))
+        return "%s(sys=(%r, %r), analog=%r)" % (
+            self.__class__.__name__, np.asarray(self.num),
+            np.asarray(self.den), self.analog)
 
     def __str__(self):
-        return "(%s, %s)" % (np.asarray(self.num), np.asarray(self.den))
+        return "(%s, %s, %s)" % (
+            np.asarray(self.num), np.asarray(self.den), self.analog)
+
+    def _check_other(self, other):
+        if isinstance(other, LinearFilter):  # base class containing analog
+            if self.analog != other.analog:
+                raise ValueError("incompatible %s objects: %s, %s; both must "
+                                 "be analog or digital" % (
+                                     self.__class__.__name__, self, other))
 
     def __neg__(self):
         n, d = self.tf
-        return LinearSystem((-n, d))
+        return LinearSystem((-n, d), self.analog)
 
     def __pow__(self, other):
         if not is_integer(other):
             return NotImplemented
         n, d = self.tf
         if other > 0:
-            return LinearSystem(normalize(n**other, d**other))
+            return LinearSystem(normalize(n**other, d**other), self.analog)
         elif other < 0:
-            return LinearSystem(normalize(d**-other, n**-other))
+            return LinearSystem(normalize(d**-other, n**-other), self.analog)
         else:
             assert other == 0
-            return LinearSystem(1)
+            return LinearSystem(1., self.analog)
 
     def __invert__(self):
         return self.__pow__(-1)
 
     def __add__(self, other):
+        self._check_other(other)
         n1, d1 = self.tf
-        n2, d2 = LinearSystem(other).tf
+        n2, d2 = LinearSystem(other, self.analog).tf
         if len(d1) == len(d2) and np.allclose(d1, d2):
             # short-cut to avoid needing pole-zero cancellation
-            return LinearSystem((n1 + n2, d1))
-        return LinearSystem(normalize(n1*d2 + n2*d1, d1*d2))
+            return LinearSystem((n1 + n2, d1), self.analog)
+        return LinearSystem(normalize(n1*d2 + n2*d1, d1*d2), self.analog)
 
     def __radd__(self, other):
         return self.__add__(other)
@@ -366,19 +383,21 @@ class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
         return (-self).__add__(other)
 
     def __mul__(self, other):
+        self._check_other(other)
         n1, d1 = self.tf
-        n2, d2 = LinearSystem(other).tf
-        # TODO: pole-zero cancellation
-        return LinearSystem(normalize(n1*n2, d1*d2))
+        n2, d2 = LinearSystem(other, self.analog).tf
+        return LinearSystem(normalize(n1*n2, d1*d2), self.analog)
 
     def __rmul__(self, other):
         return self.__mul__(other)
 
     def __div__(self, other):
-        return self.__mul__(~LinearSystem(other))
+        self._check_other(other)
+        return self.__mul__(~LinearSystem(other, self.analog))
 
     def __rdiv__(self, other):
-        return (~self).__mul__(LinearSystem(other))
+        self._check_other(other)
+        return (~self).__mul__(LinearSystem(other, self.analog))
 
     def __truediv__(self, other):
         return self.__div__(other)
@@ -387,13 +406,16 @@ class LinearSystem(with_metaclass(ReuseUnderlying, NengoLinearFilterMixin)):
         return self.__rdiv__(other)
 
     def __eq__(self, other):
-        return sys_equal(self.tf, LinearSystem(other).tf)
+        self._check_other(other)
+        return sys_equal(self.tf, LinearSystem(other, self.analog).tf)
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return hash((tuple(self.num), tuple(self.den)))
+        num, den = normalize(*self.tf)
+        return hash((tuple(num), tuple(den), self.analog))
 
 
-s = LinearSystem(([1, 0], [1]))  # differential operator
+s = LinearSystem(([1, 0], [1]), analog=True)  # differential operator
+q = LinearSystem(([1, 0], [1]), analog=False)  # shift operator

@@ -1,9 +1,12 @@
+import pytest
+
 import numpy as np
 
 import nengo
 
 from nengolib.synapses.hetero_synapse import HeteroSynapse
 from nengolib import Network
+from nengolib.signal import q
 from nengolib.stats import sphere
 from nengolib.synapses import Lowpass, Alpha
 
@@ -169,6 +172,11 @@ def test_hetero_multi_vector(Simulator):
 
 
 def test_hetero_casting():
-    sys = Lowpass(0.5)
+    sys = ~q
     hs = HeteroSynapse(sys)
     assert [sys] == hs.systems
+
+
+def test_invalid_system():
+    with pytest.raises(ValueError):
+        HeteroSynapse(Lowpass(0.1))  # no dt provided

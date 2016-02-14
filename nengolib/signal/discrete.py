@@ -1,23 +1,31 @@
 import numpy as np
 from numpy.linalg import solve
 from scipy import linalg
-from scipy.signal import cont2discrete as _cont2discrete
+from scipy.signal import cont2discrete as _cont2discrete, lfilter
 
-from nengolib.signal.system import sys2ss, LinearSystem
+from nengolib.signal.system import LinearSystem
 
-__all__ = ['cont2discrete', 'discrete2cont']
+__all__ = ['cont2discrete', 'discrete2cont', 'apply_filter', 'impulse']
 
 
 def cont2discrete(sys, dt, method='zoh', alpha=None):
+    sys = LinearSystem(sys)
+    if not sys.analog:
+        raise ValueError("system (%s) is already discrete" % sys)
     return LinearSystem(
-        _cont2discrete(sys2ss(sys), dt=dt, method=method, alpha=alpha)[:-1])
+        _cont2discrete(sys.ss, dt=dt, method=method, alpha=alpha)[:-1],
+        analog=False)
 
 
 def discrete2cont(sys, dt, method='zoh', alpha=None):
+    sys = LinearSystem(sys)
+    if sys.analog:
+        raise ValueError("system (%s) is already continuous" % sys)
+
     if dt <= 0:
         raise ValueError("dt (%s) must be positive" % (dt,))
 
-    ad, bd, cd, dd = sys2ss(sys)
+    ad, bd, cd, dd = sys.ss
     n = ad.shape[0]
     m = n + bd.shape[1]
 
@@ -57,4 +65,32 @@ def discrete2cont(sys, dt, method='zoh', alpha=None):
     else:
         raise ValueError("invalid method: '%s'" % (method,))
 
-    return LinearSystem((ar, br, cr, dr))
+    return LinearSystem((ar, br, cr, dr), analog=True)
+
+
+def apply_filter(sys, dt, u, axis=-1):
+    """Simulates sys on u for length timesteps of width dt."""
+    # TODO: properly handle SIMO systems
+    # https://github.com/scipy/scipy/issues/5753\
+    sys = LinearSystem(sys)
+    if dt is not None:
+        num, den = cont2discrete(sys, dt).tf
+    elif not sys.analog:
+        num, den = sys.tf
+    else:
+        raise ValueError("system (%s) must be discrete if not given dt" % sys)
+
+    # convert from the polynomial representation, and add back the leading
+    # zeros that were dropped by poly1d, since lfilter will shift it the
+    # wrong way (it will add the leading zeros back to the end, effectively
+    # removing the delay)
+    num, den = map(np.asarray, (num, den))
+    num = np.append([0]*(len(den) - len(num)), num)
+    return lfilter(num, den, u, axis)
+
+
+def impulse(sys, dt, length, axis=-1):
+    """Simulates sys on a delta impulse for length timesteps of width dt."""
+    impulse = np.zeros(length)
+    impulse[0] = 1
+    return apply_filter(sys, dt, impulse, axis)

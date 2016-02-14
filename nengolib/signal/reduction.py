@@ -54,6 +54,8 @@ def balreal(sys):
             Control*, AC-32 (1987), pp. 115-122.
     """
     sys = LinearSystem(sys)  # cast first to memoize sys2ss
+    if not sys.analog:
+        raise NotImplementedError("balanced digital filters not supported")
 
     R = control_gram(sys)
     O = observe_gram(sys)
@@ -69,7 +71,7 @@ def balreal(sys):
     A, B, C, D = sys2ss(sys)
     TA, TB, TC, TD = similarity_transform(A, B, C, D, T, Tinv)
 
-    return LinearSystem((TA, TB, TC, TD)), S
+    return LinearSystem((TA, TB, TC, TD), analog=True), S
 
 
 def modred(sys, keep_states, method='del'):
@@ -78,7 +80,12 @@ def modred(sys, keep_states, method='del'):
     References:
         http://www.mathworks.com/help/control/ref/modred.html
     """
-    A, B, C, D = sys2ss(sys)
+    sys = LinearSystem(sys)
+    A, B, C, D = sys.ss
+    if not sys.analog:
+        raise NotImplementedError("model reduction of digital filters not "
+                                  "supported")
+
     mask = np.zeros(len(A), dtype=bool)
     mask[np.asarray(keep_states)] = True
 

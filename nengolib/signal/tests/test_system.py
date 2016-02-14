@@ -2,14 +2,12 @@ from __future__ import division
 
 import numpy as np
 import pytest
-from scipy.signal import cont2discrete
 
 import nengo
-from nengo.synapses import filt
 
 from nengolib.signal.system import (
-    sys2ss, sys2zpk, sys2tf, canonical, sys_equal, impulse, is_exp_stable,
-    scale_state, LinearSystem, s)
+    sys2ss, sys2zpk, sys2tf, canonical, sys_equal, is_exp_stable, scale_state,
+    LinearSystem, s, q)
 from nengolib import Network, Lowpass, Alpha, LinearFilter
 from nengolib.signal import state_norm
 
@@ -83,22 +81,6 @@ def test_canonical():
 
     sys = nengo.Alpha(0.1)
     assert sys_equal(canonical(sys), sys)
-
-
-def test_impulse():
-    dt = 0.001
-    tau = 0.005
-    length = 10
-
-    delta = np.zeros(length)  # TODO: turn into a little helper?
-    delta[1] = 1.0
-
-    sys = Lowpass(tau)
-    response = impulse(sys, dt, length)
-    np.allclose(response, filt(delta, sys, dt))
-
-    dss = cont2discrete(sys2ss(sys), dt=dt)[:-1]
-    np.allclose(response, impulse(dss, dt=None, length=length))
 
 
 def test_is_exp_stable():
@@ -257,3 +239,77 @@ def test_linear_system():
 
     # Test usage of differential building block
     assert sys == 1 / (tau*s + 1)
+
+
+def test_linear_system_type():
+    # Test that sys1 is reused by sys2
+    sys1 = LinearSystem(1)
+    sys2 = LinearSystem(sys1)
+    sys3 = LinearSystem(1)
+
+    assert sys1 is sys2
+    assert sys1 is not sys3
+
+    # Test that sys1 is still reused even with weird arg/kwarg ordering
+    sys4 = LinearSystem(sys1, analog=True)
+    sys5 = LinearSystem(sys=sys1, analog=True)
+    sys6 = LinearSystem(analog=True, sys=sys1)
+
+    assert sys1 is sys4
+    assert sys1 is sys5
+    assert sys1 is sys6
+
+    # Test that analog argument gets inherited properly
+    assert LinearSystem(s).analog
+    assert LinearSystem(s, analog=True).analog
+    assert not LinearSystem(q).analog
+    assert not LinearSystem(q, analog=False).analog
+    assert LinearSystem(nengo.Lowpass(0.1)).analog
+    assert not LinearSystem(LinearFilter([1], [1], analog=False)).analog
+
+    # Test that analog argument must match
+    with pytest.raises(TypeError):
+        LinearSystem(sys1, analog=False)
+
+    with pytest.raises(TypeError):
+        LinearSystem(sys1, False)
+
+    with pytest.raises(TypeError):
+        LinearSystem(sys1, analog=False)
+
+    with pytest.raises(TypeError):
+        LinearSystem(s, analog=False)
+
+    with pytest.raises(TypeError):
+        LinearSystem(q, analog=True)
+
+    with pytest.raises(TypeError):
+        LinearSystem(LinearFilter([1], [1], analog=True), analog=False)
+
+    with pytest.raises(TypeError):
+        LinearSystem(LinearFilter([1], [1], analog=False), analog=True)
+
+
+def test_invalid_operations():
+    with pytest.raises(ValueError):
+        q == s
+
+    with pytest.raises(ValueError):
+        s != q
+
+    with pytest.raises(ValueError):
+        q + s
+
+    with pytest.raises(ValueError):
+        s - q
+
+    with pytest.raises(ValueError):
+        q * s
+
+    with pytest.raises(ValueError):
+        q / s
+
+
+def test_hashing():
+    assert len(set((q, s))) == 2
+    assert len(set((s, 5*s/5))) == 1

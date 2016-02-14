@@ -9,7 +9,7 @@ root = os.path.dirname(os.path.realpath(__file__))
 version_module = imp.load_source(
     'version', os.path.join(root, name, 'version.py'))
 
-submodules = ['linalg', 'signal', 'stats', 'synapses', 'utils']
+submodules = ['linalg', 'signal', 'stats', 'synapses']
 packages = [name] + ['%s/%s' % (name, d) for d in submodules]
 
 setup(

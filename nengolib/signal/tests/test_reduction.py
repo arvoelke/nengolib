@@ -83,16 +83,16 @@ def test_modred(rng):
     assert delsys.order_den == 1
 
     u = rng.normal(size=2000)
-    expected = apply_filter(u, sys, dt)
-    actual = apply_filter(u, delsys, dt)
+    expected = apply_filter(sys, dt, u)
+    actual = apply_filter(delsys, dt, u)
 
     assert rmse(expected, actual) < 1e-4
 
     step = np.zeros(2000)
     step[50:] = 1.0
     dcsys = modred(balsys, S.argmax(), method='dc')
-    expected = apply_filter(step, sys, dt)
-    actual = apply_filter(step, dcsys, dt)
+    expected = apply_filter(sys, dt, step)
+    actual = apply_filter(dcsys, dt, step)
 
     assert rmse(expected, actual) < 1e-4
 
@@ -107,12 +107,12 @@ def test_balred(rng):
     sys = Alpha(0.01) + Lowpass(0.001)
 
     u = rng.normal(size=2000)
-    expected = apply_filter(u, sys, dt)
+    expected = apply_filter(sys, dt, u)
 
     def check(order, within, tol, method='del'):
         redsys = balred(sys, order, method=method)
         assert redsys.order_den <= order
-        actual = apply_filter(u, redsys, dt)
+        actual = apply_filter(redsys, dt, u)
         assert abs(rmse(expected, actual) - within) < tol
 
     with warns(UserWarning):

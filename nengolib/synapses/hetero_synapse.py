@@ -1,10 +1,10 @@
 import numpy as np
 from scipy.linalg import block_diag
-from scipy.signal import cont2discrete
 
 from nengo.utils.compat import is_iterable
 
-from nengolib.signal.system import sys2ss
+from nengolib.signal.discrete import cont2discrete
+from nengolib.signal.system import LinearSystem
 
 __all__ = ['HeteroSynapse']
 
@@ -38,9 +38,14 @@ class HeteroSynapse(object):
         self.C = []
         self.D = []
         for sys in systems:
-            A, B, C, D = sys2ss(sys)
+            sys = LinearSystem(sys)
             if dt is not None:
-                A, B, C, D, _ = cont2discrete((A, B, C, D), dt, method=method)
+                sys = cont2discrete(sys, dt, method=method)
+            elif sys.analog:
+                raise ValueError(
+                    "system (%s) must be digital if not given dt" % sys)
+
+            A, B, C, D = sys.ss
             self.A.append(A)
             self.B.append(B)
             self.C.append(C)

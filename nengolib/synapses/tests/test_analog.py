@@ -7,7 +7,7 @@ from nengo import Alpha as BaseAlpha
 
 from nengolib.synapses.analog import (
     Bandpass, Highpass, PadeDelay, LinearFilter, Lowpass, Alpha)
-from nengolib.signal import impulse, LinearSystem, sys_equal
+from nengolib.signal import impulse, sys_equal, s
 
 
 def test_nengo_analogs():
@@ -35,7 +35,6 @@ def test_bandpass(freq, Q):
 @pytest.mark.parametrize("tau,order", [(0.01, 1), (0.2, 2), (0.0001, 5)])
 def test_highpass(tau, order):
     sys = Highpass(tau, order)
-    assert sys == (Lowpass(tau) * LinearSystem(([tau, 0], [1]))) ** order
 
     length = 1000
     dt = 0.001
@@ -67,3 +66,11 @@ def test_pade_delay(c):
     offset = 10
     assert np.allclose(
         (np.argmax(response[offset:])+offset), c*length, atol=100)
+
+
+def test_equivalent_defs():
+    tau = 0.05
+
+    assert Lowpass(tau) == 1 / (tau*s + 1)
+    assert Alpha(tau) == (1 / (tau*s + 1))**2
+    assert Highpass(tau, 3) == (tau * s * Lowpass(tau)) ** 3
