@@ -6,7 +6,7 @@ import nengo
 
 from nengolib.synapses.hetero_synapse import HeteroSynapse
 from nengolib import Network
-from nengolib.signal import q
+from nengolib.signal import z
 from nengolib.stats import sphere
 from nengolib.synapses import Lowpass, Alpha
 
@@ -172,7 +172,7 @@ def test_hetero_multi_vector(Simulator):
 
 
 def test_hetero_casting():
-    sys = ~q
+    sys = ~z
     hs = HeteroSynapse(sys)
     assert [sys] == hs.systems
 

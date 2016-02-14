@@ -7,7 +7,7 @@ import nengo
 
 from nengolib.signal.system import (
     sys2ss, sys2zpk, sys2tf, canonical, sys_equal, is_exp_stable, scale_state,
-    LinearSystem, s, q)
+    LinearSystem, s, z)
 from nengolib import Network, Lowpass, Alpha, LinearFilter
 from nengolib.signal import state_norm
 
@@ -262,8 +262,8 @@ def test_linear_system_type():
     # Test that analog argument gets inherited properly
     assert LinearSystem(s).analog
     assert LinearSystem(s, analog=True).analog
-    assert not LinearSystem(q).analog
-    assert not LinearSystem(q, analog=False).analog
+    assert not LinearSystem(z).analog
+    assert not LinearSystem(z, analog=False).analog
     assert LinearSystem(nengo.Lowpass(0.1)).analog
     assert not LinearSystem(LinearFilter([1], [1], analog=False)).analog
 
@@ -281,7 +281,7 @@ def test_linear_system_type():
         LinearSystem(s, analog=False)
 
     with pytest.raises(TypeError):
-        LinearSystem(q, analog=True)
+        LinearSystem(z, analog=True)
 
     with pytest.raises(TypeError):
         LinearSystem(LinearFilter([1], [1], analog=True), analog=False)
@@ -292,24 +292,24 @@ def test_linear_system_type():
 
 def test_invalid_operations():
     with pytest.raises(ValueError):
-        q == s
+        z == s
 
     with pytest.raises(ValueError):
-        s != q
+        s != z
 
     with pytest.raises(ValueError):
-        q + s
+        z + s
 
     with pytest.raises(ValueError):
-        s - q
+        s - z
 
     with pytest.raises(ValueError):
-        q * s
+        z * s
 
     with pytest.raises(ValueError):
-        q / s
+        z / s
 
 
 def test_hashing():
-    assert len(set((q, s))) == 2
+    assert len(set((z, s))) == 2
     assert len(set((s, 5*s/5))) == 1

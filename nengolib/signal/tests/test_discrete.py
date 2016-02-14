@@ -5,7 +5,7 @@ import numpy as np
 from nengo.synapses import filt
 
 from nengolib.signal.discrete import cont2discrete, discrete2cont, impulse
-from nengolib.signal import s, q
+from nengolib.signal import s, z
 from nengolib.synapses import Lowpass, Alpha, Highpass
 
 
@@ -44,7 +44,7 @@ def test_invalid_discrete():
         discrete2cont(s, dt=dt)  # already continuous
 
     with pytest.raises(ValueError):
-        cont2discrete(q, dt=dt)  # already discrete
+        cont2discrete(z, dt=dt)  # already discrete
 
 
 def test_impulse():

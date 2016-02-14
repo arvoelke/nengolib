@@ -11,7 +11,7 @@ from nengo.utils.compat import is_integer, is_number, with_metaclass
 __all__ = [
     'sys2ss', 'sys2tf', 'sys2zpk', 'canonical', 'sys_equal',
     'is_exp_stable', 'scale_state',
-    'NengoLinearFilterMixin', 'LinearSystem', 's', 'q']
+    'NengoLinearFilterMixin', 'LinearSystem', 's', 'z']
 
 
 _LSYS, _LFILT, _NUM, _TF, _ZPK, _SS = range(6)
@@ -190,7 +190,7 @@ class NengoLinearFilterMixin(LinearFilter):
         sys = LinearSystem((A, B, C, D), analog=False)
         if not sys.has_passthrough:
             # This makes our system behave like it does in Nengo
-            sys *= q  # discrete shift of the system to remove delay
+            sys *= z  # discrete shift of the system to remove delay
         else:
             warnings.warn("Synapse (%s) has extra delay due to passthrough "
                           "(https://github.com/nengo/nengo/issues/938)" % sys)
@@ -418,4 +418,4 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
 
 
 s = LinearSystem(([1, 0], [1]), analog=True)  # differential operator
-q = LinearSystem(([1, 0], [1]), analog=False)  # shift operator
+z = LinearSystem(([1, 0], [1]), analog=False)  # shift operator

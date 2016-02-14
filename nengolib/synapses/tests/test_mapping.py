@@ -5,7 +5,7 @@ import nengo
 
 from nengolib.synapses.mapping import ss2sim
 from nengolib import Network, Lowpass, Alpha, LinearFilter
-from nengolib.signal import apply_filter, s, q
+from nengolib.signal import apply_filter, s, z
 
 
 def test_mapping(Simulator, plt):
@@ -83,4 +83,4 @@ def test_unsupported_synapse():
 
 def test_unsupported_system():
     with pytest.raises(ValueError):
-        ss2sim(sys=q, synapse=Lowpass(0.1))
+        ss2sim(sys=z, synapse=Lowpass(0.1))
