@@ -80,7 +80,21 @@ def test_canonical():
     assert sys_equal(canonical(sys), sys)
 
     sys = nengo.Alpha(0.1)
-    assert sys_equal(canonical(sys), sys)
+    csys = canonical(sys, controllable=True)
+    osys = canonical(sys, controllable=False)
+
+    A, B, C, D = csys.ss
+    assert sys_equal(csys, sys)
+    assert np.allclose(csys.A, [[-20, -100], [1, 0]])
+    assert np.allclose(csys.B, [[1], [0]])
+    assert np.allclose(csys.C, [[0, 100]])
+    assert np.allclose(csys.D, [[0]])
+
+    assert sys_equal(osys, sys)
+    assert np.allclose(osys.A, [[-20, 1], [-100, 0]])
+    assert np.allclose(osys.B, [[0], [100]])
+    assert np.allclose(osys.C, [[1, 0]])
+    assert np.allclose(osys.D, [[0]])
 
 
 def test_is_exp_stable():

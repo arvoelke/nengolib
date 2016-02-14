@@ -12,6 +12,7 @@ from .network import Network  # noqa: F401
 from .neurons import PerfectLIF  # noqa: F401
 
 from . import linalg  # noqa: F401
+from . import networks  # noqa: F401
 from . import signal  # noqa: F401
 from . import stats  # noqa: F401
 from . import synapses  # noqa: F401

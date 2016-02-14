@@ -16,7 +16,6 @@ def ss2sim(sys, synapse, dt=None):
     sys = LinearSystem(sys)
     if not sys.analog:
         raise ValueError("system (%s) must be analog" % sys)
-    A, B, C, D = sys.ss
 
     # TODO: put derivations into a notebook
     a, = synapse.num
@@ -24,10 +23,12 @@ def ss2sim(sys, synapse, dt=None):
     if np.allclose(b2, 0):  # scaled integrator
         # put synapse into form: gain / s, and handle gain at the end
         gain = a / b1
-        if dt is not None:
+        if dt is None:
+            A, B, C, D = sys.ss
+        else:
             # discretized integrator is dt / (z - 1)
             A, B, C, D = cont2discrete(sys, dt=dt).ss
-            A = 1./dt * (A - np.eye(len(A)))
+            A = 1./dt * (A - np.eye(len(sys)))
             B = 1./dt * B
 
     else:  # scaled lowpass
@@ -36,8 +37,10 @@ def ss2sim(sys, synapse, dt=None):
 
         if dt is None:
             # Analog case (normal principle 3)
-            A = tau * A + np.eye(len(A))
-            B = tau * B
+            A = tau * sys.A + np.eye(len(sys))
+            B = tau * sys.B
+            C = sys.C
+            D = sys.D
         else:
             # Discretized case (derived from generalized principle 3)
             # discretized lowpass is (1 - a) / (z - a)

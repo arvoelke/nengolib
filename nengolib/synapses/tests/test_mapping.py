@@ -8,7 +8,7 @@ from nengolib import Network, Lowpass, Alpha, LinearFilter
 from nengolib.signal import apply_filter, s, z
 
 
-def test_mapping(Simulator, plt):
+def test_mapping(Simulator, plt, seed):
     sys = Alpha(0.1)
     syn = Lowpass(0.01)
     gsyn = 2*syn  # scaled lowpass
@@ -24,7 +24,7 @@ def test_mapping(Simulator, plt):
     assert ss.analog and gss.analog and iss.analog
     assert not (dss.analog or gdss.analog or idss.analog)
 
-    with Network() as model:
+    with Network(seed=seed) as model:
         stim = nengo.Node(output=lambda t: np.sin(20*np.pi*t))
 
         probes = []

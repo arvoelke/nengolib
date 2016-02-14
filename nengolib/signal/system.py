@@ -98,7 +98,7 @@ def sys2tf(sys):
     return _sys2tf[_sys2form(sys)](sys)
 
 
-def _is_canonical(A, B, C, D):
+def _is_ccf(A, B, C, D):
     """Returns true iff (A, B, C, D) is in controllable canonical form."""
     n = len(A)
     if not np.allclose(B[0], 1.0):
@@ -110,14 +110,17 @@ def _is_canonical(A, B, C, D):
             np.allclose(A[1:, -1], 0))
 
 
-def canonical(sys):
-    """Converts SISO to controllable canonical form."""
+def canonical(sys, controllable=True):
+    """Converts SISO to controllable/observable canonical form."""
     # TODO: raise nicer error if not SISO
     sys = LinearSystem(sys)
     ss = abcd_normalize(*sys.ss)
-    if not _is_canonical(*ss):
+    if not _is_ccf(*ss):
+        # TODO: if already observable than this might hurt the accuracy
         ss = sys2ss(sys2tf(ss))
-        assert _is_canonical(*ss)
+        assert _is_ccf(*ss)
+    if not controllable:
+        ss = (ss[0].T, ss[2].T, ss[1].T, ss[3])
     return LinearSystem(ss, sys.analog)
 
 
