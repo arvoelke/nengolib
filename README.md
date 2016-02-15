@@ -19,6 +19,7 @@ from nengolib.signal import s
 1 / (tau*s + 1)**2 == nengo.Alpha(tau)  # True
 ```
  - `nengolib.signal.{minreal,balreal,modred}` provide tools for model order reduction of linear systems using minimal and balanced realizations. See `doc/notebooks/research/linear_model_reduction.ipynb` for more information.
+ - `nengolib.synapses.ss2sim` can map any `LinearSystem` object to an equivalent system that uses the given synapse. The synapse must be proper, first-order, and causal, and uses a generalization of Principle 3 from he NEF which handles both digital and analog hardware implementations.
 
 ### Installation
 
