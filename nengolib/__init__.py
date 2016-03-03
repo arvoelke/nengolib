@@ -9,6 +9,7 @@ modelling with Nengo.
 from .version import version as __version__  # noqa: F401
 
 from .network import Network  # noqa: F401
+from .neurons import PerfectLIF  # noqa: F401
 
 from . import linalg  # noqa: F401
 from . import signal  # noqa: F401

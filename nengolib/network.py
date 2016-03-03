@@ -1,6 +1,7 @@
 from nengo import Network as BaseNetwork
 from nengo import Ensemble
 
+from nengolib.neurons import PerfectLIF
 from nengolib.stats.ntmdists import ScatteredHypersphere
 
 _all__ = ['Network']
@@ -12,4 +13,5 @@ class Network(BaseNetwork):
         super(Network, self).__init__(*args, **kwargs)
         self.config[Ensemble].update({
             'encoders': ScatteredHypersphere(surface=True),
-            'eval_points': ScatteredHypersphere(surface=False)})
+            'eval_points': ScatteredHypersphere(surface=False),
+            'neuron_type': PerfectLIF()})

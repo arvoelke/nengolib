@@ -4,7 +4,7 @@
 Additional extensions for large-scale brain modelling with Nengo.
 
 ### Highlights
- - `nengolib.Network(...)` serves as a drop-in replacement for `nengo.Network(...)` to improve the performance of an ensemble and the accuracy of its decoders.
+ - `nengolib.Network(...)` serves as a drop-in replacement for `nengo.Network(...)` to improve the encoding of an ensemble, the spike timing of each neuron, and the accuracy of the decoders.
  - `nengolib.HeteroSynapse(...)` allows one to connect to an ensemble using a different synapse per dimension or per neuron.
  - `nengolib.LinearFilter(...)` serves as a drop-in replacement for `nengo.LinearFilter(...)` to improve the efficiency of simulations for high-order synapse models.
  - `nengolib.{Lowpass,Alpha,LinearFilter}` are synapses with rich semantics. These linear systems can be scaled, added, multiplied, inverted, compared, and converted between various standard formats. These synapses can also be simulated easily within `Nengo`. For example, to use a double-exponential synapse:
@@ -19,7 +19,7 @@ from nengolib.signal import s
 1 / (tau*s + 1)**2 == nengo.Alpha(tau)  # True
 ```
  - `nengolib.signal.{minreal,balreal,modred}` provide tools for model order reduction of linear systems using minimal and balanced realizations. See `doc/notebooks/research/linear_model_reduction.ipynb` for more information.
- - `nengolib.synapses.ss2sim` can map any `LinearSystem` object to an equivalent system that uses the given synapse. The synapse must be proper, first-order, and causal, and uses a generalization of Principle 3 from he NEF which handles both digital and analog hardware implementations.
+ - `nengolib.synapses.ss2sim` can map any `LinearSystem` object to an equivalent system that uses the given synapse. The synapse must be proper and first-order, and uses a generalization of Principle 3 from he NEF which handles both digital and analog hardware implementations.
 
 ### Installation
 

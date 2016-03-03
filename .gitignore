@@ -4,3 +4,4 @@ build
 .cache
 .coverage
 coverage.xml
+nengo.simulator.logs
