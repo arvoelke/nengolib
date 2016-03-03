@@ -7,7 +7,7 @@ notifications:
 env:
   global:
     - TEST_CMD="py.test nengolib"
-    - PIP_DEPS="pytest==2.7.3 pytest-xdist"
+    - PIP_DEPS="pytest pytest-xdist"
     - NUMPY="1.10"
     - SCIPY="0.16.0"
     - NENGO="https://github.com/nengo/nengo/archive/master.tar.gz"
