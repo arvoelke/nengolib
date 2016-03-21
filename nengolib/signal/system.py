@@ -184,11 +184,11 @@ class NengoLinearFilterMixin(LinearFilter):
 
     def make_step(self, dt, output, method='zoh'):
         A, B, C, D = sys2ss(self)
-        if self.analog:  # pragma: no cover
+        if self.analog:
             A, B, C, D, _ = cont2discrete((A, B, C, D), dt, method=method)
             sys = LinearSystem((A, B, C, D), analog=False)
-	else:
-	    sys = self
+        else:
+            sys = self
 
         if not sys.has_passthrough:
             # This makes our system behave like it does in Nengo

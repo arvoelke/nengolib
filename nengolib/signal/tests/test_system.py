@@ -144,6 +144,24 @@ def test_simulation(sys, Simulator, plt):
     assert np.allclose(sim.data[p_new], sim.data[p_old])
 
 
+def test_discrete_synapse(Simulator):
+    # Test that discrete synapses are simulated properly
+    delay_steps = 1000
+
+    with Network() as model:
+        stim = nengo.Node(output=np.sin)
+        output = nengo.Node(size_in=1)
+        nengo.Connection(stim, output, synapse=z**-delay_steps)
+        p_stim = nengo.Probe(stim, synapse=None)
+        p_output = nengo.Probe(output, synapse=None)
+
+    sim = Simulator(model)
+    sim.run(5.0)
+
+    assert np.allclose(sim.data[p_output][delay_steps:],
+                       sim.data[p_stim][:-delay_steps])
+
+
 def test_sys_multiplication():
     # Check that alpha is just two lowpass multiplied together
     assert Lowpass(0.1) * Lowpass(0.1) == Alpha(0.1)
