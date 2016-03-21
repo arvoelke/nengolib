@@ -3,27 +3,29 @@
 #  <img src="http://i.imgur.com/wSjRUi4.png" width="64" height="64" valign="middle" /> Nengo Library
 Additional extensions for large-scale brain modelling with Nengo.
 
-### Highlights
- - `nengolib.Network(...)` serves as a drop-in replacement for `nengo.Network(...)` to improve the encoding of an ensemble, the spike timing of each neuron, and the accuracy of the decoders.
- - `nengolib.HeteroSynapse(...)` allows one to connect to an ensemble using a different synapse per dimension or per neuron.
- - `nengolib.LinearFilter(...)` serves as a drop-in replacement for `nengo.LinearFilter(...)` to improve the efficiency of simulations for high-order synapse models.
- - `nengolib.{Lowpass,Alpha,LinearFilter}` are synapses with rich semantics. These linear systems can be scaled, added, multiplied, inverted, compared, and converted between various standard formats. These synapses can also be simulated easily within `Nengo`. For example, to use a double-exponential synapse:
-
+### Improvements
+ - `nengolib.Network(...)` serves as a drop-in replacement for `nengo.Network(...)` to automatically improve the encoding of an ensemble, the spike-timing of each neuron, and the accuracy of the decoders.
+ - `nengolib.HeteroSynapse(...)` allows one to use a different synapse per dimension/neuron when connecting to an ensemble.
+ - `nengolib.LinearFilter(...)` is a drop-in replacement for `nengo.LinearFilter(...)` that improves the efficiency of simulations for higher-order synapse models.
+ 
+### Synapse Features
+ - NengoLib extends the `LinearFilter` object by adding a natural language for building synaptic models. These linear systems can be scaled, added, multiplied, inverted, compared, converted to discrete time, converted to continuous time, and represented in various standard formats (along with some caching, error checking, and other nice features). These synapses can then be simulated within Nengo. For example, to introduce a pure delay of `k` timesteps:
+ 
    ```
-synapse = (tau1 * nengolib.Lowpass(tau1) - tau2 * nengolib.Lowpass(tau2)) / (tau1 - tau2)
-nengo.Connection(a, b, synapse=synapse)
-```
-   To further illustrate the versatility of these semantics, we can define an equivalent expression for the `Alpha` synapse:
+ from nengolib.signal import s, z
+ nengo.Connection(a, b, synapse=z**(-k))
    ```
-from nengolib.signal import s
-1 / (tau*s + 1)**2 == nengo.Alpha(tau)  # True
+   which is equivalent to using `(~z)**k` by use of the _reverse shift operator_. Or we can implement a double-exponential synapse:
+   ```
+(tau1*nengolib.Lowpass(tau1) - tau2*nengolib.Lowpass(tau2)) / (tau1 - tau2)
 ```
- - `nengolib.signal.{minreal,balreal,modred}` provide tools for model order reduction of linear systems using minimal and balanced realizations. See `doc/notebooks/research/linear_model_reduction.ipynb` for more information.
- - `nengolib.synapses.ss2sim` can map any `LinearSystem` object to an equivalent system that uses the given synapse. The synapse must be proper and first-order, and uses a generalization of Principle 3 from he NEF which handles both digital and analog hardware implementations.
+   which is equivalent to using `1/((tau1*s + 1)*(tau2*s + 1))` by use of the continuous _differential operator_.
+ - `nengolib.signal.{minreal,balreal,modred}` are tools for model order reduction using _minimal_ and _balanced realizations_. See `doc/notebooks/research/linear_model_reduction.ipynb` for more information.
+ - `nengolib.synapses.ss2sim` can map any `LinearSystem` object to an equivalent system that uses the given synapse. This uses a generalization of _Principle 3_ from the NEF that supports both digital and analog hardware implementations.
 
 ### Installation
 
-NengoLib is tested against Python 2.7, 3.4, and 3.5.
+NengoLib is tested rigorously (100% coverage) against Python 2.7, 3.4, and 3.5.
 
 To install, first grab the current development version of Nengo [2.1.0-dev](https://github.com/nengo/nengo):
 ```
