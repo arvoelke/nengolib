@@ -183,11 +183,14 @@ class _DigitalStep(LinearFilter.Step):
 class NengoLinearFilterMixin(LinearFilter):
 
     def make_step(self, dt, output, method='zoh'):
-        A, B, C, D = sys2ss(self)
-        if self.analog:  # pragma: no cover
-            A, B, C, D, _ = cont2discrete((A, B, C, D), dt, method=method)
+        if self.analog:
+            # Note: equivalent to cont2discrete in discrete.py, but repeated
+            # here to avoid circular dependency.
+            A, B, C, D, _ = cont2discrete(self.ss, dt, method=method)
+            sys = LinearSystem((A, B, C, D), analog=False)
+        else:
+            sys = self
 
-        sys = LinearSystem((A, B, C, D), analog=False)
         if not sys.has_passthrough:
             # This makes our system behave like it does in Nengo
             sys *= z  # discrete shift of the system to remove delay
