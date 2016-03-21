@@ -22,13 +22,12 @@ class PerfectLIF(LIF):
         voltage -= (J - voltage) * np.expm1(-delta_t / self.tau_rc)
 
         # determine which neurons spiked (set them to 1/dt, else 0)
-        spiked_mask = voltage >= 1
+        spiked_mask = voltage > 1
         spiked[:] = spiked_mask / dt
-        spiked_v = voltage[spiked_mask]
 
         # set v(0) = 1 and solve for t to compute the spike time
         t_spike = dt + self.tau_rc * np.log1p(
-            -(spiked_v - 1) / (J[spiked_mask] - 1))
+            -(voltage[spiked_mask] - 1) / (J[spiked_mask] - 1))
 
         # set spiked voltages to zero, refractory times to tau_ref, and
         # rectify negative voltages to a floor of min_voltage
