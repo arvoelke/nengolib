@@ -9,8 +9,9 @@ env:
     - TEST_CMD="py.test nengolib"
     - PIP_DEPS="pytest pytest-xdist"
     - NUMPY="1.10"
-    - SCIPY="0.16.0"
+    - SCIPY="0.17.0"
     - NENGO="https://github.com/nengo/nengo/archive/master.tar.gz"
+    - CONDA_DEPS="libgfortran"
 
 matrix:
   include:
@@ -31,11 +32,7 @@ matrix:
     - env:
         TEST_CMD="py.test nengolib -k nengolib/tests/test_notebooks.py -rw --slow"
         PYTHON="2.7"
-        PIP_DEPS="$PIP_DEPS jupyter matplotlib ipython"
-        CONA_DEPS="jupyter matplotlib ipython pygments"
-    - env:
-        PYTHON="2.7"
-        NUMPY="1.9.2"
+        CONDA_DEPS="jupyter matplotlib ipython pygments"
     - env:
         PYTHON="3.4"
     - env:
