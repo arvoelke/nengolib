@@ -92,5 +92,5 @@ def apply_filter(sys, dt, u, axis=-1):
 def impulse(sys, dt, length, axis=-1):
     """Simulates sys on a delta impulse for length timesteps of width dt."""
     impulse = np.zeros(length)
-    impulse[0] = 1
+    impulse[0] = 1. / dt if dt is not None else 1
     return apply_filter(sys, dt, impulse, axis)

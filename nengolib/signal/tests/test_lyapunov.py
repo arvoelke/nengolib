@@ -25,7 +25,7 @@ def test_state_norm(plt):
     # Choose a filter, timestep, and number of simulation timesteps
     sys = Alpha(0.1)
     dt = 0.000001
-    length = 1000000
+    length = 2000000
 
     # Modify the state-space to read out the state vector
     A, B, C, D = sys2ss(sys)
@@ -40,9 +40,10 @@ def test_state_norm(plt):
 
     # Check that the power of each state equals the H2-norm of each state
     # The analog case is the same after scaling since dt is approx 0.
-    h2 = state_norm(cont2discrete((A, B, C, D), dt)[:-1], analog=False)
-    assert np.allclose(h2, norm(response, axis=0))
-    assert np.allclose(h2, state_norm(sys, analog=True) / np.sqrt(length))
+    actual = norm(response, axis=0) * dt
+    assert np.allclose(
+        actual, state_norm(cont2discrete((A, B, C, D), dt)[:-1], analog=False))
+    assert np.allclose(actual, state_norm(sys, analog=True) * np.sqrt(dt))
 
     plt.figure()
     plt.plot(response[:, 0], label="$x_0$")
