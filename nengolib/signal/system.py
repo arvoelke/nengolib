@@ -163,7 +163,7 @@ def scale_state(A, B, C, D, radii=1.0):
 
 class _DigitalStep(LinearFilter.Step):
 
-    def __init__(self, sys, output):
+    def __init__(self, sys, output, y0=None):
         A, B, C, D = canonical(sys).ss
         self._a = A[0, :]
         assert len(C) == 1
@@ -172,17 +172,25 @@ class _DigitalStep(LinearFilter.Step):
         self._d = D.flatten()[0]
         self._x = np.zeros((len(self._a), len(np.atleast_1d(output))))
         self.output = output
+        if y0 is not None:
+            self.output[...] = y0
 
-    def __call__(self, u):
+    def __call__(self, t, u):
         r = np.dot(self._a, self._x)
         self.output[...] = np.dot(self._c, self._x) + self._d*u
         self._x[1:, :] = self._x[:-1, :]
         self._x[0, :] = r + u
+        return self.output
 
 
 class NengoLinearFilterMixin(LinearFilter):
 
-    def make_step(self, dt, output, method='zoh'):
+    seed = None
+
+    def make_step(self, shape_in, shape_out, dt, rng, y0=None, method='zoh'):
+        assert shape_in == shape_out
+        output = np.zeros(shape_out)
+
         if self.analog:
             # Note: equivalent to cont2discrete in discrete.py, but repeated
             # here to avoid circular dependency.
@@ -198,7 +206,7 @@ class NengoLinearFilterMixin(LinearFilter):
             warnings.warn("Synapse (%s) has extra delay due to passthrough "
                           "(https://github.com/nengo/nengo/issues/938)" % sys)
 
-        return _DigitalStep(sys, output)
+        return _DigitalStep(sys, output, y0=y0)
 
 
 class LinearSystemType(type):

@@ -58,7 +58,7 @@ def test_impulse():
     sys = Lowpass(tau)
     response = impulse(sys, dt, length)
     assert np.allclose(response[0], 0)
-    np.allclose(response, filt(delta, sys, dt))
+    assert np.allclose(response, filt(delta, sys, dt))
 
     dss = cont2discrete(sys, dt=dt)
     assert not dss.analog
