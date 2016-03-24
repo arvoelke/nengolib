@@ -1,11 +1,11 @@
 import numpy as np
 import pytest
-from scipy.signal import cont2discrete
 
 from nengo.utils.numpy import norm
 
 from nengolib.signal.lyapunov import (
     _H2P, state_norm, control_gram, observe_gram)
+from nengolib.signal.discrete import cont2discrete
 from nengolib.signal import sys2ss, impulse
 from nengolib import Lowpass, Alpha
 
@@ -41,9 +41,8 @@ def test_state_norm(plt):
     # Check that the power of each state equals the H2-norm of each state
     # The analog case is the same after scaling since dt is approx 0.
     actual = norm(response, axis=0) * dt
-    assert np.allclose(
-        actual, state_norm(cont2discrete((A, B, C, D), dt)[:-1], analog=False))
-    assert np.allclose(actual, state_norm(sys, analog=True) * np.sqrt(dt))
+    assert np.allclose(actual, state_norm(cont2discrete(sys, dt)))
+    assert np.allclose(actual, state_norm(sys) * np.sqrt(dt))
 
     plt.figure()
     plt.plot(response[:, 0], label="$x_0$")

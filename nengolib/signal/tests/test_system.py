@@ -101,8 +101,7 @@ def test_scale_state():
     assert not np.allclose(ss[1], scaled[1])
 
     # Check that the state vectors have half the power
-    assert np.allclose(
-        state_norm(ss, analog=True)/2, state_norm(scaled, analog=True))
+    assert np.allclose(state_norm(ss)/2, state_norm(scaled))
 
 
 def test_invalid_scale_state():

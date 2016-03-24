@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.linalg import solve_lyapunov, solve_discrete_lyapunov
 
-from nengolib.signal.system import sys2ss
+from nengolib.signal.system import LinearSystem, sys2ss
 
 __all__ = ['state_norm', 'control_gram', 'observe_gram']
 
@@ -16,7 +16,7 @@ def _H2P(A, B, analog):
     return P
 
 
-def state_norm(sys, analog=True, method='H2'):
+def state_norm(sys, method='H2'):
     """Returns the H2-norm of each component of x in the state-space.
 
     This gives the power of each component of x in response to white-noise
@@ -30,8 +30,9 @@ def state_norm(sys, analog=True, method='H2'):
         raise ValueError("Only method=='H2' is currently supported")
     # TODO: accept an additional sys describing the filtering on the input
     # so that we can get the norm in response to different input spectra.
-    A, B, C, D = sys2ss(sys)
-    P = _H2P(A, B, analog)
+    sys = LinearSystem(sys)
+    A, B, C, D = sys.ss
+    P = _H2P(A, B, sys.analog)
     return np.sqrt(P[np.diag_indices(len(P))])
 
 
