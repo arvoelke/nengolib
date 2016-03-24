@@ -17,7 +17,7 @@ Additional extensions for large-scale brain modelling with Nengo.
    ```
    which is equivalent to using `(~z)**k` by use of the _reverse shift operator_. Or we can implement a double-exponential synapse:
    ```
-(tau1*nengolib.Lowpass(tau1) - tau2*nengolib.Lowpass(tau2)) / (tau1 - tau2)
+nengolib.synapses.DoubleExp(tau1, tau2)
 ```
    which is equivalent to using `1/((tau1*s + 1)*(tau2*s + 1))` by use of the continuous _differential operator_.
  - `nengolib.signal.{minreal,balreal,modred}` are tools for model order reduction using _minimal_ and _balanced realizations_. See `doc/notebooks/research/linear_model_reduction.ipynb` for more information.
