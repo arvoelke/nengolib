@@ -8,7 +8,8 @@ from nengo.utils.compat import is_integer
 from nengolib.signal.system import LinearSystem
 
 __all__ = [
-    'LinearFilter', 'Lowpass', 'Alpha', 'Bandpass', 'Highpass', 'PadeDelay']
+    'LinearFilter', 'Lowpass', 'Alpha', 'DoubleExp', 'Bandpass', 'Highpass',
+    'PadeDelay']
 
 
 def LinearFilter(num, den, analog=True):
@@ -23,6 +24,10 @@ def Lowpass(tau):
 
 def Alpha(tau):
     return LinearFilter([1], [tau**2, 2*tau, 1])
+
+
+def DoubleExp(tau1, tau2):
+    return LinearFilter([1], [tau1*tau2, tau1 + tau2, 1])
 
 
 def Bandpass(freq, Q):

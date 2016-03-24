@@ -6,7 +6,7 @@ from nengo import Lowpass as BaseLowpass
 from nengo import Alpha as BaseAlpha
 
 from nengolib.synapses.analog import (
-    Bandpass, Highpass, PadeDelay, LinearFilter, Lowpass, Alpha)
+    Bandpass, Highpass, PadeDelay, LinearFilter, Lowpass, Alpha, DoubleExp)
 from nengolib.signal import impulse, sys_equal, s
 
 
@@ -14,6 +14,19 @@ def test_nengo_analogs():
     assert sys_equal(BaseLinearFilter([1], [1, 0]), LinearFilter([1], [1, 0]))
     assert sys_equal(BaseLowpass(0.1), Lowpass(0.1))
     assert sys_equal(BaseAlpha(0.1), Alpha(0.1))
+    assert sys_equal(BaseAlpha(0.1), DoubleExp(0.1, 0.1))
+
+
+def test_double_exp():
+    tau1 = 0.005
+    tau2 = 0.008
+    sys = DoubleExp(tau1, tau2)
+
+    assert sys == Lowpass(tau1) * Lowpass(tau2)
+    assert sys == 1 / ((tau1*s + 1) * (tau2*s + 1))
+    # this equality follows from algebraic manipulation of the above equality
+    # however there will be a ZeroDivisionError when tau1 == tau2
+    assert sys == (tau1*Lowpass(tau1) - tau2*Lowpass(tau2)) / (tau1 - tau2)
 
 
 @pytest.mark.parametrize("freq,Q", [(5, 2), (50, 50), (200, 4)])
