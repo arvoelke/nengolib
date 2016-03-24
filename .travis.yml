@@ -11,7 +11,7 @@ env:
     - NUMPY="1.10"
     - SCIPY="0.17.0"
     - NENGO="https://github.com/nengo/nengo/archive/master.tar.gz"
-    - CONDA_DEPS="libgfortran"
+    - CONDA_DEPS="matplotlib"
 
 matrix:
   include:
@@ -32,7 +32,7 @@ matrix:
     - env:
         TEST_CMD="py.test nengolib -k nengolib/tests/test_notebooks.py -rw --slow"
         PYTHON="2.7"
-        CONDA_DEPS="jupyter matplotlib ipython pygments"
+        CONDA_DEPS="matplotlib jupyter ipython pygments"
     - env:
         PYTHON="3.4"
     - env:
