@@ -5,7 +5,7 @@ import numpy as np
 from scipy.linalg import cholesky, svd, inv
 
 from nengolib.signal.lyapunov import control_gram, observe_gram
-from nengolib.signal.system import sys2zpk, sys2ss, LinearSystem
+from nengolib.signal.system import sys2zpk, LinearSystem
 
 __all__ = ['minreal', 'similarity_transform', 'balreal', 'modred', 'balred']
 
@@ -31,15 +31,17 @@ def minreal(sys, tol=1e-8):
     return LinearSystem((z[mz], p[mp], k))
 
 
-def similarity_transform(A, B, C, D, T, Tinv=None):
+def similarity_transform(sys, T, Tinv=None):
     """Changes basis of state-space (A, B, C, D) to T."""
+    sys = LinearSystem(sys)
+    A, B, C, D = sys.ss
     if Tinv is None:
         Tinv = inv(T)
     TA = np.dot(Tinv, np.dot(A, T))
     TB = np.dot(Tinv, B)
     TC = np.dot(C, T)
     TD = D
-    return (TA, TB, TC, TD)
+    return LinearSystem((TA, TB, TC, TD), analog=sys.analog)
 
 
 def balreal(sys):
@@ -68,10 +70,7 @@ def balreal(sys):
     T = np.dot(LR, V.T) * S ** (-1. / 2)
     Tinv = (S ** (-1. / 2))[:, None] * np.dot(U.T, LO.T)
 
-    A, B, C, D = sys2ss(sys)
-    TA, TB, TC, TD = similarity_transform(A, B, C, D, T, Tinv)
-
-    return LinearSystem((TA, TB, TC, TD), analog=True), S
+    return similarity_transform(sys, T, Tinv), S
 
 
 def modred(sys, keep_states, method='del'):

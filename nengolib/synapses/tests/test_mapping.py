@@ -21,13 +21,16 @@ def test_mapping(Simulator, plt):
     gdss = ss2sim(sys, gsyn, dt)  # scaled lowpass, discrete
     iss = ss2sim(sys, isyn)  # scaled integrator, continuous
     idss = ss2sim(sys, isyn, dt)  # scaled integrator, discrete
+    assert ss.analog and gss.analog and iss.analog
+    assert not (dss.analog or gdss.analog or idss.analog)
 
     with Network() as model:
         stim = nengo.Node(output=lambda t: np.sin(20*np.pi*t))
 
         probes = []
-        for (A, B, C, D), synapse in ((ss, syn), (dss, syn), (gss, gsyn),
-                                      (gdss, gsyn), (iss, isyn), (idss, isyn)):
+        for mapped, synapse in ((ss, syn), (dss, syn), (gss, gsyn),
+                                (gdss, gsyn), (iss, isyn), (idss, isyn)):
+            A, B, C, D = mapped.ss
             x = nengo.Node(size_in=2)
             y = nengo.Node(size_in=1)
 

@@ -29,17 +29,19 @@ def test_minreal():
 def test_similarity_transform():
     sys = Alpha(0.1)
 
+    TA, TB, TC, TD = similarity_transform(sys, np.eye(2)).ss
     A, B, C, D = sys2ss(sys)
-    T = np.eye(len(A))
-    TA, TB, TC, TD = similarity_transform(A, B, C, D, T)
-
     assert np.allclose(A, TA)
     assert np.allclose(B, TB)
     assert np.allclose(C, TC)
     assert np.allclose(D, TD)
 
     T = [[1, 1], [-0.5, 0]]
-    TA, TB, TC, TD = similarity_transform(A, B, C, D, T)
+    TA, TB, TC, TD = similarity_transform(sys, T).ss
+    assert not np.allclose(A, TA)
+    assert not np.allclose(B, TB)
+    assert not np.allclose(C, TC)
+    assert np.allclose(D, TD)
     assert sys_equal(sys, (TA, TB, TC, TD))
 
 

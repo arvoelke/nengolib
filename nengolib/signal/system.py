@@ -140,12 +140,14 @@ def _is_exp_stable(A):
 
 def is_exp_stable(sys):
     """Returns true iff system is exponentially stable."""
-    return _is_exp_stable(sys2ss(sys)[0])
+    return _is_exp_stable(LinearSystem(sys).A)
 
 
-def scale_state(A, B, C, D, radii=1.0):
+def scale_state(sys, radii=1.0):
     """Scales the system to compensate for radii of the state."""
     # TODO: move to another file
+    sys = LinearSystem(sys)
+    A, B, C, D = sys.ss
     r = np.asarray(radii, dtype=np.float64)
     if r.ndim > 1:
         raise ValueError("radii (%s) must be a 1-dim array or scalar" % (
@@ -158,7 +160,7 @@ def scale_state(A, B, C, D, radii=1.0):
     A = A / r[:, None] * r
     B = B / r[:, None]
     C = C * r
-    return A, B, C, D
+    return LinearSystem((A, B, C, D), analog=sys.analog)
 
 
 class _DigitalStep(LinearFilter.Step):

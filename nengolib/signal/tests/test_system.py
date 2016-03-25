@@ -92,29 +92,28 @@ def test_is_exp_stable():
 
 
 def test_scale_state():
-    syn = Lowpass(0.1)
-    ss = sys2ss(syn)
-    scaled = scale_state(*ss, radii=2)
+    sys = Lowpass(0.1)
+    scaled = scale_state(sys, radii=2)
+    assert not np.allclose(sys.B, scaled.B)
+    assert not np.allclose(sys.C, scaled.C)
 
-    # Check that it's still the same stystem, even though different matrices
-    assert sys_equal(ss, scaled)
-    assert not np.allclose(ss[1], scaled[1])
+    # Check that it's still the same system, even though different matrices
+    assert sys_equal(sys, scaled)
 
     # Check that the state vectors have half the power
-    assert np.allclose(state_norm(ss)/2, state_norm(scaled))
+    assert np.allclose(state_norm(sys)/2, state_norm(scaled))
 
 
 def test_invalid_scale_state():
-    syn = Lowpass(0.1)
-    ss = sys2ss(syn)
+    sys = Lowpass(0.1)
 
-    scale_state(*ss, radii=[1])
-
-    with pytest.raises(ValueError):
-        scale_state(*ss, radii=[[1]])
+    scale_state(sys, radii=[1])
 
     with pytest.raises(ValueError):
-        scale_state(*ss, radii=[1, 2])
+        scale_state(sys, radii=[[1]])
+
+    with pytest.raises(ValueError):
+        scale_state(sys, radii=[1, 2])
 
 
 @pytest.mark.parametrize("sys", [

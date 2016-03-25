@@ -46,4 +46,4 @@ def ss2sim(sys, synapse, dt=None):
             A = 1./(1 - a) * (A - a * np.eye(len(A)))
             B = 1./(1 - a) * B
 
-    return (A / gain, B / gain, C, D)
+    return LinearSystem((A / gain, B / gain, C, D), analog=dt is None)
