@@ -36,7 +36,7 @@ def test_hetero_neurons(Simulator):
         stim = nengo.Node(size_in=dims_in)
         for i in range(dims_in):
             nengo.Connection(
-                nengo.Node(output=nengo.processes.WhiteSignal(T)),
+                nengo.Node(output=nengo.processes.WhiteSignal(T, high=10)),
                 stim[i], synapse=None)
 
         # HeteroSynapse node
@@ -83,7 +83,7 @@ def test_hetero_vector(Simulator):
         stim = nengo.Node(size_in=dims_in)
         for i in range(dims_in):
             nengo.Connection(
-                nengo.Node(output=nengo.processes.WhiteSignal(T)),
+                nengo.Node(output=nengo.processes.WhiteSignal(T, high=10)),
                 stim[i], synapse=None)
 
         # HeteroSynapse Nodes
@@ -129,7 +129,7 @@ def test_hetero_multi_vector(Simulator):
         stim = nengo.Node(size_in=dims_in)
         for i in range(dims_in):
             nengo.Connection(
-                nengo.Node(output=nengo.processes.WhiteSignal(T)),
+                nengo.Node(output=nengo.processes.WhiteSignal(T, high=10)),
                 stim[i], synapse=None)
 
         # HeteroSynapse Nodes

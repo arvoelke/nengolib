@@ -124,7 +124,7 @@ def test_simulation(sys, Simulator, plt):
     assert sys == old_sys
 
     with Network() as model:
-        stim = nengo.Node(output=nengo.processes.WhiteSignal(1.0))
+        stim = nengo.Node(output=nengo.processes.WhiteSignal(1.0, high=10))
         out_new = nengo.Node(size_in=2)
         out_old = nengo.Node(size_in=2)
         nengo.Connection(stim, out_new, transform=[[1], [-1]], synapse=sys)
