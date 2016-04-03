@@ -8,6 +8,8 @@ from nengolib.network import Network
 from nengolib.signal.system import LinearSystem, canonical, is_exp_stable
 from nengolib.synapses.mapping import ss2sim
 
+__all__ = ['LinearNetwork']
+
 
 class LinearNetwork(Network):
     """Network implementing a linear time-invariant (LTI) system."""

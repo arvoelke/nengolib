@@ -7,15 +7,15 @@ Additional extensions for large-scale brain modelling with Nengo.
  - `nengolib.Network(...)` serves as a drop-in replacement for `nengo.Network(...)` to automatically improve the encoding of an ensemble, the spike-timing of each neuron, and the accuracy of the decoders.
  - `nengolib.HeteroSynapse(...)` allows one to use a different synapse per dimension/neuron when connecting to an ensemble.
  - `nengolib.LinearFilter(...)` is a drop-in replacement for `nengo.LinearFilter(...)` that improves the efficiency of simulations for higher-order synapse models.
- 
+
 ### Synapse Features
  - NengoLib extends the `LinearFilter` object by adding a natural language for building synaptic models. These linear systems can be scaled, added, multiplied, inverted, compared, converted to discrete time, converted to continuous time, and represented in various standard formats (along with some caching, error checking, and other nice features). These synapses can then be simulated within Nengo. For example, to introduce a pure delay of `k` timesteps:
- 
+
    ```
  from nengolib.signal import s, z
  nengo.Connection(a, b, synapse=z**(-k))
    ```
-   which is equivalent to using `(~z)**k` by use of the _reverse shift operator_. Or we can implement a double-exponential synapse:
+   which is equivalent to using `nengolib.PureDelay(k)` or `(~z)**k` by use of the _reverse shift operator_. Or we can implement a double-exponential synapse:
    ```
 nengolib.synapses.DoubleExp(tau1, tau2)
 ```

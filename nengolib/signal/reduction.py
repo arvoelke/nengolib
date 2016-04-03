@@ -28,7 +28,7 @@ def minreal(sys, tol=1e-8):
             mz[bad[0]] = False
         else:  # include this pole
             mp[i] = True
-    return LinearSystem((z[mz], p[mp], k))
+    return LinearSystem((z[mz], p[mp], k), analog=sys.analog)
 
 
 def similarity_transform(sys, T, Tinv=None):
@@ -119,7 +119,7 @@ def modred(sys, keep_states, method='del'):
     else:
         raise ValueError("invalid method: '%s'" % (method,))
 
-    return LinearSystem((RA, RB, RC, RD))
+    return LinearSystem((RA, RB, RC, RD), analog=sys.analog)
 
 
 def balred(sys, order, method='del'):
