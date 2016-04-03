@@ -31,13 +31,7 @@ def test_spherical_coords(m, rng):
                            dist.cdf(b+width) - dist.cdf(b), atol=1e-2)
 
 
-def test_sobol_invalid_dims():
-    with pytest.raises(ValueError):
-        Sobol().sample(1, d=0)
-
-    with pytest.raises(ValueError):
-        Sobol().sample(1, d=1.5)
-
+def test_sobol():
     # check derministic
     s1 = Sobol().sample(3, 4)
     s2 = Sobol().sample(3, 4)
@@ -46,8 +40,23 @@ def test_sobol_invalid_dims():
     # check shape
     assert s1.shape == (3, 4)
 
+
+def test_sobol_invalid_dims():
+    with pytest.raises(ValueError):
+        Sobol().sample(1, d=0)
+
+    with pytest.raises(ValueError):
+        Sobol().sample(1, d=1.5)
+
     with warns(UserWarning):
         Sobol().sample(2, d=41)
+
+
+def _furthest(x):
+    # returns largest distance from each point
+    diffs = x[:, None, :] - x[None, :, :]
+    dists = norm(diffs, axis=2)
+    return np.max(dists, axis=0)
 
 
 @pytest.mark.parametrize("d", [1, 2, 4, 16, 64])
@@ -55,7 +64,12 @@ def test_ball(d, rng):
     n = 200
     x = ball.sample(n, d, rng)
     assert x.shape == (n, d)
-    assert (norm(x, axis=1) <= 1).all()
+
+    dist = norm(x, axis=1)
+    assert (dist <= 1).all()
+
+    f = _furthest(x)
+    assert (f > dist + 0.5).all()
 
 
 @pytest.mark.parametrize("d", [1, 2, 4, 16, 64])
@@ -64,3 +78,6 @@ def test_sphere(d, rng):
     x = sphere.sample(n, d, rng)
     assert x.shape == (n, d)
     assert np.allclose(norm(x, axis=1), 1)
+
+    f = _furthest(x)
+    assert (f > 1.5).all()

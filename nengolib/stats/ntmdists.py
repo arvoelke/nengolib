@@ -58,8 +58,7 @@ class Sobol(Distribution):
 class ScatteredHypersphere(UniformHypersphere):
 
     def sample(self, num, d=1, rng=np.random, ntm=Sobol()):
-        if d == 1 and self.surface:
-            # Only 2 possible values to choose from: {-1, 1}
+        if d == 1:
             return super(ScatteredHypersphere, self).sample(num, d, rng)
 
         if self.surface:
@@ -75,13 +74,12 @@ class ScatteredHypersphere(UniformHypersphere):
 
         # spherical coordinate transform
         mapped = np.ones((num, d))
-        if d > 1:
-            i = np.ones(d-1)
-            i[-1] = 2.0
-            s = np.sin(i[None, :] * np.pi * cube)
-            c = np.cos(i[None, :] * np.pi * cube)
-            mapped[:, 1:] = np.cumprod(s, axis=1)
-            mapped[:, :-1] *= c
+        i = np.ones(d-1)
+        i[-1] = 2.0
+        s = np.sin(i[None, :] * np.pi * cube)
+        c = np.cos(i[None, :] * np.pi * cube)
+        mapped[:, 1:] = np.cumprod(s, axis=1)
+        mapped[:, :-1] *= c
 
         # radius adjustment for ball versus sphere, and rotate
         rotation = random_orthogonal(d, rng=rng)
