@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from nengolib.linalg import random_orthogonal
+from nengolib.linalg.ortho import random_orthogonal
 
 
 @pytest.mark.parametrize("d", [1, 2, 3, 50, 100])
