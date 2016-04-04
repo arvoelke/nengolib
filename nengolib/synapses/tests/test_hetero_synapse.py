@@ -11,16 +11,16 @@ from nengolib.stats import sphere
 from nengolib.synapses import Lowpass, Alpha
 
 
-def test_hetero_neurons(Simulator):
+def test_hetero_neurons(Simulator, rng, seed):
 
     n_neurons = 100
     dt = 0.001
     T = 0.1
     dims_in = 2
 
-    taus = nengo.dists.Uniform(0.001, 0.1).sample(n_neurons)
+    taus = nengo.dists.Uniform(0.001, 0.1).sample(n_neurons, rng=rng)
     synapses = [Lowpass(tau) for tau in taus]
-    encoders = sphere.sample(n_neurons, dims_in)
+    encoders = sphere.sample(n_neurons, dims_in, rng=rng)
 
     hs = HeteroSynapse(synapses, dt)
 
@@ -31,7 +31,7 @@ def test_hetero_neurons(Simulator):
         # efficient solution.
         return np.sum(encoders * hs.from_vector(x), axis=1)
 
-    with Network() as model:
+    with Network(seed=seed) as model:
         # Input stimulus
         stim = nengo.Node(size_in=dims_in)
         for i in range(dims_in):
@@ -62,13 +62,13 @@ def test_hetero_neurons(Simulator):
         p_act = nengo.Probe(x[1].neurons, synapse=None)
 
     # Check correctness
-    sim = Simulator(model, dt=dt)
+    sim = Simulator(model, dt=dt, seed=seed)
     sim.run(T)
 
     assert np.allclose(sim.data[p_act], sim.data[p_exp])
 
 
-def test_hetero_vector(Simulator):
+def test_hetero_vector(Simulator, rng, seed):
     n_neurons = 20
     dt = 0.0005
     T = 0.1
@@ -76,9 +76,9 @@ def test_hetero_vector(Simulator):
     synapses = [Alpha(0.1), Lowpass(0.005)]
     assert dims_in == len(synapses)
 
-    encoders = sphere.sample(n_neurons, dims_in)
+    encoders = sphere.sample(n_neurons, dims_in, rng=rng)
 
-    with Network() as model:
+    with Network(seed=seed) as model:
         # Input stimulus
         stim = nengo.Node(size_in=dims_in)
         for i in range(dims_in):
@@ -108,13 +108,13 @@ def test_hetero_vector(Simulator):
         p_act_elemwise = nengo.Probe(x[1], synapse=None)
 
     # Check correctness
-    sim = Simulator(model, dt=dt)
+    sim = Simulator(model, dt=dt, seed=seed)
     sim.run(T)
 
     assert np.allclose(sim.data[p_act_elemwise], sim.data[p_exp])
 
 
-def test_hetero_multi_vector(Simulator):
+def test_hetero_multi_vector(Simulator, rng, seed):
     n_neurons = 20
     dt = 0.0005
     T = 0.1
@@ -122,9 +122,9 @@ def test_hetero_multi_vector(Simulator):
     synapses = [Alpha(0.1), Lowpass(0.005), Alpha(0.02)]
 
     dims_out = len(synapses)*dims_in
-    encoders = sphere.sample(n_neurons, dims_out)
+    encoders = sphere.sample(n_neurons, dims_out, rng=rng)
 
-    with Network() as model:
+    with Network(seed=seed) as model:
         # Input stimulus
         stim = nengo.Node(size_in=dims_in)
         for i in range(dims_in):
@@ -164,7 +164,7 @@ def test_hetero_multi_vector(Simulator):
         p_act_elemwise = nengo.Probe(x[2], synapse=None)
 
     # Check correctness
-    sim = Simulator(model, dt=dt)
+    sim = Simulator(model, dt=dt, seed=seed)
     sim.run(T)
 
     assert np.allclose(sim.data[p_act_dot], sim.data[p_exp])
