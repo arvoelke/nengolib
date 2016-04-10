@@ -5,10 +5,17 @@ from nengo.utils.numpy import rmse
 from nengo.utils.testing import warns
 
 from nengolib.signal.reduction import (
-    minreal, similarity_transform, balreal, modred, balred)
+    hankel, minreal, similarity_transform, balreal, modred, balred)
+from nengolib import Lowpass, Alpha
 from nengolib.signal import (
     sys2ss, sys_equal, LinearSystem, apply_filter, control_gram, observe_gram)
-from nengolib import Lowpass, Alpha
+from nengolib.synapses import PadeDelay
+
+
+@pytest.mark.parametrize("sys", [
+    PadeDelay(3, 4, 0.1), PadeDelay(5, 5, 0.2), Alpha(0.2)])
+def test_hankel(sys):
+    assert np.allclose(hankel(sys), balreal(sys)[1])
 
 
 def test_minreal():

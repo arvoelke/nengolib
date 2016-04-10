@@ -6,7 +6,9 @@ from nengo.utils.testing import warns
 
 from nengolib.networks.linear_network import LinearNetwork
 from nengolib import Network
-from nengolib.signal import apply_filter, s
+from nengolib.signal import (
+    apply_filter, impulse, s, Controllable, decompose_states)
+from nengolib.synapses import PadeDelay
 
 
 @pytest.mark.parametrize("neuron_type,atol", [(nengo.neurons.Direct(), 1e-08),
@@ -50,4 +52,44 @@ def test_linear_network(neuron_type, atol, Simulator, plt, seed, rng):
 def test_expstable():
     with warns(UserWarning):
         with Network():
-            LinearNetwork(~s, 1, synapse=0.02, dt=0.001)
+            LinearNetwork(~s, 1, synapse=0.02, dt=0.001,
+                          normalizer=Controllable())
+
+
+def test_radii(Simulator, seed, plt):
+    sys = PadeDelay(3, 4, 0.1)
+    dt = 0.001
+    T = 0.3
+
+    plt.figure()
+
+    # Precompute the exact bounds for an impulse stimulus (note: this by
+    # default will use the canonical controllable realization).
+    radii = []
+    for sub in decompose_states(sys):
+        response = impulse(sub, dt=dt, length=int(T / dt))
+        amplitude = np.max(abs(response))
+        assert amplitude >= 1e-6  # otherwise numerical issues
+        radii.append(amplitude)
+
+        plt.plot(response / amplitude, linestyle='--')
+
+    with Network(seed=seed) as model:
+        # Impulse stimulus
+        stim = nengo.Node(output=lambda t: 1 / dt if t <= dt else 0)
+
+        # Set explicit radii for controllable realization
+        subnet = LinearNetwork(sys, n_neurons=1, synapse=0.2, dt=dt,
+                               radii=radii, normalizer=Controllable(),
+                               neuron_type=nengo.neurons.Direct())
+        nengo.Connection(stim, subnet.input, synapse=None)
+        p = nengo.Probe(subnet.x.output, synapse=None)
+
+    assert subnet.info == {}
+
+    sim = nengo.Simulator(model, dt=dt)
+    sim.run(T)
+
+    plt.plot(sim.data[p], lw=5, alpha=0.5)
+
+    assert np.allclose(np.max(abs(sim.data[p]), axis=0), 1, atol=1e-4)

@@ -9,9 +9,9 @@ from nengo.synapses import LinearFilter
 from nengo.utils.compat import is_integer, is_number, with_metaclass
 
 __all__ = [
-    'sys2ss', 'sys2tf', 'sys2zpk', 'canonical', 'sys_equal',
-    'is_exp_stable', 'scale_state',
-    'NengoLinearFilterMixin', 'LinearSystem', 's', 'z']
+    'sys2ss', 'sys2tf', 'sys2zpk', 'canonical', 'sys_equal', 'ss_equal',
+    'is_exp_stable', 'decompose_states', 'NengoLinearFilterMixin',
+    'LinearSystem', 's', 'z']
 
 
 _LSYS, _LFILT, _NUM, _TF, _ZPK, _SS = range(6)
@@ -127,12 +127,28 @@ def canonical(sys, controllable=True):
 def sys_equal(sys1, sys2, rtol=1e-05, atol=1e-08):
     """Returns true iff sys1 and sys2 have the same transfer functions."""
     # TODO: doesn't do pole-zero cancellation
+    sys1 = LinearSystem(sys1)
+    sys2 = LinearSystem(sys2)
+    if sys1.analog != sys2.analog:
+        raise ValueError("cannot compare analog with discrete system")
     tf1 = normalize(*sys2tf(sys1))
     tf2 = normalize(*sys2tf(sys2))
     for t1, t2 in zip(tf1, tf2):
         if len(t1) != len(t2) or not np.allclose(t1, t2, rtol=rtol, atol=atol):
             return False
     return True
+
+
+def ss_equal(sys1, sys2, rtol=1e-05, atol=1e-08):
+    """Returns true iff sys1 and sys2 have the same realizations."""
+    sys1 = LinearSystem(sys1)
+    sys2 = LinearSystem(sys2)
+    if sys1.analog != sys2.analog:
+        raise ValueError("cannot compare analog with discrete system")
+    return (np.allclose(sys1.A, sys2.A, rtol=rtol, atol=atol) and
+            np.allclose(sys1.B, sys2.B, rtol=rtol, atol=atol) and
+            np.allclose(sys1.C, sys2.C, rtol=rtol, atol=atol) and
+            np.allclose(sys1.D, sys2.D, rtol=rtol, atol=atol))
 
 
 def _is_exp_stable(A):
@@ -146,36 +162,27 @@ def is_exp_stable(sys):
     return _is_exp_stable(LinearSystem(sys).A)
 
 
-def scale_state(sys, radii=1.0):
-    """Scales the system to compensate for radii of the state."""
-    # TODO: move to another file
+def decompose_states(sys):
+    """Returns the LinearSystem for each state."""
     sys = LinearSystem(sys)
-    A, B, C, D = sys.ss
-    r = np.asarray(radii, dtype=np.float64)
-    if r.ndim > 1:
-        raise ValueError("radii (%s) must be a 1-dim array or scalar" % (
-            radii,))
-    elif r.ndim == 0:
-        r = np.ones(len(A)) * r
-    elif len(r) != len(A):
-        raise ValueError("radii (%s) length must match state dimension %d" % (
-            radii, len(A)))
-    A = A / r[:, None] * r
-    B = B / r[:, None]
-    C = C * r
-    return LinearSystem((A, B, C, D), analog=sys.analog)
+    r = []
+    for i in range(len(sys)):
+        subsys = (sys.A, sys.B, np.eye(len(sys))[i:i+1, :], [[0]])
+        r.append(LinearSystem(subsys, analog=sys.analog))
+    return r
 
 
 class _DigitalStep(LinearFilter.Step):
 
-    def __init__(self, sys, output, y0=None):
+    def __init__(self, sys, output, y0=None, dtype=np.float64):
         A, B, C, D = canonical(sys).ss
         self._a = A[0, :]
         assert len(C) == 1
         self._c = C[0, :]
         assert D.size == 1
         self._d = D.flatten()[0]
-        self._x = np.zeros((len(self._a), len(np.atleast_1d(output))))
+        self._x = np.zeros(
+            (len(self._a), len(np.atleast_1d(output))), dtype=dtype)
         self.output = output
         if y0 is not None:
             self.output[...] = y0
@@ -192,7 +199,8 @@ class NengoLinearFilterMixin(LinearFilter):
 
     seed = None
 
-    def make_step(self, shape_in, shape_out, dt, rng, y0=None, method='zoh'):
+    def make_step(self, shape_in, shape_out, dt, rng, y0=None,
+                  dtype=np.float64, method='zoh'):
         assert shape_in == shape_out
         output = np.zeros(shape_out)
 
@@ -211,7 +219,7 @@ class NengoLinearFilterMixin(LinearFilter):
             warnings.warn("Synapse (%s) has extra delay due to passthrough "
                           "(https://github.com/nengo/nengo/issues/938)" % sys)
 
-        return _DigitalStep(sys, output, y0=y0)
+        return _DigitalStep(sys, output, y0=y0, dtype=dtype)
 
 
 class LinearSystemType(type):

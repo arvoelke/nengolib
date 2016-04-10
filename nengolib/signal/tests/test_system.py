@@ -6,10 +6,10 @@ import pytest
 import nengo
 
 from nengolib.signal.system import (
-    sys2ss, sys2zpk, sys2tf, canonical, sys_equal, is_exp_stable, scale_state,
-    LinearSystem, s, z)
+    sys2ss, sys2zpk, sys2tf, canonical, sys_equal, ss_equal, is_exp_stable,
+    decompose_states, LinearSystem, s, z)
 from nengolib import Network, Lowpass, Alpha, LinearFilter
-from nengolib.signal import state_norm
+from nengolib.synapses import PadeDelay
 
 
 def test_sys_conversions():
@@ -55,6 +55,12 @@ def test_sys_conversions():
 def test_check_sys_equal():
     assert not sys_equal(np.zeros(2), np.zeros(3))
 
+    with pytest.raises(ValueError):
+        assert not sys_equal(s, z)
+
+    with pytest.raises(ValueError):
+        assert not ss_equal(s, z)
+
 
 def test_canonical():
     sys = ([1], [1], [1], [0])
@@ -83,18 +89,17 @@ def test_canonical():
     csys = canonical(sys, controllable=True)
     osys = canonical(sys, controllable=False)
 
+    assert sys_equal(csys, osys)
+    assert not ss_equal(csys, osys)  # different state-space realizations
+
     A, B, C, D = csys.ss
     assert sys_equal(csys, sys)
-    assert np.allclose(csys.A, [[-20, -100], [1, 0]])
-    assert np.allclose(csys.B, [[1], [0]])
-    assert np.allclose(csys.C, [[0, 100]])
-    assert np.allclose(csys.D, [[0]])
+    assert ss_equal(csys,
+                    ([[-20, -100], [1, 0]], [[1], [0]], [[0, 100]], [[0]]))
 
     assert sys_equal(osys, sys)
-    assert np.allclose(osys.A, [[-20, 1], [-100, 0]])
-    assert np.allclose(osys.B, [[0], [100]])
-    assert np.allclose(osys.C, [[1, 0]])
-    assert np.allclose(osys.D, [[0]])
+    assert ss_equal(osys,
+                    ([[-20, 1], [-100, 0]], [[0], [100]], [[1, 0]],  [[0]]))
 
 
 def test_is_exp_stable():
@@ -105,29 +110,9 @@ def test_is_exp_stable():
     assert not is_exp_stable(sys)
 
 
-def test_scale_state():
-    sys = Lowpass(0.1)
-    scaled = scale_state(sys, radii=2)
-    assert not np.allclose(sys.B, scaled.B)
-    assert not np.allclose(sys.C, scaled.C)
-
-    # Check that it's still the same system, even though different matrices
-    assert sys_equal(sys, scaled)
-
-    # Check that the state vectors have half the power
-    assert np.allclose(state_norm(sys)/2, state_norm(scaled))
-
-
-def test_invalid_scale_state():
-    sys = Lowpass(0.1)
-
-    scale_state(sys, radii=[1])
-
-    with pytest.raises(ValueError):
-        scale_state(sys, radii=[[1]])
-
-    with pytest.raises(ValueError):
-        scale_state(sys, radii=[1, 2])
+@pytest.mark.parametrize("sys", [PadeDelay(3, 4, 0.1), PadeDelay(5, 5, 0.2)])
+def test_decompose_states(sys):
+    assert np.dot(sys.C, decompose_states(sys)) + sys.D == sys
 
 
 @pytest.mark.parametrize("sys", [

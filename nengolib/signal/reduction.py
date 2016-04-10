@@ -2,14 +2,30 @@ import warnings
 
 import numpy as np
 
-from scipy.linalg import cholesky, svd, inv
+from scipy.linalg import cholesky, svd, inv, eig
 
 from nengolib.signal.lyapunov import control_gram, observe_gram
 from nengolib.signal.system import sys2zpk, LinearSystem
 
-__all__ = ['minreal', 'similarity_transform', 'balreal', 'modred', 'balred']
+__all__ = ['minreal', 'similarity_transform', 'balreal', 'modred', 'balred',
+           'hankel']
 
 # TODO: reference linear_model_reduction.ipynb in auto-generated docs
+
+
+def hankel(sys):
+    """Compute Hankel singular values of a linear system.
+
+    References:
+        [1] Glover, Keith, and Jonathan R. Partington. "Bounds on the
+            achievable accuracy in model reduction." Modelling, robustness and
+            sensitivity reduction in control systems. Springer Berlin
+            Heidelberg, 1987. 95-118.
+    """
+    sys = LinearSystem(sys)
+    R, O = control_gram(sys), observe_gram(sys)
+    # sort needed to be consistent across different versions
+    return np.sort(np.sqrt(abs(eig(np.dot(O, R))[0])))[::-1]
 
 
 def minreal(sys, tol=1e-8):
