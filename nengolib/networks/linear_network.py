@@ -5,7 +5,7 @@ from nengo.params import NumberParam
 from nengo.synapses import SynapseParam
 
 from nengolib.network import Network
-from nengolib.signal.normalization import HankelNorm as default_normalizer
+from nengolib.signal.normalization import L1Norm as default_normalizer
 from nengolib.signal.system import LinearSystem, is_exp_stable
 from nengolib.synapses.mapping import ss2sim
 
@@ -35,9 +35,8 @@ class LinearNetwork(Network):
         self.normalizer = normalizer
 
         if not is_exp_stable(self.sys):
-            # This means certain normalizers won't work, such as the default
-            # WorstCaseHankel normalizer, because the worst-case output is
-            # now unbounded.
+            # This means certain normalizers won't work, because the worst-case
+            # output is now unbounded.
             warnings.warn("system (%s) is not exponentially stable" % self.sys)
 
         # Obtain a normalized state-space representation

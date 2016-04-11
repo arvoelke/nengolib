@@ -188,8 +188,8 @@ class _DigitalStep(LinearFilter.Step):
             self.output[...] = y0
 
     def __call__(self, t, u):
-        r = np.dot(self._a, self._x)
         self.output[...] = np.dot(self._c, self._x) + self._d*u
+        r = np.dot(self._a, self._x)
         self._x[1:, :] = self._x[:-1, :]
         self._x[0, :] = r + u
         return self.output

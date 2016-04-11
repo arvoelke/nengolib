@@ -4,9 +4,9 @@ import pytest
 from nengo.utils.numpy import norm
 
 from nengolib.signal.lyapunov import (
-    _H2P, state_norm, control_gram, observe_gram)
-from nengolib.signal.discrete import cont2discrete
-from nengolib.signal import sys2ss, impulse
+    _H2P, state_norm, control_gram, observe_gram, l1_norm)
+from nengolib.signal import sys2ss, impulse, cont2discrete, s, z
+from nengolib.synapses import Bandpass, PadeDelay
 from nengolib import Lowpass, Alpha
 
 
@@ -51,11 +51,6 @@ def test_state_norm(plt):
     plt.legend()
 
 
-def test_invalid_state_norm():
-    with pytest.raises(ValueError):
-        state_norm(Alpha(0.1), method=None)
-
-
 def test_grams():
     sys = 0.6*Alpha(0.01) + 0.4*Lowpass(0.05)
 
@@ -68,3 +63,43 @@ def test_grams():
     Q = observe_gram(sys)
     assert np.allclose(np.dot(A.T, Q) + np.dot(Q, A), -np.dot(C.T, C))
     assert np.linalg.matrix_rank(Q) == len(Q)  # observable
+
+
+def test_l1_norm_known():
+    # Check that Lowpass has a norm of exactly 1
+    l1, rtol = l1_norm(Lowpass(0.1))
+    assert np.allclose(l1, 1)
+    assert np.allclose(rtol, 0)
+
+    # Check that Alpha scaled by a has a norm of approximately abs(a)
+    for a in (-2, 3):
+        for desired_rtol in (1e-1, 1e-2, 1e-4, 1e-8):
+            l1, rtol = l1_norm(a*Alpha(0.1), rtol=desired_rtol)
+            assert np.allclose(l1, abs(a), rtol=rtol)
+            assert rtol <= desired_rtol
+
+
+@pytest.mark.parametrize("sys", [
+    Bandpass(10, 3), Bandpass(50, 50), PadeDelay(3, 4, 0.02),
+    PadeDelay(4, 4, 0.2)])
+def test_l1_norm_unknown(sys):
+    # These impulse responses have zero-crossings which makes computing their
+    # exact L1-norm infeasible.
+    dt = 0.0001
+    length = 500000
+    response = impulse(sys, dt=dt, length=length)
+    assert np.allclose(response[-10:], 0)
+    l1_est = np.sum(abs(response) * dt)
+
+    desired_rtol = 1e-6
+    l1, rtol = l1_norm(sys, rtol=desired_rtol, max_length=2*length)
+    assert np.allclose(l1, l1_est, rtol=1e-2)
+    assert rtol <= desired_rtol
+
+
+def test_l1_norm_bad():
+    with pytest.raises(ValueError):
+        l1_norm(~z)
+
+    with pytest.raises(ValueError):
+        l1_norm(~s)

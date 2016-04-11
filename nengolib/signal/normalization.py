@@ -1,16 +1,16 @@
 import numpy as np
 
+from nengolib.signal.lyapunov import l1_norm
 from nengolib.signal.reduction import hankel
 from nengolib.signal.system import LinearSystem, decompose_states, canonical
 
 
 __all__ = ['scale_state', 'AbstractNormalizer', 'Controllable',
-           'Observable', 'AbstractScaleState', 'HankelNorm']
+           'Observable', 'AbstractScaleState', 'HankelNorm', 'L1Norm']
 
 
 def scale_state(sys, radii=1.0):
     """Scales the system to compensate for radii of the state."""
-    # TODO: move to another file
     sys = LinearSystem(sys)
     A, B, C, D = sys.ss
     r = np.asarray(radii, dtype=np.float64)
@@ -22,6 +22,7 @@ def scale_state(sys, radii=1.0):
     elif len(r) != len(A):
         raise ValueError("radii (%s) length must match state dimension %d" % (
             radii, len(A)))
+    # Note: following is equivalent to a diagonal similarity transform T = rI
     A = A / r[:, None] * r
     B = B / r[:, None]
     C = C * r
@@ -31,7 +32,7 @@ def scale_state(sys, radii=1.0):
 class AbstractNormalizer(object):
     """Abstract class for normalizing a LinearSystem."""
 
-    def __call__(self, sys):
+    def __call__(self, sys, radii=1.0):
         raise NotImplementedError("normalizer must be callable")
 
 
@@ -64,13 +65,8 @@ class AbstractScaleState(AbstractNormalizer):
 class HankelNorm(AbstractScaleState):
     """Upper-bounds the worst-case state using Hankel singular values.
 
-    This enforces that any input (even full spectrum white-noise) within
-    [-1, 1] will keep the state within the given radii. However, since this is
-    an upper-bound, space may be "wasted" by over-estimating.
-
-    An upper-bound on the worst-case output is given by the L1-norm of a system
-    which in turn is bounded by 2 times the sum of the Hankel singular
-    values _[1].
+    The worst-case output is given by the L1-norm of a system which in turn is
+    bounded by 2 times the sum of the Hankel singular values [1]_.
 
     References:
         [1] Khaisongkram, W., and D. Banjerdpongchai. "On computing the
@@ -80,4 +76,25 @@ class HankelNorm(AbstractScaleState):
     """
 
     def radii(self, sys):
+        # TODO: this recomputes the same control_gram multiple times over
         return [2 * np.sum(hankel(sub)) for sub in decompose_states(sys)]
+
+
+class L1Norm(AbstractScaleState):
+    """Approximates the worst-case state using the L1-norm.
+
+    This enforces that any input (even full spectrum white-noise) bounded by
+    [-1, 1] will keep the state within the given radii.
+
+    See ``l1_norm`` for details.
+    """
+
+    def __init__(self, rtol=1e-6, max_length=2**18):
+        self.rtol = rtol
+        self.max_length = max_length
+
+    def radii(self, sys):
+        # TODO: this also recomputes many subcalculations in l1_norm
+        return np.squeeze(
+            [l1_norm(sub, rtol=self.rtol, max_length=self.max_length)[0]
+             for sub in decompose_states(sys)])
