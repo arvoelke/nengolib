@@ -8,8 +8,10 @@ Additional extensions for large-scale brain modelling with Nengo.
  - `nengolib.HeteroSynapse(...)` allows one to use a different synapse per dimension/neuron when connecting to an ensemble.
  - `nengolib.LinearFilter(...)` is a drop-in replacement for `nengo.LinearFilter(...)` that improves the efficiency of simulations for higher-order synapse models.
 
-### Synapse Features
- - NengoLib extends the `LinearFilter` object by adding a natural language for building synaptic models. These linear systems can be scaled, added, multiplied, inverted, compared, converted to discrete time, converted to continuous time, and represented in various standard formats (along with some caching, error checking, and other nice features). These synapses can then be simulated within Nengo. For example, to introduce a pure delay of `k` timesteps:
+### Synapses and Filters
+ - NengoLib extends the `LinearFilter` object by adding a natural language for building synaptic models. These linear systems can be scaled, added, multiplied, inverted, compared, converted to discrete time, and converted to continuous time.
+ - This unifies a number of common formats (transfer function, state-space, zero-pole-gain, and `nengo.LinearFilter`) to support manipulating these systems within a common framework, while supporting caching, error checking, and various functionality.
+ - These synapses can be easily simulated within Nengo. For example, to introduce a pure delay of `k` timesteps:
 
    ```
  from nengolib.signal import s, z
@@ -21,7 +23,11 @@ nengolib.synapses.DoubleExp(tau1, tau2)
 ```
    which is equivalent to using `1/((tau1*s + 1)*(tau2*s + 1))` by use of the continuous _differential operator_.
  - `nengolib.signal.{minreal,balreal,modred}` are tools for model order reduction using _minimal_ and _balanced realizations_. See `doc/notebooks/research/linear_model_reduction.ipynb` for more information.
- - `nengolib.synapses.ss2sim` can map any `LinearSystem` object to an equivalent system that uses the given synapse. This uses a generalization of _Principle 3_ from the NEF that supports both digital and analog hardware implementations.
+
+### Networks
+ - `nengolib.networks.LinearNetwork` is a Nengo-style network that can map any causal linear system (including any of the synapses above) onto a recurrently connected population of neurons.
+ - This uses `nengolib.synapses.ss2sim`, which maps the dynamics of the system onto the dynamics of the given synapse. This is accomplished by generalizing _Principle 3_ from the NEF to support various synapses in both digital and analog hardware implementations.
+ - See `doc/notebooks/examples/linear_network.ipynb` for more information.
 
 ### Installation
 
