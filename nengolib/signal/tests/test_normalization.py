@@ -67,8 +67,7 @@ def _test_normalization(Simulator, sys, rng, normalizer, l1_lower,
 
     # lower bound is to see how well Hankel norm approximates L1 norm
     assert (l1_lower*subnet.info['radii'] <= l1_norms).all()
-    assert ((l1_norms <= subnet.info['radii']) |
-            (l1_norms <= 1e-6)).all()
+    assert (l1_norms <= subnet.info['radii'] + 1e-4).all()
 
     sim = Simulator(model, dt=dt)
     sim.run(T)
