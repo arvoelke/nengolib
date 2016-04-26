@@ -11,7 +11,7 @@ from nengolib.signal import (
 from nengolib.synapses import PadeDelay
 
 
-@pytest.mark.parametrize("neuron_type,atol", [(nengo.neurons.Direct(), 1e-08),
+@pytest.mark.parametrize("neuron_type,atol", [(nengo.neurons.Direct(), 1e-14),
                                               (nengo.neurons.LIFRate(), 5e-01),
                                               (nengo.neurons.LIF(), 1e-01)])
 def test_linear_network(neuron_type, atol, Simulator, plt, seed, rng):
@@ -32,6 +32,8 @@ def test_linear_network(neuron_type, atol, Simulator, plt, seed, rng):
         nengo.Connection(
             stim, subnet.input, synapse=None, transform=scale_input)
 
+        assert subnet.synapse == subnet.input_synapse
+
         p_stim = nengo.Probe(subnet.input, synapse=tau_probe)
         p_x = nengo.Probe(subnet.x.output, synapse=tau_probe)
         p_output = nengo.Probe(subnet.output, synapse=tau_probe)
@@ -49,11 +51,37 @@ def test_linear_network(neuron_type, atol, Simulator, plt, seed, rng):
     assert np.allclose(sim.data[p_output], expected, atol=atol)
 
 
+def test_unfiltered(Simulator, seed, rng):
+    dt = 0.001
+    T = 1.0
+
+    sys = nengo.Alpha(0.1)
+    synapse = 0.01
+
+    with Network(seed=seed) as model:
+        stim = nengo.Node(
+            output=nengo.processes.WhiteSignal(T, high=10, seed=seed))
+        subnet = LinearNetwork(
+            sys, 1, synapse=synapse, input_synapse=None, dt=dt,
+            neuron_type=nengo.neurons.Direct())
+        nengo.Connection(stim, subnet.input, synapse=None)
+
+        assert subnet.input_synapse is None
+
+        p_ideal = nengo.Probe(subnet.input, synapse=sys)
+        p_output = nengo.Probe(subnet.output, synapse=synapse)
+
+    sim = Simulator(model, dt=dt)
+    sim.run(T)
+
+    assert np.allclose(sim.data[p_output], sim.data[p_ideal])
+
+
 def test_expstable():
     with warns(UserWarning):
         with Network():
-            LinearNetwork(~s, 1, synapse=0.02, dt=0.001,
-                          normalizer=Controllable())
+            LinearNetwork(
+                ~s, 1, synapse=0.02, dt=0.001, normalizer=Controllable())
 
 
 def test_radii(Simulator, seed, plt):

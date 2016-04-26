@@ -91,6 +91,7 @@ def test_hankel_normalization(Simulator, sys, rng):
 @pytest.mark.parametrize("sys", [Lowpass(0.005)])
 def test_l1_normalization_positive(Simulator, sys, rng):
     # all the states are always positive
+    # TODO: get a test passing with higher-order PadeDelay
     _test_normalization(Simulator, sys, rng, L1Norm(),
                         l1_lower=0.999, worst_lower=0.999)
 
