@@ -1,9 +1,11 @@
 import numpy as np
+import pytest
 
 import nengo
 from nengo.utils.numpy import rmse
 
 from nengolib import Network, PerfectLIF
+from nengolib.neurons import Tanh
 
 
 def _test_lif(Simulator, seed, neuron_type, u, dt, n=500, t=2.0):
@@ -45,3 +47,28 @@ def test_perfect_lif_invariance(Simulator, seed):
         error = _test_lif(Simulator, seed, PerfectLIF(), 0, dt, t=t)
         errors.append(error)
     assert np.allclose(errors, errors[0])
+
+
+def test_tanh(Simulator, seed):
+    T = 0.1
+    with Network(seed=seed) as model:
+        stim = nengo.Node(output=nengo.processes.WhiteSignal(T, high=10))
+        x = nengo.Ensemble(2, 1, neuron_type=Tanh())
+        nengo.Connection(
+            stim, x.neurons, transform=np.ones((2, 1)), synapse=None)
+        p_stim = nengo.Probe(stim, synapse=None)
+        p_x = nengo.Probe(x.neurons, synapse=None)
+
+    sim = nengo.Simulator(model)
+    sim.run(T)
+
+    assert np.allclose(sim.data[x].gain, 1)
+    assert np.allclose(sim.data[x].bias, 0)
+    assert np.allclose(sim.data[p_x], np.tanh(sim.data[p_stim]))
+
+
+def test_tanh_decoding(Simulator):
+    with Network() as model:
+        nengo.Probe(nengo.Ensemble(10, 1, neuron_type=Tanh()), synapse=None)
+    with pytest.raises(NotImplementedError):
+        nengo.Simulator(model)

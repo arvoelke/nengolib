@@ -1,6 +1,11 @@
 import numpy as np
 
 from nengo import LIF
+from nengo.builder.builder import Builder
+from nengo.builder.neurons import SimNeurons
+from nengo.neurons import NeuronType
+
+__all__ = ['PerfectLIF', 'Unit', 'Tanh']
 
 
 class PerfectLIF(LIF):
@@ -34,3 +39,28 @@ class PerfectLIF(LIF):
         voltage[voltage < self.min_voltage] = self.min_voltage
         voltage[spiked_mask] = 0
         refractory_time[spiked_mask] = self.tau_ref + t_spike
+
+
+class Unit(NeuronType):
+    """A neuron model with gain=1 and bias=0 on its input."""
+
+    def rates(self, x, gain, bias):
+        raise NotImplementedError("unit does not support decoding")
+
+    def gain_bias(self, max_rates, intercepts):
+        return np.ones_like(max_rates), np.zeros_like(max_rates)
+
+
+class Tanh(Unit):
+    """Common hyperbolic tangent neural nonlinearity."""
+
+    def step_math(self, dt, J, output):
+        output[...] = np.tanh(J)
+
+
+@Builder.register(Unit)
+def build_unit(model, unit, neurons):
+    """Adds all unit neuron types to the nengo reference backend."""
+    model.add_op(SimNeurons(neurons=unit,
+                            J=model.sig[neurons]['in'],
+                            output=model.sig[neurons]['out']))
