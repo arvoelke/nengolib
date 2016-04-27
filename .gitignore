@@ -5,3 +5,4 @@ build
 .coverage
 coverage.xml
 nengo.simulator.logs
+nengo.simulator.plots
