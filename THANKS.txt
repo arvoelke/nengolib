@@ -10,6 +10,8 @@ Eric Hunsberger for his guidance in the areas of signal processing and linear
     systems theory.
 Michael Hopkins for providing background information on number-theoretic
     methods for obtaining more scattered samples.
+Terrence C. Stewart for helping develop the ideas behind reservoir computing
+    in Nengo by solving for the decoders over time.
 
 Institutions
 ------------
