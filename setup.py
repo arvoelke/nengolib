@@ -2,7 +2,7 @@
 
 import os
 import imp
-from distutils.core import setup
+from setuptools import setup
 
 name = 'nengolib'
 root = os.path.dirname(os.path.realpath(__file__))
