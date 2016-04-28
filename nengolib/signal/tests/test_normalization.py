@@ -85,7 +85,7 @@ def _test_normalization(Simulator, sys, rng, normalizer, l1_lower,
     PadeDelay(2, 2, 0.1)])
 def test_hankel_normalization(Simulator, sys, rng):
     _test_normalization(Simulator, sys, rng, HankelNorm(),
-                        l1_lower=0.3, worst_lower=0.2)
+                        l1_lower=0.3, worst_lower=0.15)
 
 
 @pytest.mark.parametrize("sys", [Lowpass(0.005)])
