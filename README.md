@@ -36,7 +36,7 @@ nengolib.synapses.DoubleExp(tau1, tau2)
 
 ### Installation
 
-NengoLib is tested rigorously (100% coverage) against Python 2.7, 3.4, and 3.5.
+NengoLib is tested rigorously (100% coverage) against Python 2.7, 3.4, and 3.5, and [Nengo](https://github.com/nengo/nengo) 2.1.0 and its development branch.
 
 To install the development version of NengoLib:
 ```
