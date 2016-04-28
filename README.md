@@ -17,17 +17,22 @@ Additional extensions for large-scale brain modelling with Nengo.
  from nengolib.signal import s, z
  nengo.Connection(a, b, synapse=z**(-k))
    ```
-   which is equivalent to using `nengolib.PureDelay(k)` or `(~z)**k` by use of the _reverse shift operator_. Or we can implement a double-exponential synapse:
+   which is equivalent to using `nengolib.synapses.PureDelay(k)` or `(~z)**k` by use of the _reverse shift operator_. Or we can implement a double-exponential synapse:
    ```
 nengolib.synapses.DoubleExp(tau1, tau2)
 ```
    which is equivalent to using `1/((tau1*s + 1)*(tau2*s + 1))` by use of the continuous _differential operator_.
  - `nengolib.signal.{minreal,balreal,modred}` are tools for model order reduction using _minimal_ and _balanced realizations_. See `doc/notebooks/research/linear_model_reduction.ipynb` for more information.
 
-### Networks
- - `nengolib.networks.LinearNetwork` is a Nengo-style network that can map any causal linear system (including any of the synapses above) onto a recurrently connected population of neurons.
+### Dynamical Systems
+ - `nengolib.networks.LinearNetwork(...)` is a Nengo-style network that can map any causal linear system (including any of the synapses above) onto a recurrently connected population of neurons.
  - This uses `nengolib.synapses.ss2sim`, which maps the dynamics of the system onto the dynamics of the given synapse. This is accomplished by generalizing _Principle 3_ from the NEF to support various synapses in both digital and analog hardware implementations.
  - See `doc/notebooks/examples/linear_network.ipynb` for more information.
+
+### Reservoir Computing
+ - `nengolib.networks.Reservoir(...)` provides a flexible way of building structure into "reservoirs" using Nengo and the NEF. Arbitrary Nengo networks and ensembles can be fed a training signal, to solve for decoders over time. This allows one to achieve the same (or better) performance as reservoir computing, with far fewer resources.
+ - `nengolib.networks.EchoState(...)` is a reservoir with a random pool of recurrently connected rate-neurons, intended for comparison and rapid prototyping.
+ - See `doc/notebooks/examples/reservoir_computing.ipynb` for more information.
 
 ### Installation
 
