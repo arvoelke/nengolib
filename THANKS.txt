@@ -2,10 +2,13 @@ NengoLib is an open source library of routines for use alongside Nengo.
 It was started by Aaron Voelker from the University of Waterloo as a
 collection of tools made available through work on his PhD dissertation.
 
-We acknowledge the following people for their support during the development
-of this code (in alphabetical order):
+We acknowledge the following people and institutions for their support
+during the development of this code (in alphabetical order):
 
-Chris Eliasmith for his supervision and guidance.
+People
+------
+
+Chris Eliasmith for his supervision, guidance, feedback, and testing.
 Eric Hunsberger for his guidance in the areas of signal processing and linear
     systems theory.
 Michael Hopkins for providing background information on number-theoretic
@@ -16,5 +19,6 @@ Terrence C. Stewart for helping develop the ideas behind reservoir computing
 Institutions
 ------------
 
-The Centre for Theoretical Neuroscience at the University of Waterloo for
-    their support during the development of this library.
+Applied Brain Research for advancing the development of Nengo.
+The Centre for Theoretical Neuroscience and the University of Waterloo for
+    their academic support during the development of this library.
