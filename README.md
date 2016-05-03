@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/arvoelke/nengolib.svg?branch=master)](https://travis-ci.org/arvoelke/nengolib) [![codecov.io](https://codecov.io/github/arvoelke/nengolib/coverage.svg?branch=master)](https://codecov.io/github/arvoelke/nengolib?branch=master)
 
 #  <img src="http://i.imgur.com/wSjRUi4.png" width="64" height="64" valign="middle" /> Nengo Library
-Additional extensions for large-scale brain modelling with Nengo.
+Additional extensions for large-scale brain modelling with [Nengo](https://github.com/nengo/nengo).
 
 ### Improvements
  - `nengolib.Network(...)` serves as a drop-in replacement for `nengo.Network(...)` to automatically improve the encoding of an ensemble, the spike-timing of each neuron, and the accuracy of the decoders.
@@ -10,7 +10,7 @@ Additional extensions for large-scale brain modelling with Nengo.
 
 ### Synapses and Filters
  - NengoLib extends the `LinearFilter` object by adding a natural language for building synaptic models. These linear systems can be scaled, added, multiplied, inverted, compared, converted to discrete time, and converted to continuous time.
- - This unifies a number of common formats (transfer function, state-space, zero-pole-gain, and `nengo.LinearFilter`) to support manipulating these systems within a common framework, while supporting caching, error checking, and various functionality.
+ - This unifies a number of common formats (transfer function, state-space, zero-pole-gain, and `nengo.LinearFilter`) to support manipulating these systems within a common framework, with caching, error checking, and other benefits.
  - These synapses can be easily simulated within Nengo. For example, to introduce a pure delay of `k` timesteps:
 
    ```
@@ -36,7 +36,7 @@ nengolib.synapses.DoubleExp(tau1, tau2)
 
 ### Installation
 
-NengoLib is tested rigorously (100% coverage) against Python 2.7, 3.4, and 3.5, and [Nengo](https://github.com/nengo/nengo) 2.1.0 and its development branch.
+NengoLib is tested rigorously (100% coverage) against Python 2.7, 3.4, and 3.5, and [Nengo](https://github.com/nengo/nengo/releases) 2.1.0 and its development branch.
 
 To install the development version of NengoLib:
 ```
