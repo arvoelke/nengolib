@@ -11,6 +11,16 @@ from nengolib.signal import (
 from nengolib.synapses import PadeDelay
 
 
+_mock_solver_calls = 0  # global to keep solver's fingerprint static
+
+
+class MockSolver(nengo.solvers.LstsqL2):
+
+    def __call__(self, A, Y, rng=None, E=None):
+        globals()['_mock_solver_calls'] += 1
+        return super(MockSolver, self).__call__(A, Y, rng=rng, E=E)
+
+
 @pytest.mark.parametrize("neuron_type,atol", [(nengo.neurons.Direct(), 1e-14),
                                               (nengo.neurons.LIFRate(), 5e-01),
                                               (nengo.neurons.LIF(), 1e-01)])
@@ -121,3 +131,18 @@ def test_radii(Simulator, seed, plt):
     plt.plot(sim.data[p], lw=5, alpha=0.5)
 
     assert np.allclose(np.max(abs(sim.data[p]), axis=0), 1, atol=1e-4)
+
+
+def test_solver(tmpdir, Simulator, seed, rng):
+    assert _mock_solver_calls == 0
+
+    for _ in range(3):
+        model = LinearNetwork(
+            nengo.Lowpass(0.1), 10, nengo.Lowpass(0.1), 0.001,
+            solver=MockSolver(reg=rng.rand()), seed=seed)
+
+        Simulator(model, model=nengo.builder.Model(
+            decoder_cache=nengo.cache.DecoderCache(cache_dir=str(tmpdir))))
+
+    # checks workaround for https://github.com/nengo/nengo/issues/1044
+    assert _mock_solver_calls == 3

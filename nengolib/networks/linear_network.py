@@ -1,4 +1,5 @@
 import warnings
+from random import random
 
 import nengo
 from nengo.params import NumberParam, Default
@@ -24,7 +25,8 @@ class LinearNetwork(Network):
 
     def __init__(self, sys, n_neurons, synapse, dt, radii=1.0,
                  input_synapse=Default, normalizer=default_normalizer(),
-                 label=None, seed=None, add_to_container=None, **ens_kwargs):
+                 solver=None, label=None, seed=None, add_to_container=None,
+                 **ens_kwargs):
         super(LinearNetwork, self).__init__(label, seed, add_to_container)
 
         # Parameter checking
@@ -57,6 +59,14 @@ class LinearNetwork(Network):
             self.x = nengo.networks.EnsembleArray(
                 self.n_neurons, self.size_state, ens_dimensions=1,
                 **ens_kwargs)
+
+            if solver is not None:
+                # https://github.com/nengo/nengo/issues/1044
+                assert not hasattr(solver, '_hack')
+                solver._hack = random()
+
+                # https://github.com/nengo/nengo/issues/1040
+                self.x.add_output('output', function=None, solver=solver)
 
             # Connect everything up using (A, B, C, D)
             self.conn_A = nengo.Connection(
