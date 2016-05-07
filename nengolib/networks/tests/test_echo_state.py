@@ -1,3 +1,5 @@
+import pytest
+
 import nengo
 from nengo.processes import WhiteSignal
 from nengo.utils.numpy import rmse, rms
@@ -8,7 +10,8 @@ from nengolib import Network
 from nengolib.synapses import Highpass
 
 
-def test_echo_state(Simulator, plt, seed, rng):
+@pytest.mark.parametrize("include_bias", [True, False])
+def test_echo_state(Simulator, plt, seed, rng, include_bias):
     test_t = 1.0
     train_t = 5.0
     dt = 0.001
@@ -19,7 +22,8 @@ def test_echo_state(Simulator, plt, seed, rng):
 
     with Network() as model:
         stim = nengo.Node(output=process, size_out=dimensions)
-        esn = EchoState(n_neurons, dimensions, rng=rng)
+        esn = EchoState(
+            n_neurons, dimensions, include_bias=include_bias, rng=rng)
         nengo.Connection(stim, esn.input, synapse=None)
 
         p = nengo.Probe(esn.output, synapse=None)

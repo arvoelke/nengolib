@@ -44,7 +44,7 @@ class EchoState(Network, Reservoir):
 
     def __init__(self, n_neurons, dimensions, recurrent_synapse=0.005,
                  readout_synapse=None, radii=1.0, gain=1.25, rng=None,
-                 neuron_type=Tanh(), ens_seed=None,
+                 neuron_type=Tanh(), include_bias=True, ens_seed=None,
                  label=None, seed=None, add_to_container=None, **ens_kwargs):
         """Initializes the Echo State Network.
 
@@ -70,6 +70,10 @@ class EchoState(Network, Reservoir):
         neuron_type : ``nengo.neurons.NeuronType`` optional \
                       (Default: ``Tanh()``)
             Neuron model to use within the reservoir.
+        include_bias : ``bool`` (Default: ``True``)
+            Whether to include a bias current to the neural nonlinearity.
+            This should be ``False`` if the neuron model already has a bias,
+            e.g., ``LIF`` or ``LIFRate``.
         ens_seed : int, optional (Default: ``None``)
             Seed passed to the ensemble of neurons.
         """
@@ -83,10 +87,14 @@ class EchoState(Network, Reservoir):
         self.gain = gain
         self.rng = np.random if rng is None else rng
         self.neuron_type = neuron_type
+        self.include_bias = include_bias
 
         self.W_in = (
             self.rng.rand(self.n_neurons, self.dimensions) - 0.5) / self.radii
-        self.W_bias = self.rng.rand(self.n_neurons, 1) - 0.5
+        if self.include_bias:
+            self.W_bias = self.rng.rand(self.n_neurons, 1) - 0.5
+        else:
+            self.W_bias = np.zeros((self.n_neurons, 1))
         self.W = self.rng.rand(self.n_neurons, self.n_neurons) - 0.5
         self.W *= self.gain / max(abs(eig(self.W)[0]))
 
