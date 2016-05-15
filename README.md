@@ -30,7 +30,7 @@ nengolib.synapses.DoubleExp(tau1, tau2)
  - See `doc/notebooks/examples/linear_network.ipynb` for more information.
 
 ### Reservoir Computing
- - `nengolib.networks.Reservoir(...)` provides a flexible way of building structure into "reservoirs" using Nengo and the NEF. Arbitrary Nengo networks and ensembles can be fed a training signal, to solve for decoders over time. This allows one to achieve the same (or better) performance as reservoir computing, with far fewer resources.
+ - `nengolib.networks.Reservoir(...)` provides a flexible way of building structure into "reservoirs" using Nengo and the NEF. Arbitrary Nengo networks and ensembles can be fed a training signal, to solve for decoders over time. This allows one to obtain the benefits of reservoir computing, with faster simulations and improved performance for spiking networks.
  - `nengolib.networks.EchoState(...)` is a reservoir with a random pool of recurrently connected rate-neurons, intended for comparison and rapid prototyping.
  - See `doc/notebooks/examples/reservoir_computing.ipynb` for more information.
 
