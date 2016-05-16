@@ -57,16 +57,18 @@ class LinearNetwork(Network):
             self.x = nengo.networks.EnsembleArray(
                 self.n_neurons, self.size_state, ens_dimensions=1,
                 **ens_kwargs)
-
+            tmp_reg = 1e-3
+            self.x.add_output('output1', function=None, 
+                solver=nengo.solvers.LstsqL2(reg=tmp_reg))
             # Connect everything up using (A, B, C, D)
             self.conn_A = nengo.Connection(
-                self.x.output, self.x.input, transform=self.A,
+                self.x.output1, self.x.input, transform=self.A,
                 synapse=self.synapse)
             self.conn_B = nengo.Connection(
                 self.input, self.x.input, transform=self.B,
                 synapse=self.input_synapse)
             self.conn_C = nengo.Connection(
-                self.x.output, self.output, transform=self.C,
+                self.x.output1, self.output, transform=self.C,
                 synapse=None)
             self.conn_D = nengo.Connection(
                 self.input, self.output, transform=self.D,
