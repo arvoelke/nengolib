@@ -139,7 +139,7 @@ class Reservoir(object):
                 transform=np.zeros((1, self.size_mid)))
             self.size_out = None
 
-    def run(self, t, dt, process, seed=None):
+    def run(self, t, dt, process, seed=None, progress_bar=None):
         """Simulate the network on a particular input signal.
 
         If the network has been trained, this will include the decoded output.
@@ -157,6 +157,8 @@ class Reservoir(object):
             appropriate dimensionality to match the input objects.
         seed : int, optional (Default: ``None``)
             Seed used to initialize the simulator.
+        progress_bar : ``nengo.utils.Progress``, optional (Default: ``None``)
+            Progress bar to pass to simulator run method.
         """
 
         # Setup a sandbox so that the reservoir doesn't keep the
