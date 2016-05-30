@@ -9,7 +9,7 @@ Additional extensions for large-scale brain modelling with [Nengo](https://githu
  - `nengolib.LinearFilter(...)` is a drop-in replacement for `nengo.LinearFilter(...)` that improves the efficiency of simulations for higher-order synapse models.
 
 ### Synapses and Filters
- - NengoLib extends the `LinearFilter` object by adding a natural language for building synaptic models. These linear systems can be scaled, added, multiplied, inverted, compared, converted to discrete time, and converted to continuous time.
+ - NengoLib extends the `LinearFilter` object by adding a language for building synaptic models. These linear systems can be scaled, added, multiplied, inverted, compared, converted to discrete time, and converted to continuous time.
  - This unifies a number of common formats (transfer function, state-space, zero-pole-gain, and `nengo.LinearFilter`) to support manipulating these systems within a common framework, with caching, error checking, and other benefits.
  - These synapses can be easily simulated within Nengo. For example, to introduce a pure delay of `k` timesteps:
 
