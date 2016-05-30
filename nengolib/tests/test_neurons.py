@@ -24,16 +24,11 @@ def _test_lif(Simulator, seed, neuron_type, u, dt, n=500, t=2.0):
     return rmse(actual, expected, axis=0)
 
 
-def test_perfect_lif_performance(Simulator, seed, logger):
+def test_perfect_lif_performance(Simulator, seed):
     for dt in np.linspace(0.0005, 0.002, 3):
         for u in np.linspace(-1, 1, 6):
-            error_lif = _test_lif(Simulator, seed, nengo.LIF(), u, dt)
             error_perfect_lif = _test_lif(Simulator, seed, PerfectLIF(), u, dt)
-            logger.info("dt=%s, u=%s: %s <? %s (ratio=%s)",
-                        dt, u, error_perfect_lif, error_lif,
-                        error_perfect_lif / error_lif)
             assert error_perfect_lif < 1
-            assert error_perfect_lif < error_lif
             seed += 1
 
 

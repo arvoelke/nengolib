@@ -4,7 +4,7 @@
 Additional extensions for large-scale brain modelling with [Nengo](https://github.com/nengo/nengo).
 
 ### Improvements
- - `nengolib.Network(...)` serves as a drop-in replacement for `nengo.Network(...)` to automatically improve the encoding of an ensemble, the spike-timing of each neuron, and the accuracy of the decoders.
+ - `nengolib.Network(...)` serves as a drop-in replacement for `nengo.Network(...)` to automatically improve the encoding of an ensemble, the spike-timing of each neuron (now added to upcoming [Nengo 2.1.1](https://github.com/nengo/nengo/pull/975) release), and the accuracy of the decoders.
  - `nengolib.HeteroSynapse(...)` allows one to use a different synapse per dimension/neuron when connecting to an ensemble.
  - `nengolib.LinearFilter(...)` is a drop-in replacement for `nengo.LinearFilter(...)` that improves the efficiency of simulations for higher-order synapse models.
 
