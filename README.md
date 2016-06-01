@@ -3,10 +3,19 @@
 #  <img src="http://i.imgur.com/wSjRUi4.png" width="64" height="64" valign="middle" /> Nengo Library
 Additional extensions for large-scale brain modelling with [Nengo](https://github.com/nengo/nengo).
 
+Simply add the line **`import nengolib; nengolib.patch()`** to the top of your code to automatically improve certain kinds of Nengo models. See [`doc/notebooks/examples/basic_usage.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/examples/basic_usage.ipynb) and below for details.
+
 ### Improvements
- - `nengolib.Network(...)` serves as a drop-in replacement for `nengo.Network(...)` to automatically improve the encoding of an ensemble, the spike-timing of each neuron (now added to upcoming [Nengo 2.1.1](https://github.com/nengo/nengo/pull/975) release), and the accuracy of the decoders.
+ - `nengolib.Network(...)` serves as a drop-in replacement for `nengo.Network(...)` to automatically improve the encoding of an ensemble with few neurons, the spike-timing of each neuron (now added to upcoming [Nengo 2.1.1](https://github.com/nengo/nengo/pull/975) release), and the generalization of the decoders (with fewer `eval_points`).
+   - [`doc/notebooks/examples/network.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/examples/network.ipynb)
+   - [`doc/notebooks/research/sampling_high_dimensional_vectors.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/research/sampling_high_dimensional_vectors.ipynb)
+ - `nengolib.Connection(...)` is similarly a drop-in replacement for `nengo.Connection(...)` that automatically improves the decoding of a small ensembles by adding a constant bias activity (equivalent to a change in the post-synaptic biases).
+   - [`doc/notebooks/examples/connection.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/examples/connection.ipynb)
  - `nengolib.HeteroSynapse(...)` allows one to use a different synapse per dimension/neuron when connecting to an ensemble.
+   - [`doc/notebooks/examples/hetero_synapse.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/examples/hetero_synapse.ipynb)
+   - [`doc/notebooks/examples/decoding_derivative.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/examples/decoding_derivative.ipynb)
  - `nengolib.LinearFilter(...)` is a drop-in replacement for `nengo.LinearFilter(...)` that improves the efficiency of simulations for higher-order synapse models.
+   - [`doc/notebooks/examples/linear_filter.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/examples/linear_filter.ipynb)
 
 ### Synapses and Filters
  - NengoLib extends the `LinearFilter` object by adding a language for building synaptic models. These linear systems can be scaled, added, multiplied, inverted, compared, converted to discrete time, and converted to continuous time.
@@ -22,17 +31,17 @@ Additional extensions for large-scale brain modelling with [Nengo](https://githu
 nengolib.synapses.DoubleExp(tau1, tau2)
 ```
    which is equivalent to using `1/((tau1*s + 1)*(tau2*s + 1))` by use of the continuous _differential operator_.
- - `nengolib.signal.{minreal,balreal,modred}` are tools for model order reduction using _minimal_ and _balanced realizations_. See `doc/notebooks/research/linear_model_reduction.ipynb` for more information.
+ - `nengolib.signal.{minreal,balreal,modred}` are tools for model order reduction using _minimal_ and _balanced realizations_. See [`doc/notebooks/research/linear_model_reduction.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/research/reservoir_computing.ipynb) for more information.
 
 ### Dynamical Systems
  - `nengolib.networks.LinearNetwork(...)` is a Nengo-style network that can map any causal linear system (including any of the synapses above) onto a recurrently connected population of neurons.
  - This uses `nengolib.synapses.ss2sim`, which maps the dynamics of the system onto the dynamics of the given synapse. This is accomplished by generalizing _Principle 3_ from the NEF to support various synapses in both digital and analog hardware implementations.
- - See `doc/notebooks/examples/linear_network.ipynb` for more information.
+ - See [`doc/notebooks/examples/linear_network.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/examples/linear_network.ipynb) for more information.
 
 ### Reservoir Computing
  - `nengolib.networks.Reservoir(...)` provides a flexible way of building structure into "reservoirs" using Nengo and the NEF. Arbitrary Nengo networks and ensembles can be fed a training signal, to solve for decoders over time. This allows one to obtain the benefits of reservoir computing, with faster simulations and improved performance for spiking networks.
  - `nengolib.networks.EchoState(...)` is a reservoir with a random pool of recurrently connected rate-neurons, intended for comparison and rapid prototyping.
- - See `doc/notebooks/research/reservoir_computing.ipynb` for more information.
+ - See [`doc/notebooks/research/reservoir_computing.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/research/reservoir_computing.ipynb) for more information.
 
 ### Installation
 

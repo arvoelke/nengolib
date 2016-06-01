@@ -20,7 +20,7 @@ def test_echo_state(Simulator, plt, seed, rng, include_bias):
     dimensions = 2
     process = WhiteSignal(train_t, high=10)
 
-    with Network() as model:
+    with Network(seed=seed) as model:
         stim = nengo.Node(output=process, size_out=dimensions)
         esn = EchoState(
             n_neurons, dimensions, include_bias=include_bias, rng=rng)
@@ -45,4 +45,7 @@ def test_echo_state(Simulator, plt, seed, rng, include_bias):
     plt.plot(sim.trange(), ideal, label="Ideal")
     plt.legend()
 
-    assert rmse(sim.data[p], ideal) <= 0.5 * rms(ideal)
+    if include_bias:
+        assert rmse(sim.data[p], ideal) <= 0.5 * rms(ideal)
+    else:
+        assert rmse(sim.data[p], ideal) <= 0.7 * rms(ideal)
