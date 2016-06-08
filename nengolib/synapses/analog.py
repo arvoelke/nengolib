@@ -44,7 +44,29 @@ def Highpass(tau, order=1):
     return LinearFilter(num**order, den**order)
 
 
+def _passthrough_delay(m, c):
+    """Analytically derived state-space when p = q = m.
+
+    We use this because it is numerically stable for high m.
+    """
+    j = np.arange(1, m+1)
+    u = (m + j) * (m - j + 1) / (c * j)
+
+    A = np.zeros((m, m))
+    B = np.zeros((m, 1))
+    C = np.zeros((1, m))
+    D = np.zeros((1,))
+
+    A[0, :] = B[0, 0] = -u[0]
+    A[1:, :-1][np.diag_indices(m-1)] = u[1:]
+    D[0] = (-1)**m
+    C[0, np.arange(m) % 2 == 0] = 2*D[0]
+    return LinearSystem((A, B, C, D), analog=True)
+
+
 def PadeDelay(p, q, c=1.0):
+    if p == q:
+        return _passthrough_delay(p, c)
     i = np.arange(1, p+q+1)
     taylor = np.append([1.0], (-c)**i / factorial(i))
     num, den = pade(taylor, q)
