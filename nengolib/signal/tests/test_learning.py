@@ -38,8 +38,12 @@ def test_pes_learning_rate(Simulator, plt, seed):
         stim = nengo.Node(output=initial)
         ystar = nengo.Node(output=desired)
 
-        conn.learning_rule_type = nengo.PES(
-            pre_tau=1e-15, learning_rate=learning_rate)
+        try:
+            conn.learning_rule_type = nengo.PES(
+                pre_synapse=None, learning_rate=learning_rate)
+        except TypeError:  # prior to Nengo PR #1095
+            conn.learning_rule_type = nengo.PES(
+                pre_tau=1e-15, learning_rate=learning_rate)
 
         nengo.Connection(stim, x, synapse=None)
         nengo.Connection(ystar, conn.learning_rule, synapse=0, transform=-1)
