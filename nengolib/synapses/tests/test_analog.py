@@ -4,9 +4,12 @@ import pytest
 from nengo import LinearFilter as BaseLinearFilter
 from nengo import Lowpass as BaseLowpass
 from nengo import Alpha as BaseAlpha
+from nengo.exceptions import ValidationError
+from nengo.utils.testing import warns
 
 from nengolib.synapses.analog import (
-    Bandpass, Highpass, PadeDelay, LinearFilter, Lowpass, Alpha, DoubleExp)
+    Bandpass, Highpass, PureDelay, LinearFilter, Lowpass, Alpha, DoubleExp,
+    _pade_delay, _passthrough_delay, _proper_delay)
 from nengolib.signal import impulse, sys_equal, s
 
 
@@ -68,17 +71,48 @@ def test_invalid_highpass(order):
 
 @pytest.mark.parametrize("c", [0.1, 0.4, 0.8])
 def test_pade_delay(c):
-    p = 3
-    q = 4
     dt = 0.001
     length = 1000
 
-    sys = PadeDelay(p, q, c)
+    sys = PureDelay(c, order=4)
     response = impulse(sys, dt, length)
 
     offset = 10
     assert np.allclose(
         (np.argmax(response[offset:])+offset), c*length, atol=100)
+
+
+@pytest.mark.parametrize("p", [1, 2, 3])
+def test_pade_versions(p):
+    c = 0.5
+    # make sure all of the delay methods do the same thing
+    assert _pade_delay(p, p+1, c) == _proper_delay(p+1, c)
+    assert _pade_delay(p, p, c) == _passthrough_delay(p, c)
+
+    # consistency check on each code path within main interface
+    assert _proper_delay(p+1, c) == PureDelay(c, order=p+1)
+    assert _passthrough_delay(p, c) == PureDelay(c, order=p, p=p)
+    assert _pade_delay(p, p+2, c) == PureDelay(c, order=p+2, p=p)
+
+
+def test_delay_invalid():
+    with pytest.raises(ValidationError):
+        PureDelay(1, order=0)
+
+    with pytest.raises(ValidationError):
+        PureDelay(1, order=1)
+
+    with pytest.raises(ValidationError):
+        PureDelay(1, order=2.5)
+
+    with pytest.raises(ValidationError):
+        PureDelay(1, order=2, p=0)
+
+    with pytest.raises(ValidationError):
+        PureDelay(1, order=2, p=1.5)
+
+    with warns(UserWarning):
+        PureDelay(1, order=10, p=8)
 
 
 def test_equivalent_defs():

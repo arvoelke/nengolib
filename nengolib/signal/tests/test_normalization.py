@@ -9,7 +9,7 @@ from nengolib import Lowpass, Alpha, Network
 from nengolib.networks import LinearNetwork
 from nengolib.signal import (
     sys_equal, ss_equal, state_norm, impulse, decompose_states)
-from nengolib.synapses import Bandpass, Highpass, PadeDelay
+from nengolib.synapses import Bandpass, Highpass, PureDelay
 
 
 @pytest.mark.parametrize("radius", [0.7, 3, [1.5, 0.2]])
@@ -82,7 +82,7 @@ def _test_normalization(Simulator, sys, rng, normalizer, l1_lower,
 
 @pytest.mark.parametrize("sys", [
     Lowpass(0.005), Alpha(0.01), Bandpass(50, 5), Highpass(0.01, 4),
-    PadeDelay(2, 2, 0.1)])
+    PureDelay(0.1, 2, 2)])
 def test_hankel_normalization(Simulator, sys, rng):
     _test_normalization(Simulator, sys, rng, HankelNorm(),
                         l1_lower=0.3, worst_lower=0.15)
@@ -97,7 +97,7 @@ def test_l1_normalization_positive(Simulator, sys, rng):
 
 
 @pytest.mark.parametrize("sys", [
-    Alpha(0.01), Bandpass(50, 5), Highpass(0.01, 4), PadeDelay(2, 2, 0.1)])
+    Alpha(0.01), Bandpass(50, 5), Highpass(0.01, 4), PureDelay(0.1, 2, 2)])
 def test_l1_normalization_crossing(Simulator, sys, rng):
     _test_normalization(Simulator, sys, rng, L1Norm(),
                         l1_lower=0.9, worst_lower=0.2)

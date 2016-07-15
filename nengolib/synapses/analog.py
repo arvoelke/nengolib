@@ -1,15 +1,17 @@
 """Classical analog linear filters."""
 
 import numpy as np
+import warnings
 from scipy.misc import pade, factorial
 
+from nengo.params import IntParam
 from nengo.utils.compat import is_integer
 
 from nengolib.signal.system import LinearSystem
 
 __all__ = [
     'LinearFilter', 'Lowpass', 'Alpha', 'DoubleExp', 'Bandpass', 'Highpass',
-    'PadeDelay']
+    'PureDelay']
 
 
 def LinearFilter(num, den, analog=True):
@@ -64,10 +66,59 @@ def _passthrough_delay(m, c):
     return LinearSystem((A, B, C, D), analog=True)
 
 
-def PadeDelay(p, q, c=1.0):
-    if p == q:
-        return _passthrough_delay(p, c)
+def _proper_delay(q, c):
+    """Analytically derived state-space when p = q - 1.
+
+    We use this because it is numerically stable for high q
+    and doesn't have a passthrough.
+    """
+    j = np.arange(1, q+1)
+    u = (q + j - 1) * (q - j + 1) / (c * j)
+
+    A = np.zeros((q, q))
+    B = np.zeros((q, 1))
+    C = np.zeros((1, q))
+    D = np.zeros((1,))
+
+    A[0, :] = B[0, 0] = -u[0]
+    A[1:, :-1][np.diag_indices(q-1)] = u[1:]
+    C[0, :] = - j / float(q) * (-1) ** (q - j)
+    return LinearSystem((A, B, C, D), analog=True)
+
+
+def _pade_delay(p, q, c):
+    """Numerically evaluated state-space using Pade approximants.
+
+    This may have numerical issues for large values of p or q.
+    """
     i = np.arange(1, p+q+1)
     taylor = np.append([1.0], (-c)**i / factorial(i))
     num, den = pade(taylor, q)
     return LinearFilter(num, den)
+
+
+def PureDelay(c, order, p=None):
+    """Linear filter for a continuous pure delay of c seconds.
+
+    The order is the degree of the denominator in the transfer function, also
+    known as q in the Pade approximation. Parameter p is the degree of the
+    numerator. If p is equal to q, then the system will have a passthrough.
+    If None (default), then p = q - 1. Either of these choices will be
+    significantly more accurate than other choices of p when q is large.
+    """
+    q = order
+    if p is None:
+        p = q - 1
+
+    IntParam("order", low=1).validate(None, q)
+    IntParam("p", low=1).validate(None, p)
+
+    if p == q:
+        return _passthrough_delay(p, c)
+    elif p == q - 1:
+        return _proper_delay(q, c)
+    else:
+        if q >= 10:
+            warnings.warn("For large values of q (>= 10), p should either be "
+                          "None, q - 1, or q.")
+        return _pade_delay(p, q, c)

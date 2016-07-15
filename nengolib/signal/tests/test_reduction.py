@@ -9,11 +9,11 @@ from nengolib.signal.reduction import (
 from nengolib import Lowpass, Alpha
 from nengolib.signal import (
     sys2ss, sys_equal, LinearSystem, apply_filter, control_gram, observe_gram)
-from nengolib.synapses import PadeDelay
+from nengolib.synapses import PureDelay
 
 
 @pytest.mark.parametrize("sys", [
-    PadeDelay(3, 4, 0.1), PadeDelay(5, 5, 0.2), Alpha(0.2)])
+    PureDelay(0.1, 4), PureDelay(0.2, 5, 5), Alpha(0.2)])
 def test_hankel(sys):
     assert np.allclose(hankel(sys), balreal(sys)[1])
 

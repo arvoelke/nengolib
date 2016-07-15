@@ -6,7 +6,7 @@ from nengo.utils.numpy import norm
 from nengolib.signal.lyapunov import (
     _H2P, state_norm, control_gram, observe_gram, l1_norm)
 from nengolib.signal import sys2ss, impulse, cont2discrete, s, z
-from nengolib.synapses import Bandpass, PadeDelay
+from nengolib.synapses import Bandpass, PureDelay
 from nengolib import Lowpass, Alpha
 
 
@@ -80,8 +80,8 @@ def test_l1_norm_known():
 
 
 @pytest.mark.parametrize("sys", [
-    Bandpass(10, 3), Bandpass(50, 50), PadeDelay(3, 4, 0.02),
-    PadeDelay(4, 4, 0.2)])
+    Bandpass(10, 3), Bandpass(50, 50), PureDelay(0.02, 4),
+    PureDelay(0.2, 4, 4)])
 def test_l1_norm_unknown(sys):
     # These impulse responses have zero-crossings which makes computing their
     # exact L1-norm infeasible.

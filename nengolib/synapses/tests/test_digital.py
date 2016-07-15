@@ -1,14 +1,14 @@
 import numpy as np
 import pytest
 
-from nengolib.synapses.digital import PureDelay, BoxFilter
+from nengolib.synapses.digital import DiscreteDelay, BoxFilter
 from nengolib.signal import impulse, z, minreal
 
 
 @pytest.mark.parametrize("steps", [0, 1, 5])
 def test_pure_delay(steps):
     length = 20
-    sys = PureDelay(steps)
+    sys = DiscreteDelay(steps)
     y = impulse(sys, dt=None, length=length)
     assert np.allclose(y, [0]*steps + [1] + [0]*(length - steps - 1))
 
@@ -28,10 +28,10 @@ def test_box_filter(width, normalized):
 
 def test_bad_steps():
     with pytest.raises(ValueError):
-        PureDelay(-1)
+        DiscreteDelay(-1)
 
     with pytest.raises(ValueError):
-        PureDelay(1.5)
+        DiscreteDelay(1.5)
 
     with pytest.raises(ValueError):
         BoxFilter(-1)
@@ -41,8 +41,8 @@ def test_bad_steps():
 
 
 def test_equivalent_defs():
-    assert PureDelay(5) == (~z)**5
-    assert PureDelay(5) == 1 / z**5
+    assert DiscreteDelay(5) == (~z)**5
+    assert DiscreteDelay(5) == 1 / z**5
 
     # equivalent to an (undelayed) integrator convolved with a delayed cutoff
     assert BoxFilter(5, normalized=False) == minreal(

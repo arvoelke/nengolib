@@ -7,8 +7,8 @@ from nengo.utils.testing import warns
 from nengolib.networks.linear_network import LinearNetwork
 from nengolib import Network
 from nengolib.signal import (
-    apply_filter, impulse, s, Controllable, decompose_states)
-from nengolib.synapses import PadeDelay
+    apply_filter, impulse, s, Controllable, canonical, decompose_states)
+from nengolib.synapses import PureDelay
 
 
 _mock_solver_calls = 0  # global to keep solver's fingerprint static
@@ -95,14 +95,13 @@ def test_expstable():
 
 
 def test_radii(Simulator, seed, plt):
-    sys = PadeDelay(3, 4, 0.1)
+    sys = canonical(PureDelay(0.1, order=4))
     dt = 0.001
     T = 0.3
 
     plt.figure()
 
-    # Precompute the exact bounds for an impulse stimulus (note: this by
-    # default will use the canonical controllable realization).
+    # Precompute the exact bounds for an impulse stimulus
     radii = []
     for sub in decompose_states(sys):
         response = impulse(sub, dt=dt, length=int(T / dt))
@@ -130,7 +129,7 @@ def test_radii(Simulator, seed, plt):
 
     plt.plot(sim.data[p], lw=5, alpha=0.5)
 
-    assert np.allclose(np.max(abs(sim.data[p]), axis=0), 1, atol=1e-4)
+    assert np.allclose(np.max(abs(sim.data[p]), axis=0), 1, atol=1e-3)
 
 
 def test_solver(tmpdir, Simulator, seed, rng):

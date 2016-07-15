@@ -9,7 +9,7 @@ from nengolib.signal.system import (
     sys2ss, sys2zpk, sys2tf, canonical, sys_equal, ss_equal, is_exp_stable,
     decompose_states, LinearSystem, s, z)
 from nengolib import Network, Lowpass, Alpha, LinearFilter
-from nengolib.synapses import PadeDelay
+from nengolib.synapses import PureDelay
 
 
 def test_sys_conversions():
@@ -17,15 +17,16 @@ def test_sys_conversions():
 
     tf = sys2tf(sys)
     ss = sys2ss(sys)
+    zpk = sys2zpk(sys)
 
     assert sys_equal(sys2ss(tf), ss)
     assert sys_equal(sys2ss(ss), ss)  # unchanged
     assert sys_equal(sys2tf(tf), tf)  # unchanged
     assert sys_equal(sys2tf(ss), tf)
 
-    zpk = sys2zpk(ss)
     assert sys_equal(sys2zpk(zpk), zpk)  # sanity check
     assert sys_equal(sys2zpk(tf), zpk)  # sanity check
+    assert sys_equal(sys2zpk(ss), zpk)
     assert sys_equal(sys2tf(zpk), tf)
     assert sys_equal(sys2ss(zpk), ss)
 
@@ -36,7 +37,8 @@ def test_sys_conversions():
 
     # system can also be just a scalar
     assert sys_equal(sys2tf(2.0), (1, 0.5))
-    assert sys_equal(sys2tf(sys2ss(5)), (5, 1))
+    assert np.allclose(sys2ss(5)[3], 5)
+    assert sys_equal(sys2zpk(5), 5)
 
     with pytest.raises(ValueError):
         sys2ss(np.zeros(5))
@@ -110,7 +112,7 @@ def test_is_exp_stable():
     assert not is_exp_stable(sys)
 
 
-@pytest.mark.parametrize("sys", [PadeDelay(3, 4, 0.1), PadeDelay(5, 5, 0.2)])
+@pytest.mark.parametrize("sys", [PureDelay(0.1, 4), PureDelay(0.2, 5, 5)])
 def test_decompose_states(sys):
     assert np.dot(sys.C, decompose_states(sys)) + sys.D == sys
 

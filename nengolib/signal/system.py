@@ -46,7 +46,7 @@ def _ss2tf(A, B, C, D):
         D = np.asarray(D).flatten()
         if len(D) != 1:
             raise ValueError("D must be scalar for zero-order models")
-        return (D[0], 1.)
+        return (D[0], 1.)  # pragma: no cover; solved in scipy>=0.18rc2
     nums, den = ss2tf(A, B, C, D)
     if len(nums) != 1:
         # TODO: support MIMO systems
