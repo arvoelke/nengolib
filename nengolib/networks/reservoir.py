@@ -139,7 +139,7 @@ class Reservoir(object):
                 transform=np.zeros((1, self.size_mid)))
             self.size_out = None
 
-    def run(self, t, dt, process, seed=None):
+    def run(self, t, dt, process=None, seed=None):
         """Simulate the network on a particular input signal.
 
         If the network has been trained, this will include the decoded output.
@@ -152,9 +152,10 @@ class Reservoir(object):
         dt : float
             A positive number indicating the time elapsed between each
             timestep. The length of each output will be ``int(t / dt)``.
-        process : nengo.Process
+        process : nengo.Process (Default: ``None``)
             An autonomous process that provides a training signal of
             appropriate dimensionality to match the input objects.
+            If ``None``, then the system will receive no external input.
         seed : int, optional (Default: ``None``)
             Seed used to initialize the simulator.
         """
@@ -164,8 +165,9 @@ class Reservoir(object):
         with nengo.Network(add_to_container=False) as sandbox:
             sandbox.add(self.network)
 
-            stim = nengo.Node(output=process, size_out=self.size_in)
-            nengo.Connection(stim, self._proxy_in, synapse=None)
+            if process is not None:
+                stim = nengo.Node(output=process, size_out=self.size_in)
+                nengo.Connection(stim, self._proxy_in, synapse=None)
             p_in = nengo.Probe(self._proxy_in, synapse=None)
             p_mid = nengo.Probe(self._proxy_mid, synapse=self.readout_synapse)
             p_out = nengo.Probe(self.output, synapse=None)
@@ -175,8 +177,8 @@ class Reservoir(object):
 
         return sim, (sim.data[p_in], sim.data[p_mid], sim.data[p_out])
 
-    def train(self, function, t, dt, process, seed=None,
-              t_init=0, solver=LstsqL2(), rng=None):
+    def train(self, function, t, dt, process=None, seed=None,
+              t_init=0, n_subsamples=None, solver=LstsqL2(), rng=np.random):
         """Train an optimal linear readout.
 
         Afterwards, the decoded and filtered output will be available in the
@@ -196,13 +198,18 @@ class Reservoir(object):
         dt : float
             A positive number indicating the time elapsed between each
             timestep. The length of the test signal will be ``int(t / dt)``.
-        process : nengo.Process
+        process : nengo.Process (Default: ``None``)
             An autonomous process that provides a training signal of
             appropriate dimensionality to match the input objects.
+            If ``None``, then the system will receive no external input.
         seed : int, optional (Default: ``None``)
             Seed used to initialize the simulator.
         t_init : int, optional (Default: ``0``)
             The number of seconds to discard from the start.
+        n_subsamples : int, optional (Default: ``None``)
+            Number of points to sample randomly from the training signal.
+            If ``None``, then the entire signal is used. Note that the entire
+            signal is still passed to the ``function``.
         solver : nengo.solvers.Solver (Default: ``nengo.solvers.LstsqL2()``)
             Solves for ``D`` such that ``AD ~ Y``.
         rng : ``numpy.random.RandomState``, optional (Default: ``None``)
@@ -230,7 +237,13 @@ class Reservoir(object):
                 "instead" % (len(data_in), len(target)))
 
         offset = int(t_init / dt)
-        decoders, info = solver(data_mid[offset:], target[offset:], rng=rng)
+        if n_subsamples is not None:
+            sl = offset + rng.choice(
+                len(data_in) - offset, size=n_subsamples, replace=False)
+        else:
+            sl = slice(offset, None)
+
+        decoders, info = solver(data_mid[sl], target[sl], rng=rng)
 
         # Update dummy node
         self.output.size_in = self.output.size_out = self.size_out = (
