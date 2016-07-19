@@ -161,6 +161,19 @@ def test_discrete_synapse(Simulator):
                        sim.data[p_stim][:-delay_steps])
 
 
+@pytest.mark.parametrize("y0", [None, -1, 0, 2])
+def test_filt(y0):
+    # https://github.com/nengo/nengo/issues/1124
+    u = np.asarray([1.0, 0, 0])
+    dt = 0.1
+    num, den = [1], [1, 2, 1]
+    # make sure the synapses filt the same way in nengo vs nengolib
+    # with various initial y0
+    sys1 = nengo.LinearFilter(num, den)
+    sys2 = LinearFilter(num, den)
+    assert np.allclose(sys1.filt(u, dt=dt, y0=y0), sys2.filt(u, dt=dt, y0=y0))
+
+
 def test_sys_multiplication():
     # Check that alpha is just two lowpass multiplied together
     assert Lowpass(0.1) * Lowpass(0.1) == Alpha(0.1)
