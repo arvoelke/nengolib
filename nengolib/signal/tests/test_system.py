@@ -6,7 +6,7 @@ import pytest
 import nengo
 
 from nengolib.signal.system import (
-    sys2ss, sys2zpk, sys2tf, canonical, sys_equal, ss_equal, is_exp_stable,
+    sys2ss, sys2zpk, sys2tf, canonical, sys_equal, ss_equal,
     decompose_states, LinearSystem, s, z)
 from nengolib import Network, Lowpass, Alpha, LinearFilter
 from nengolib.synapses import PureDelay
@@ -104,12 +104,15 @@ def test_canonical():
                     ([[-20, 1], [-100, 0]], [[0], [100]], [[1, 0]],  [[0]]))
 
 
-def test_is_exp_stable():
+def test_is_stable():
     sys = Lowpass(0.1)
-    assert is_exp_stable(sys)
+    assert sys.is_stable
 
     sys = LinearFilter([1], [1, 0])  # integrator
-    assert not is_exp_stable(sys)
+    assert not sys.is_stable
+
+    assert (~(z * (z - 0.5))).is_stable
+    assert not (z / (z - 1)).is_stable  # discrete integrator
 
 
 @pytest.mark.parametrize("sys", [PureDelay(0.1, 4), PureDelay(0.2, 5, 5)])

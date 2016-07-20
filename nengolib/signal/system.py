@@ -10,7 +10,7 @@ from nengo.utils.compat import is_integer, is_number, with_metaclass
 
 __all__ = [
     'sys2ss', 'sys2tf', 'sys2zpk', 'canonical', 'sys_equal', 'ss_equal',
-    'is_exp_stable', 'decompose_states', 'NengoLinearFilterMixin',
+    'decompose_states', 'NengoLinearFilterMixin',
     'LinearSystem', 's', 'z']
 
 
@@ -149,17 +149,6 @@ def ss_equal(sys1, sys2, rtol=1e-05, atol=1e-08):
             np.allclose(sys1.B, sys2.B, rtol=rtol, atol=atol) and
             np.allclose(sys1.C, sys2.C, rtol=rtol, atol=atol) and
             np.allclose(sys1.D, sys2.D, rtol=rtol, atol=atol))
-
-
-def _is_exp_stable(A):
-    # TODO: we can avoid this computation if in zpk form
-    w, v = np.linalg.eig(A)
-    return (w.real < 0).all()  # <=> e^(At) goes to 0
-
-
-def is_exp_stable(sys):
-    """Returns true iff system is exponentially stable."""
-    return _is_exp_stable(LinearSystem(sys).A)
 
 
 def decompose_states(sys):
@@ -376,6 +365,13 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
     def dcgain(self):
         # http://www.mathworks.com/help/control/ref/dcgain.html
         return self(0 if self.analog else 1)
+
+    @property
+    def is_stable(self):
+        w = self.poles  # eig(A)
+        if not self.analog:
+            return np.max(abs(w)) < 1  # within unit circle
+        return np.max(w.real) < 0  # within left half-plane
 
     def __call__(self, s):
         return self.num(s) / self.den(s)

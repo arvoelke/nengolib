@@ -7,7 +7,7 @@ from nengo.synapses import SynapseParam
 
 from nengolib.network import Network
 from nengolib.signal.normalization import HankelNorm as default_normalizer
-from nengolib.signal.system import LinearSystem, is_exp_stable
+from nengolib.signal.system import LinearSystem
 from nengolib.synapses.mapping import ss2sim
 
 __all__ = ['LinearNetwork', 'default_normalizer']
@@ -30,7 +30,7 @@ class LinearNetwork(Network):
         super(LinearNetwork, self).__init__(label, seed, add_to_container)
 
         # Parameter checking
-        self.sys = LinearSystem(sys)
+        self.sys = LinearSystem(sys)  # sys is discrete => ss2sim throws error
         self.n_neurons = n_neurons
         self.synapse = synapse
         self.input_synapse = (synapse if input_synapse is Default
@@ -39,7 +39,7 @@ class LinearNetwork(Network):
         self.radii = radii
         self.normalizer = normalizer
 
-        if not is_exp_stable(self.sys):
+        if not self.sys.is_stable:
             # This means certain normalizers won't work, because the worst-case
             # output is now unbounded.
             warnings.warn("system (%s) is not exponentially stable" % self.sys)
