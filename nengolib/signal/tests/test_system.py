@@ -57,11 +57,15 @@ def test_sys_conversions():
 def test_check_sys_equal():
     assert not sys_equal(np.zeros(2), np.zeros(3))
 
-    with pytest.raises(ValueError):
-        assert not sys_equal(s, z)
+    assert s != z
+    assert not z == s
+    assert LinearSystem(5, analog=True) != LinearSystem(5, analog=False)
 
     with pytest.raises(ValueError):
-        assert not ss_equal(s, z)
+        sys_equal(s, z)
+
+    with pytest.raises(ValueError):
+        ss_equal(s, z)
 
 
 def test_canonical():
@@ -343,12 +347,6 @@ def test_linear_system_type():
 
 
 def test_invalid_operations():
-    with pytest.raises(ValueError):
-        z == s
-
-    with pytest.raises(ValueError):
-        s != z
-
     with pytest.raises(ValueError):
         z + s
 

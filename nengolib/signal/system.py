@@ -130,7 +130,7 @@ def sys_equal(sys1, sys2, rtol=1e-05, atol=1e-08):
     sys1 = LinearSystem(sys1)
     sys2 = LinearSystem(sys2)
     if sys1.analog != sys2.analog:
-        raise ValueError("cannot compare analog with discrete system")
+        raise ValueError("Cannot compare analog with digital system")
     tf1 = normalize(*sys2tf(sys1))
     tf2 = normalize(*sys2tf(sys2))
     for t1, t2 in zip(tf1, tf2):
@@ -144,7 +144,7 @@ def ss_equal(sys1, sys2, rtol=1e-05, atol=1e-08):
     sys1 = LinearSystem(sys1)
     sys2 = LinearSystem(sys2)
     if sys1.analog != sys2.analog:
-        raise ValueError("cannot compare analog with discrete system")
+        raise ValueError("Cannot compare analog with digital system")
     return (np.allclose(sys1.A, sys2.A, rtol=rtol, atol=atol) and
             np.allclose(sys1.B, sys2.B, rtol=rtol, atol=atol) and
             np.allclose(sys1.C, sys2.C, rtol=rtol, atol=atol) and
@@ -456,8 +456,10 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
         return self.__rdiv__(other)
 
     def __eq__(self, other):
-        self._check_other(other)
-        return sys_equal(self.tf, LinearSystem(other, self.analog).tf)
+        if isinstance(other, LinearFilter):  # base class containing analog
+            if self.analog != other.analog:
+                return False
+        return sys_equal(self, other)
 
     def __ne__(self, other):
         return not self.__eq__(other)
