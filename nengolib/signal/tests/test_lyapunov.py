@@ -71,6 +71,9 @@ def test_l1_norm_known():
     assert np.allclose(l1, 1)
     assert np.allclose(rtol, 0)
 
+    # Check that passthrough is handled properly
+    assert np.allclose(l1_norm(Lowpass(0.1) + 5)[0], 6)
+
     # Check that Alpha scaled by a has a norm of approximately abs(a)
     for a in (-2, 3):
         for desired_rtol in (1e-1, 1e-2, 1e-4, 1e-8):
@@ -84,7 +87,7 @@ def test_l1_norm_known():
     PureDelay(0.2, 4, 4)])
 def test_l1_norm_unknown(sys):
     # These impulse responses have zero-crossings which makes computing their
-    # exact L1-norm infeasible.
+    # exact L1-norm infeasible without simulation.
     dt = 0.0001
     length = 500000
     response = impulse(sys, dt=dt, length=length)
@@ -93,7 +96,7 @@ def test_l1_norm_unknown(sys):
 
     desired_rtol = 1e-6
     l1, rtol = l1_norm(sys, rtol=desired_rtol, max_length=2*length)
-    assert np.allclose(l1, l1_est, rtol=1e-2)
+    assert np.allclose(l1, l1_est, rtol=1e-3)
     assert rtol <= desired_rtol
 
 

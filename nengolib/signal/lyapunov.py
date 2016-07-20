@@ -101,6 +101,7 @@ def l1_norm(sys, rtol=1e-6, max_length=2**18):
         raise ValueError("system (%s) must be analog" % sys)
 
     # Setup state-space system and check stability/conditioning
+    # we will subtract out D and add it back in at the end
     A, B, C, D = sys.ss
     alpha = np.max(eig(A)[0].real)  # eq (28)
     if alpha >= 0:
@@ -128,12 +129,11 @@ def l1_norm(sys, rtol=1e-6, max_length=2**18):
     N = 2**4
     T = -1 / alpha
 
-    while (N <= max_length and
-           (np.allclose(L, 0) or .5 * (U - L) / L >= rtol)):  # eq (25)
+    while N <= max_length and .5 * (U - L) / L >= rtol:  # eq (25)
 
         # Step 1. Improve the lower bound by simulating more.
         dt = T / N
-        dsys = cont2discrete(sys, dt=dt)
+        dsys = cont2discrete((A, B, C, 0), dt=dt)
         Phi = dsys.A
 
         y = impulse(dsys, dt=None, length=N)
@@ -170,4 +170,4 @@ def l1_norm(sys, rtol=1e-6, max_length=2**18):
         if U_impulse - L_impulse < U_tail - L_tail:  # eq (26)
             T *= 2
 
-    return (U + L) / 2, .5 * (U - L) / L
+    return (U + L) / 2 + D, .5 * (U - L) / L
