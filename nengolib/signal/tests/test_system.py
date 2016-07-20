@@ -192,11 +192,23 @@ def test_sim_new_synapse(Simulator):
 def test_linear_system():
     tau = 0.05
     sys = Lowpass(tau)
+    dsys = (1 - np.exp(-1)) * z / (1 - np.exp(-1) * z)
+
+    # Test attributes before state-space/zpk computed
+    assert sys.is_tf
+    assert not sys.is_ss
+    assert not sys.is_zpk
 
     # Test representations
     assert sys == (1, [tau, 1])
     assert sys_equal(sys.tf, sys)
     assert sys_equal(sys.ss, sys)
+    assert sys_equal(sys.zpk, sys)
+
+    # Test attributes after state-space/zpk computed
+    assert sys.is_tf
+    assert sys.is_ss
+    assert sys.is_zpk
 
     # Test attributes
     assert np.allclose(sys.num, (1,))
@@ -224,6 +236,13 @@ def test_linear_system():
     assert sys.order_den == 1
     assert len(sys) == 1  # order_den
     assert len(LinearSystem(sys.ss)) == 1  # uses state-space rep
+
+    # Test dcgain and __call__
+    assert np.allclose(sys.dcgain, 1)
+    assert np.allclose(dsys.dcgain, 1)
+    assert np.allclose((s*sys)(1e12), 1.0 / tau)  # initial value theorem
+    assert np.allclose((s*sys)(0), 0)  # final value theorem
+    assert np.allclose(((1 - ~z)*dsys)(1), 0)  # final value theorem
 
     # Test multiplication and squaring
     assert sys*2 == 2*sys

@@ -302,6 +302,18 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
         return self._zpk
 
     @property
+    def is_tf(self):
+        return _sys2form(self._sys) == _TF or self._tf is not None
+
+    @property
+    def is_ss(self):
+        return _sys2form(self._sys) == _SS or self._ss is not None
+
+    @property
+    def is_zpk(self):
+        return _sys2form(self._sys) == _ZPK or self._zpk is not None
+
+    @property
     def A(self):
         return self.ss[0]
 
@@ -343,7 +355,7 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
 
     @property
     def order_den(self):
-        if _sys2form(self._sys) == _SS or self._ss is not None:
+        if self.is_ss:
             return len(self.A)  # avoids conversion to transfer function
         return len(self.den.coeffs) - 1
 
@@ -359,6 +371,14 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
     @property
     def proper(self):
         return self.causal and not self.has_passthrough
+
+    @property
+    def dcgain(self):
+        # http://www.mathworks.com/help/control/ref/dcgain.html
+        return self(0 if self.analog else 1)
+
+    def __call__(self, s):
+        return self.num(s) / self.den(s)
 
     def __len__(self):
         return self.order_den

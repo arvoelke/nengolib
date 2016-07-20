@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.linalg import solve_lyapunov, solve_discrete_lyapunov, eig, inv
+from scipy.linalg import solve_lyapunov, solve_discrete_lyapunov, eig
 from scipy.optimize import fminbound
 
 from nengolib.signal.discrete import impulse, cont2discrete
@@ -110,7 +110,7 @@ def l1_norm(sys, rtol=1e-6, max_length=2**18):
     # Compute a suitable lower-bound for the L1-norm
     # using the steady state response, which is equivalent to the
     # L1-norm without an absolute value (i.e. just an integral)
-    G0 = np.dot(-C, np.dot(inv(A), B))
+    G0 = sys.dcgain - sys.D  # -C.inv(A).B
 
     # Compute a suitable upper-bound for the L1-norm
     # Note this should be tighter than 2*sum(abs(hankel(sys)))
