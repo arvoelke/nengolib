@@ -49,7 +49,7 @@ def test_ccf_normalization():
 
 
 def _test_normalization(Simulator, sys, rng, normalizer, l1_lower,
-                        worst_lower, radius=5.0, dt=0.001, T=1.0):
+                        lower, radius=5.0, dt=0.0001, T=1.0):
     l1_norms = np.empty(len(sys))
     for i, sub in enumerate(decompose_states(sys)):
         response = impulse(sub, dt=dt, length=int(T / dt))
@@ -59,45 +59,49 @@ def _test_normalization(Simulator, sys, rng, normalizer, l1_lower,
     with Network() as model:
         stim = nengo.Node(output=lambda t: rng.choice([-radius, radius])
                           if t < T/2 else radius)
-        subnet = LinearNetwork(sys, n_neurons=1, synapse=0.02, dt=dt,
+        tau = 0.02
+        subnet = LinearNetwork(sys, n_neurons=1, synapse=tau, dt=dt,
+                               input_synapse=tau,
                                radii=radius, normalizer=normalizer,
                                neuron_type=nengo.neurons.Direct())
         nengo.Connection(stim, subnet.input, synapse=None)
         p = nengo.Probe(subnet.x.output, synapse=None)
 
-    # lower bound is to see how well Hankel norm approximates L1 norm
-    assert (l1_lower*subnet.info['radii'] <= l1_norms).all()
+    assert ((l1_lower*subnet.info['radii'] <= l1_norms) |
+            ((l1_norms <= 1e-6) & (subnet.info['radii'] <= 1e-6))).all()
     assert (l1_norms <= subnet.info['radii'] + 1e-4).all()
 
-    sim = Simulator(model, dt=dt)
-    sim.run(T)
-
-    worst_x = np.max(abs(sim.data[p]), axis=0)
+    with Simulator(model, dt=dt) as sim:
+        sim.run(T)
 
     # lower bound includes both approximation error and the gap between
-    # uniform noise and the true worst-case input
-    assert (worst_lower <= worst_x).all()
-    assert (worst_x <= 1 + 1e-13).all()
+    # random {-1, 1} flip-flop inputs and the true worst-case input
+    worst_x = np.max(abs(sim.data[p]), axis=0)
+    assert (lower <= worst_x+1e-6).all()
+    assert (worst_x <= 1+1e-6).all()
 
 
-@pytest.mark.parametrize("sys", [
-    Lowpass(0.005), Alpha(0.01), Bandpass(50, 5), Highpass(0.01, 4),
-    PureDelay(0.1, 2, 2)])
-def test_hankel_normalization(Simulator, sys, rng):
+@pytest.mark.parametrize("sys,lower", [
+    (Lowpass(0.005), 1.0), (Alpha(0.01), 0.3), (Bandpass(50, 5), 0.05),
+    (Highpass(0.01, 4), 0.1), (PureDelay(0.1, 2, 2), 0.3)])
+def test_hankel_normalization(Simulator, rng, sys, lower):
     _test_normalization(Simulator, sys, rng, HankelNorm(),
-                        l1_lower=0.3, worst_lower=0.15)
+                        l1_lower=0.5, lower=lower)
 
 
+@pytest.mark.parametrize("radius", [0.5, 5, 10])
 @pytest.mark.parametrize("sys", [Lowpass(0.005)])
-def test_l1_normalization_positive(Simulator, sys, rng):
-    # all the states are always positive
-    # TODO: get a test passing with higher-order PadeDelay
-    _test_normalization(Simulator, sys, rng, L1Norm(),
-                        l1_lower=0.999, worst_lower=0.999)
+def test_normalization_radius(Simulator, rng, sys, radius):
+    _test_normalization(Simulator, sys, rng, L1Norm(), radius=radius,
+                        l1_lower=1-1e-3, lower=1.0)
 
 
-@pytest.mark.parametrize("sys", [
-    Alpha(0.01), Bandpass(50, 5), Highpass(0.01, 4), PureDelay(0.1, 2, 2)])
-def test_l1_normalization_crossing(Simulator, sys, rng):
+@pytest.mark.parametrize("sys,lower", [
+    (Alpha(0.01), 0.4), (Bandpass(50, 5), 0.1), (Highpass(0.01, 4), 0.2),
+    (PureDelay(0.1, 2, 2), 0.4), (PureDelay(0.1, 3), 0.3),
+    (PureDelay(0.1, 4, 4), 0.15)])
+def test_l1_normalization_crossing(Simulator, rng, sys, lower):
+    # note the lower bounds are higher than those for the hankel norm tests
+    # for the same systems
     _test_normalization(Simulator, sys, rng, L1Norm(),
-                        l1_lower=0.9, worst_lower=0.2)
+                        l1_lower=1-1e-2, lower=lower)

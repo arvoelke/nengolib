@@ -20,24 +20,49 @@ class LinearNetwork(Network):
     # are on a hypercube, not a hypersphere (and for tractibility reasons).
 
     synapse = SynapseParam('synapse')
-    input_synapse = SynapseParam('input_synapse')
-    dt = NumberParam('dt', low=0, low_open=True)
+    input_synapse = SynapseParam('input_synapse', optional=True)
+    output_synapse = SynapseParam('input_synapse', optional=True)
+    dt = NumberParam('dt', low=0, low_open=True, optional=True)
 
     def __init__(self, sys, n_neurons, synapse, dt, radii=1.0,
-                 input_synapse=Default, normalizer=default_normalizer(),
-                 solver=None, label=None, seed=None, add_to_container=None,
-                 **ens_kwargs):
+                 input_synapse=None, output_synapse=None,
+                 normalizer=default_normalizer(), solver=Default,
+                 label=None, seed=None, add_to_container=None, **ens_kwargs):
         super(LinearNetwork, self).__init__(label, seed, add_to_container)
 
         # Parameter checking
-        self.sys = LinearSystem(sys)  # sys is discrete => ss2sim throws error
+        self.sys = LinearSystem(sys)
         self.n_neurons = n_neurons
         self.synapse = synapse
-        self.input_synapse = (synapse if input_synapse is Default
-                              else input_synapse)
         self.dt = dt
         self.radii = radii
+        self.input_synapse = input_synapse
+        self.output_synapse = output_synapse
         self.normalizer = normalizer
+
+        if len(self.sys) == 0:
+            raise ValueError("system (%s) is zero order" % self.sys)
+
+        # TODO: duplicates checks in ss2sim
+        synapse = LinearSystem(self.synapse)
+        if len(synapse) != 1 or not synapse.proper or not synapse.analog:
+            raise ValueError("synapse (%s) must be first-order, proper, and "
+                             "analog" % synapse)
+
+        if not self.sys.analog:
+            # this restriction exists to simplify the life of the normalizer
+            # by assuming we only need to normalize continuous systems.
+            # ss2sim will eventually discretize the system with the given dt
+            # as long as it's not None
+            raise ValueError("system (%s) must be analog" % self.sys)
+
+        if self.sys.has_passthrough and self.output_synapse is None:
+            # the user shouldn't filter the output node themselves. an
+            # output synapse should be given so we can do it before the
+            # passthrough.
+            warnings.warn("output_synapse should be given if the system has "
+                          "a passthrough, otherwise filtering the output will "
+                          "also filter the passthrough")
 
         if not self.sys.is_stable:
             # This means certain normalizers won't work, because the worst-case
@@ -60,9 +85,8 @@ class LinearNetwork(Network):
                 self.n_neurons, self.size_state, ens_dimensions=1,
                 **ens_kwargs)
 
-            if solver is not None:
+            if solver is not Default:
                 # https://github.com/nengo/nengo/issues/1044
-                assert not hasattr(solver, '_hack')
                 solver._hack = random()
 
                 # https://github.com/nengo/nengo/issues/1040
@@ -77,7 +101,7 @@ class LinearNetwork(Network):
                 synapse=self.input_synapse)
             self.conn_C = nengo.Connection(
                 self.x.output, self.output, transform=self.C,
-                synapse=None)
+                synapse=self.output_synapse)
             self.conn_D = nengo.Connection(
                 self.input, self.output, transform=self.D,
                 synapse=None)

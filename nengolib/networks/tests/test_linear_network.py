@@ -7,8 +7,8 @@ from nengo.utils.testing import warns
 from nengolib.networks.linear_network import LinearNetwork
 from nengolib import Network
 from nengolib.signal import (
-    apply_filter, impulse, s, Controllable, canonical, decompose_states)
-from nengolib.synapses import PureDelay
+    apply_filter, impulse, s, z, Controllable, canonical, decompose_states)
+from nengolib.synapses import PureDelay, Bandpass
 
 
 _mock_solver_calls = 0  # global to keep solver's fingerprint static
@@ -32,24 +32,27 @@ def test_linear_network(neuron_type, atol, Simulator, plt, seed, rng):
     sys = nengo.Lowpass(0.1)
     scale_input = 2.0
 
+    synapse = 0.02
     tau_probe = 0.005
 
     with Network(seed=seed) as model:
         stim = nengo.Node(
             output=nengo.processes.WhiteSignal(T, high=10, seed=seed))
         subnet = LinearNetwork(
-            sys, n_neurons, synapse=0.02, dt=dt, neuron_type=neuron_type)
+            sys, n_neurons, synapse=synapse, input_synapse=synapse, dt=dt,
+            neuron_type=neuron_type)
         nengo.Connection(
             stim, subnet.input, synapse=None, transform=scale_input)
 
         assert subnet.synapse == subnet.input_synapse
+        assert subnet.output_synapse is None
 
         p_stim = nengo.Probe(subnet.input, synapse=tau_probe)
         p_x = nengo.Probe(subnet.x.output, synapse=tau_probe)
         p_output = nengo.Probe(subnet.output, synapse=tau_probe)
 
-    sim = Simulator(model, dt=dt)
-    sim.run(T)
+    with Simulator(model, dt=dt) as sim:
+        sim.run(T)
 
     expected = apply_filter(sys, dt, sim.data[p_stim], axis=0)
 
@@ -59,6 +62,59 @@ def test_linear_network(neuron_type, atol, Simulator, plt, seed, rng):
     plt.legend()
 
     assert np.allclose(sim.data[p_output], expected, atol=atol)
+
+
+def test_none_dt(Simulator, seed, rng):
+    dt = 0.0001  # approximates continuous case
+    T = 1.0
+
+    sys = Bandpass(8, 5)
+    synapse = 0.01
+
+    with Network(seed=seed) as model:
+        stim = nengo.Node(
+            output=nengo.processes.WhiteSignal(T, high=10, seed=seed))
+        subnet = LinearNetwork(
+            sys, 1, synapse=synapse, input_synapse=synapse, dt=None,
+            neuron_type=nengo.neurons.Direct())
+        nengo.Connection(stim, subnet.input, synapse=None)
+
+        assert subnet.output_synapse is None
+
+        p_ideal = nengo.Probe(subnet.input, synapse=sys)
+        p_output = nengo.Probe(subnet.output, synapse=None)
+
+    with Simulator(model, dt=dt) as sim:
+        sim.run(T)
+
+    assert np.allclose(sim.data[p_output], sim.data[p_ideal], atol=0.1)
+
+
+def test_output_filter(Simulator, seed, rng):
+    dt = 0.001
+    T = 1.0
+
+    sys = PureDelay(0.1, order=3, p=3)
+    assert sys.has_passthrough
+    synapse = 0.01
+
+    with Network(seed=seed) as model:
+        stim = nengo.Node(
+            output=nengo.processes.WhiteSignal(T, high=10, seed=seed))
+        subnet = LinearNetwork(
+            sys, 1, synapse=synapse, output_synapse=synapse, dt=dt,
+            neuron_type=nengo.neurons.Direct())
+        nengo.Connection(stim, subnet.input, synapse=None)
+
+        assert subnet.input_synapse is None
+
+        p_ideal = nengo.Probe(subnet.input, synapse=sys)
+        p_output = nengo.Probe(subnet.output, synapse=None)
+
+    with Simulator(model, dt=dt) as sim:
+        sim.run(T)
+
+    assert np.allclose(sim.data[p_output][:-1], sim.data[p_ideal][1:])
 
 
 def test_unfiltered(Simulator, seed, rng):
@@ -72,26 +128,43 @@ def test_unfiltered(Simulator, seed, rng):
         stim = nengo.Node(
             output=nengo.processes.WhiteSignal(T, high=10, seed=seed))
         subnet = LinearNetwork(
-            sys, 1, synapse=synapse, input_synapse=None, dt=dt,
+            sys, 1, synapse=synapse, dt=dt,
             neuron_type=nengo.neurons.Direct())
         nengo.Connection(stim, subnet.input, synapse=None)
 
         assert subnet.input_synapse is None
+        assert subnet.output_synapse is None
 
         p_ideal = nengo.Probe(subnet.input, synapse=sys)
         p_output = nengo.Probe(subnet.output, synapse=synapse)
 
-    sim = Simulator(model, dt=dt)
-    sim.run(T)
+    with Simulator(model, dt=dt) as sim:
+        sim.run(T)
 
     assert np.allclose(sim.data[p_output], sim.data[p_ideal])
 
 
-def test_expstable():
+def test_unstable_warning():
     with warns(UserWarning):
         with Network():
             LinearNetwork(
                 ~s, 1, synapse=0.02, dt=0.001, normalizer=Controllable())
+
+
+def test_output_warning():
+    with warns(UserWarning):
+        LinearNetwork(([1, 1], [1, 1]), 1, synapse=1, dt=1)
+
+
+def test_invalid_systems():
+    with pytest.raises(ValueError):
+        LinearNetwork(~z, 1, synapse=1, dt=1)
+
+    with pytest.raises(ValueError):
+        LinearNetwork(~s, 1, synapse=~z, dt=1)
+
+    with pytest.raises(ValueError):
+        LinearNetwork(1, 1, synapse=1, dt=1)
 
 
 def test_radii(Simulator, seed, plt):
@@ -116,7 +189,8 @@ def test_radii(Simulator, seed, plt):
         stim = nengo.Node(output=lambda t: 1 / dt if t <= dt else 0)
 
         # Set explicit radii for controllable realization
-        subnet = LinearNetwork(sys, n_neurons=1, synapse=0.2, dt=dt,
+        subnet = LinearNetwork(sys, n_neurons=1, synapse=0.2,
+                               input_synapse=0.2, dt=dt,
                                radii=radii, normalizer=Controllable(),
                                neuron_type=nengo.neurons.Direct())
         nengo.Connection(stim, subnet.input, synapse=None)
@@ -137,7 +211,7 @@ def test_solver(tmpdir, Simulator, seed, rng):
 
     for _ in range(3):
         model = LinearNetwork(
-            nengo.Lowpass(0.1), 10, nengo.Lowpass(0.1), 0.001,
+            nengo.Lowpass(0.1), 10, synapse=0.1, dt=0.001,
             solver=MockSolver(reg=rng.rand()), seed=seed)
 
         Simulator(model, model=nengo.builder.Model(
