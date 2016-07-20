@@ -32,9 +32,9 @@ def test_echo_state(Simulator, plt, seed, rng, include_bias):
     # train the reservoir to compute a highpass filter
     def function(x): return Highpass(0.01).filt(x, dt=dt)
 
-    esn.train(function, test_t, dt, process)
+    esn.train(function, test_t, dt, process, seed=seed)
 
-    with Simulator(model, dt=dt, seed=seed) as sim:
+    with Simulator(model, dt=dt, seed=seed+1) as sim:
         sim.run(test_t)
 
     ideal = function(sim.data[p_stim])
