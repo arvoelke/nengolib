@@ -369,6 +369,9 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
     @property
     def is_stable(self):
         w = self.poles  # eig(A)
+        if not len(w):
+            assert len(self) == 0  # only a passthrough
+            return True
         if not self.analog:
             return np.max(abs(w)) < 1  # within unit circle
         return np.max(w.real) < 0  # within left half-plane

@@ -115,6 +115,8 @@ def test_is_stable():
     sys = LinearFilter([1], [1, 0])  # integrator
     assert not sys.is_stable
 
+    assert LinearSystem(1).is_stable
+
     assert (~(z * (z - 0.5))).is_stable
     assert not (z / (z - 1)).is_stable  # discrete integrator
 
