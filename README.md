@@ -6,10 +6,10 @@ Additional extensions for large-scale brain modelling with [Nengo](https://githu
 Simply add the line **`import nengolib; nengolib.patch()`** to the top of your code to automatically improve certain kinds of Nengo models. See [`doc/notebooks/examples/basic_usage.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/examples/basic_usage.ipynb) and below for details.
 
 ### Improvements
- - `nengolib.Network(...)` serves as a drop-in replacement for `nengo.Network(...)` to automatically improve the encoding of an ensemble with few neurons, the spike-timing of each neuron (now added to upcoming [Nengo 2.1.1](https://github.com/nengo/nengo/pull/975) release), and the generalization of the decoders (with fewer `eval_points`).
+ - `nengolib.Network(...)` serves as a drop-in replacement for `nengo.Network(...)` to automatically improve the encoding of an ensemble with few neurons, the spike-timing of each neuron (now available in [Nengo 2.1.1](https://github.com/nengo/nengo/releases/tag/v2.1.1)), and the generalization of the decoders (with fewer `eval_points`).
    - [`doc/notebooks/examples/network.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/examples/network.ipynb)
    - [`doc/notebooks/research/sampling_high_dimensional_vectors.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/research/sampling_high_dimensional_vectors.ipynb)
- - `nengolib.Connection(...)` is similarly a drop-in replacement for `nengo.Connection(...)` that automatically improves the decoding of a small ensembles by adding a constant bias activity (equivalent to a change in the post-synaptic biases).
+ - `nengolib.Connection(...)` is similarly a drop-in replacement for `nengo.Connection(...)` that automatically improves the decoding from small ensembles by adding a constant bias activity (equivalent to a change in the post-synaptic biases).
    - [`doc/notebooks/examples/connection.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/examples/connection.ipynb)
  - `nengolib.HeteroSynapse(...)` allows one to use a different synapse per dimension/neuron when connecting to an ensemble.
    - [`doc/notebooks/examples/hetero_synapse.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/examples/hetero_synapse.ipynb)
