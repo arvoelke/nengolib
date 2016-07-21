@@ -45,6 +45,7 @@ class EchoState(Network, Reservoir):
     def __init__(self, n_neurons, dimensions, recurrent_synapse=0.005,
                  readout_synapse=None, radii=1.0, gain=1.25, rng=None,
                  neuron_type=Tanh(), include_bias=True, ens_seed=None,
+                 fanin=None,
                  label=None, seed=None, add_to_container=None, **ens_kwargs):
         """Initializes the Echo State Network.
 
@@ -96,6 +97,11 @@ class EchoState(Network, Reservoir):
         else:
             self.W_bias = np.zeros((self.n_neurons, 1))
         self.W = self.rng.rand(self.n_neurons, self.n_neurons) - 0.5
+        if fanin is not None:
+            for i in range(self.n_neurons):
+                pre = np.random.choice(self.n_neurons, size=self.n_neurons-fanin, replace=False)
+		for j in pre:
+		    self.W[i, j] = 0
         self.W *= self.gain / max(abs(eig(self.W)[0]))
 
         with self:
