@@ -175,15 +175,7 @@ class _DigitalStep(LinearFilter.Step):
         self.output = output
         if y0 is not None:
             self.output[...] = y0
-            # here we are initializing the system with a constant input
-            # of y0 to produce a constant output of y0 (times the integral
-            # of the impulse response). note that this assumes sys is BIBO
-            # stable. https://github.com/nengo/nengo/issues/1124
-            # the following equation works because the system is in CCF. to
-            # see why, observe that after convergence all of the states must be
-            # equal (since they get shifted), and then rearrange x = Ax + u
-            # for x, since B = 1
-            self._x[...] = y0 / (1.0 - np.sum(A[0, :]))
+            # note: we do not set x using y0, see Nengo issue #1124
 
     def __call__(self, t, u):
         self.output[...] = np.dot(self._c, self._x) + self._d*u
