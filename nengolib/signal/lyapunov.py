@@ -170,4 +170,4 @@ def l1_norm(sys, rtol=1e-6, max_length=2**18):
         if U_impulse - L_impulse < U_tail - L_tail:  # eq (26)
             T *= 2
 
-    return (U + L) / 2 + D, .5 * (U - L) / L
+    return (U + L) / 2 + abs(np.asarray(D).squeeze()), .5 * (U - L) / L

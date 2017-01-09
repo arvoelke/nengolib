@@ -115,5 +115,5 @@ class EchoState(Network, Reservoir):
                 synapse=self.recurrent_synapse)
 
         Reservoir.__init__(
-           self, self.input, pool, readout_synapse=readout_synapse,
-           network=self)
+            self, self.input, pool, readout_synapse=readout_synapse,
+            network=self)

@@ -5,6 +5,7 @@ import nengo
 from nengo.utils.numpy import rmse
 
 from nengolib import Network, PerfectLIF
+from nengolib.compat import get_activities
 from nengolib.neurons import Tanh
 
 
@@ -18,7 +19,7 @@ def _test_lif(Simulator, seed, neuron_type, u, dt, n=500, t=2.0):
     sim = Simulator(model, dt=dt)
     sim.run(t)
 
-    expected = nengo.builder.ensemble.get_activities(sim.model, x, [u]) * t
+    expected = get_activities(sim.model, x, [u]) * t
     actual = (sim.data[p] > 0).sum(axis=0)
 
     return rmse(actual, expected, axis=0)

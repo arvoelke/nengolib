@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 
 import nengo
-from nengo.builder.ensemble import get_activities
 
+from nengolib.compat import get_activities
 from nengolib.signal.learning import pes_learning_rate
 from nengolib import Network
 

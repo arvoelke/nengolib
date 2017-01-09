@@ -24,7 +24,8 @@ def test_basic(Simulator, seed, plt):
 
     process = WhiteSignal(max(train_t, test_t), high=10, rms=0.3)
 
-    def function(x): return x**2
+    def function(x):
+        return x**2
 
     with Network() as model:
         ens = nengo.Ensemble(n_neurons, 1, seed=seed)  # <- must have seed!

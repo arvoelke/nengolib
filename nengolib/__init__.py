@@ -13,6 +13,7 @@ from .monkeypatch import patch, unpatch  # noqa: F401
 from .network import Network  # noqa: F401
 from .neurons import PerfectLIF  # noqa: F401
 
+from . import compat  # noqa: F401
 from . import linalg  # noqa: F401
 from . import networks  # noqa: F401
 from . import signal  # noqa: F401

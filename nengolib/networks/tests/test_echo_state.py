@@ -30,7 +30,8 @@ def test_echo_state(Simulator, plt, seed, rng, include_bias):
         p_stim = nengo.Probe(stim, synapse=None)
 
     # train the reservoir to compute a highpass filter
-    def function(x): return Highpass(0.01).filt(x, dt=dt)
+    def function(x):
+        return Highpass(0.01).filt(x, dt=dt)
 
     esn.train(function, test_t, dt, process, seed=seed)
 

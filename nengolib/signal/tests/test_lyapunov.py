@@ -73,6 +73,7 @@ def test_l1_norm_known():
 
     # Check that passthrough is handled properly
     assert np.allclose(l1_norm(Lowpass(0.1) + 5)[0], 6)
+    assert np.allclose(l1_norm(Lowpass(0.1) - 5)[0], 6)
 
     # Check that Alpha scaled by a has a norm of approximately abs(a)
     for a in (-2, 3):
