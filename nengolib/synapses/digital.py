@@ -15,8 +15,10 @@ def DiscreteDelay(steps):
 
 
 def BoxFilter(width, normalized=True):
-    """Sums over width + 1 timesteps."""
-    den = DiscreteDelay(width)
-    amplitude = 1.0 / (width + 1) if normalized else 1.0
+    """Sums over width timesteps."""
+    if not is_integer(width) or width <= 0:
+        raise ValueError("width (%s) must be positive integer" % (width,))
+    den = DiscreteDelay(width - 1)
+    amplitude = 1. / width if normalized else 1.
     # 1 + 1/z + ... + 1/z^(steps) = (z^steps + z^(steps-1) + ... + 1)/z^steps
-    return amplitude * sum(z**k for k in range(width+1)) * den
+    return amplitude * sum(z**k for k in range(width)) * den
