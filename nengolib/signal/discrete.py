@@ -1,5 +1,4 @@
 import numpy as np
-from numpy.linalg import solve
 from scipy import linalg
 from scipy.signal import cont2discrete as _cont2discrete, lfilter
 
@@ -34,7 +33,7 @@ def discrete2cont(sys, dt, method='zoh', alpha=None):
             raise ValueError("alpha (%s) must be in range [0, 1]" % (alpha,))
 
         I = np.eye(n)
-        ar = solve(alpha*dt*ad.T + (1-alpha)*dt*I, ad.T - I).T
+        ar = linalg.solve(alpha*dt*ad.T + (1-alpha)*dt*I, ad.T - I).T
         M = I - alpha*dt*ar
 
         br = np.dot(M, bd) / dt

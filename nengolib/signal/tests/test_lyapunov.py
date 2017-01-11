@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from numpy.linalg import matrix_rank
 
 from nengo.utils.numpy import norm
 
@@ -58,11 +59,11 @@ def test_grams():
 
     P = control_gram(sys)
     assert np.allclose(np.dot(A, P) + np.dot(P, A.T), -np.dot(B, B.T))
-    assert np.linalg.matrix_rank(P) == len(P)  # controllable
+    assert matrix_rank(P) == len(P)  # controllable
 
     Q = observe_gram(sys)
     assert np.allclose(np.dot(A.T, Q) + np.dot(Q, A), -np.dot(C.T, C))
-    assert np.linalg.matrix_rank(Q) == len(Q)  # observable
+    assert matrix_rank(Q) == len(Q)  # observable
 
 
 def test_l1_norm_known():

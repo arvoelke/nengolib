@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.linalg import eig
+from scipy.linalg import eig
 
 from nengo.params import IntParam, NumberParam
 from nengo.neurons import NeuronTypeParam
