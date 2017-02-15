@@ -4,11 +4,11 @@ import pytest
 import nengo
 
 from nengolib.signal.normalization import (
-    scale_state, Controllable, Observable, HankelNorm, L1Norm)
+    scale_state, Controllable, Observable, Balreal, HankelNorm, L1Norm)
 from nengolib import Lowpass, Alpha, Network
 from nengolib.networks import LinearNetwork
 from nengolib.signal import (
-    sys_equal, ss_equal, state_norm, impulse, decompose_states)
+    sys_equal, ss_equal, state_norm, impulse, decompose_states, balreal)
 from nengolib.synapses import Bandpass, Highpass, PureDelay
 
 
@@ -46,6 +46,14 @@ def test_ccf_normalization():
     assert ss_equal(
         Observable()(sys, radii=[1, 2])[0],
         ([[-15, 2], [-25, 0]], [[0], [25]], [[1, 0]], [[0]]))
+
+
+@pytest.mark.parametrize("sys", [PureDelay(0.1, 4), PureDelay(0.05, 5, 5)])
+def test_balreal_normalization(sys):
+    normalized, info = Balreal()(sys)
+    balsys, S = balreal(sys)
+    assert ss_equal(balsys, normalized)
+    assert np.allclose(info['sigma'], S)
 
 
 def _test_normalization(Simulator, sys, rng, normalizer, l1_lower,

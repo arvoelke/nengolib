@@ -1,12 +1,12 @@
 import numpy as np
 
 from nengolib.signal.lyapunov import l1_norm
-from nengolib.signal.reduction import hankel
+from nengolib.signal.reduction import hankel, balreal
 from nengolib.signal.system import LinearSystem, decompose_states, canonical
 
-
 __all__ = ['scale_state', 'AbstractNormalizer', 'Controllable',
-           'Observable', 'AbstractScaleState', 'HankelNorm', 'L1Norm']
+           'Observable', 'Balreal', 'AbstractScaleState', 'HankelNorm',
+           'L1Norm']
 
 
 def scale_state(sys, radii=1.0):
@@ -48,6 +48,17 @@ class Observable(AbstractNormalizer):
 
     def __call__(self, sys, radii=1.0):
         return scale_state(canonical(sys, controllable=False), radii=radii), {}
+
+
+class Balreal(AbstractNormalizer):
+    """Transforms the system into a balanced realization.
+
+    See ``nengolib.signal.balreal`` for details.
+    """
+
+    def __call__(self, sys, radii=1.0):
+        sys, S = balreal(sys)
+        return scale_state(sys, radii=radii), {'sigma': S}
 
 
 class AbstractScaleState(AbstractNormalizer):
