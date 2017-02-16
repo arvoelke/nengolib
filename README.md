@@ -26,11 +26,12 @@ Simply add the line **`import nengolib; nengolib.patch()`** to the top of your c
  from nengolib.signal import s, z
  nengo.Connection(a, b, synapse=z**(-k))
    ```
-   which is equivalent to using `nengolib.synapses.PureDelay(k)` or `(~z)**k` by use of the _reverse shift operator_. Or we can implement a double-exponential synapse:
+   which is equivalent to using `nengolib.synapses.DiscreteDelay(k)` or `(~z)**k` by use of the _reverse shift operator_. Or we can implement a double-exponential synapse:
    ```
 nengolib.synapses.DoubleExp(tau1, tau2)
 ```
    which is equivalent to using `1/((tau1*s + 1)*(tau2*s + 1))` by use of the continuous _differential operator_.
+ - `nengolib.synapses.PureDelay(theta, order)` approximates a continuous-time delay of length `theta` seconds, by using a low-frequency expansion of the given order.
  - `nengolib.signal.{minreal,balreal,modred}` are tools for model order reduction using _minimal_ and _balanced realizations_. See [`doc/notebooks/research/linear_model_reduction.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/research/reservoir_computing.ipynb) for more information.
 
 ### Dynamical Systems
