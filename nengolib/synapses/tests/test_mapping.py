@@ -4,8 +4,9 @@ import pytest
 import nengo
 
 from nengolib.synapses.mapping import ss2sim
-from nengolib import Network, Lowpass, Alpha, LinearFilter
-from nengolib.signal import apply_filter, s, z
+from nengolib import Network, Lowpass, Alpha
+from nengolib.signal import apply_filter, s, z, ss_equal, cont2discrete
+from nengolib.synapses import Highpass, PureDelay, DoubleExp
 
 
 def test_mapping(Simulator, plt, seed):
@@ -67,23 +68,98 @@ def test_mapping(Simulator, plt, seed):
     assert np.allclose(sim.data[pidss], expected)
 
 
-def test_unsupported_synapse():
-    with pytest.raises(ValueError):
-        ss2sim(sys=Lowpass(0.1), synapse=Alpha(0.1))
+def test_principle3_continuous():
+    sys = PureDelay(0.1, order=5)
 
-    with pytest.raises(ValueError):
-        ss2sim(sys=Lowpass(0.1), synapse=LinearFilter([1, 2], [2, 1]), dt=0.01)
+    tau = 0.01
+    syn = Lowpass(tau)
 
-    with pytest.raises(ValueError):
-        ss2sim(sys=Lowpass(0.1), synapse=LinearFilter(1, 1))
+    FH = ss2sim(sys, syn, dt=None)
 
-    with pytest.raises(ValueError):
-        ss2sim(sys=Lowpass(0.1), synapse=LinearFilter([1, 0.01], [1]))
-
-    with pytest.raises(ValueError):
-        ss2sim(sys=Lowpass(0.1), synapse=LinearFilter([1], [2, 1, 1]))
+    assert np.allclose(FH.A, tau * sys.A + np.eye(len(sys)))
+    assert np.allclose(FH.B, tau * sys.B)
+    assert np.allclose(FH.C, sys.C)
+    assert np.allclose(FH.D, sys.D)
 
 
-def test_unsupported_system():
+def test_principle3_discrete():
+    sys = PureDelay(0.1, order=5)
+
+    tau = 0.01
+    dt = 0.002
+    syn = Lowpass(tau)
+
+    FH = ss2sim(sys, syn, dt=dt)
+
+    a = np.exp(-dt / tau)
+    sys = cont2discrete(sys, dt=dt)
+    assert np.allclose(FH.A, (sys.A - a * np.eye(len(sys))) / (1 - a))
+    assert np.allclose(FH.B, sys.B / (1 - a))
+    assert np.allclose(FH.C, sys.C)
+    assert np.allclose(FH.D, sys.D)
+
+    # We can also do the discretization ourselves and then pass in dt=None
+    assert ss_equal(
+        ss2sim(sys, cont2discrete(syn, dt=dt), dt=None), FH)
+
+
+def test_doubleexp_continuous():
+    sys = PureDelay(0.1, order=5)
+
+    tau1 = 0.05
+    tau2 = 0.02
+    syn = DoubleExp(tau1, tau2)
+
+    FH = ss2sim(sys, syn, dt=None)
+
+    A = sys.A
+    FHA = tau1 * tau2 * np.dot(A, A) + (tau1 + tau2) * A + np.eye(len(A))
+    B = sys.B
+    FHB = (tau1 * tau2 * A + (tau1 + tau2) * np.eye(len(A))).dot(B)
+    assert np.allclose(FH.A, FHA)
+    assert np.allclose(FH.B, FHB)
+    assert np.allclose(FH.C, sys.C)
+    assert np.allclose(FH.D, sys.D)
+
+
+def test_doubleexp_discrete():
+    sys = PureDelay(0.1, order=5)
+
+    tau1 = 0.05
+    tau2 = 0.02
+    dt = 0.002
+    syn = DoubleExp(tau1, tau2)
+
+    FH = ss2sim(sys, syn, dt=dt)
+
+    a1 = np.exp(-dt / tau1)
+    a2 = np.exp(-dt / tau2)
+    t1 = 1 / (1 - a1)
+    t2 = 1 / (1 - a2)
+    c = [a1 * a2 * t1 * t2, - (a1 + a2) * t1 * t2, t1 * t2]
+    sys = cont2discrete(sys, dt=dt)
+
+    A = sys.A
+    FHA = c[2] * np.dot(A, A) + c[1] * A + c[0] * np.eye(len(A))
+    B = sys.B
+    FHB = (c[2] * A + (c[1] + c[2]) * np.eye(len(A))).dot(B)
+    assert np.allclose(FH.A, FHA)
+    assert np.allclose(FH.B, FHB)
+    assert np.allclose(FH.C, sys.C)
+    assert np.allclose(FH.D, sys.D)
+
+
+def test_unsupported_mapping():
+    lpf = Lowpass(0.1)
+
     with pytest.raises(ValueError):
-        ss2sim(sys=z, synapse=Lowpass(0.1))
+        ss2sim(sys=lpf, synapse=Highpass(0.1))
+
+    with pytest.raises(ValueError):
+        ss2sim(sys=~z, synapse=lpf)
+
+    with pytest.raises(ValueError):
+        ss2sim(sys=lpf, synapse=~z)
+
+    with pytest.raises(ValueError):
+        ss2sim(sys=~z, synapse=~z, dt=1.)

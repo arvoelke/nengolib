@@ -43,19 +43,6 @@ class LinearNetwork(Network):
         if len(self.sys) == 0:
             raise ValueError("system (%s) is zero order" % self.sys)
 
-        # TODO: duplicates checks in ss2sim
-        synapse = LinearSystem(self.synapse)
-        if len(synapse) != 1 or not synapse.proper or not synapse.analog:
-            raise ValueError("synapse (%s) must be first-order, proper, and "
-                             "analog" % synapse)
-
-        if not self.sys.analog:
-            # this restriction exists to simplify the life of the normalizer
-            # by assuming we only need to normalize continuous systems.
-            # ss2sim will eventually discretize the system with the given dt
-            # as long as it's not None
-            raise ValueError("system (%s) must be analog" % self.sys)
-
         if self.sys.has_passthrough and self.output_synapse is None:
             # the user shouldn't filter the output node themselves. an
             # output synapse should be given so we can do it before the
