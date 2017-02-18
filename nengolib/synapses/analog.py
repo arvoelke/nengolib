@@ -51,7 +51,7 @@ def _passthrough_delay(m, c):
 
     We use this because it is numerically stable for high m.
     """
-    j = np.arange(1, m+1)
+    j = np.arange(1, m+1, dtype=np.float64)
     u = (m + j) * (m - j + 1) / (c * j)
 
     A = np.zeros((m, m))
@@ -72,7 +72,7 @@ def _proper_delay(q, c):
     We use this because it is numerically stable for high q
     and doesn't have a passthrough.
     """
-    j = np.arange(1, q+1)
+    j = np.arange(1, q+1, dtype=np.float64)
     u = (q + j - 1) * (q - j + 1) / (c * j)
 
     A = np.zeros((q, q))
@@ -91,7 +91,7 @@ def _pade_delay(p, q, c):
 
     This may have numerical issues for large values of p or q.
     """
-    i = np.arange(1, p+q+1)
+    i = np.arange(1, p+q+1, dtype=np.float64)
     taylor = np.append([1.0], (-c)**i / factorial(i))
     num, den = pade(taylor, q)
     return LinearFilter(num, den)

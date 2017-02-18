@@ -69,22 +69,25 @@ def test_invalid_highpass(order):
         Highpass(0.01, order)
 
 
-@pytest.mark.parametrize("c", [0.1, 0.4, 0.8])
+@pytest.mark.parametrize("c", [0.1, 0.4, 0.8, 1])
 def test_pade_delay(c):
     dt = 0.001
-    length = 1000
+    length = int(2*c / dt)
 
-    sys = PureDelay(c, order=4)
+    # Note: the discretization has numerical issues
+    # for larger orders here.
+    sys = PureDelay(c, order=7)
     response = impulse(sys, dt, length)
 
-    offset = 10
+    offset = int(0.1*c/dt)  # start at 10% of delay
+    atol = int(0.1*c/dt)  # allow 10% margin of error
     assert np.allclose(
-        (np.argmax(response[offset:])+offset), c*length, atol=100)
+        (np.argmax(response[offset:])+offset), int(c/dt), atol=atol)
 
 
 @pytest.mark.parametrize("p", [1, 2, 3])
 def test_pade_versions(p):
-    c = 0.5
+    c = 1
     # make sure all of the delay methods do the same thing
     assert _pade_delay(p, p+1, c) == _proper_delay(p+1, c)
     assert _pade_delay(p, p, c) == _passthrough_delay(p, c)
