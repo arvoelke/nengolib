@@ -48,6 +48,13 @@ def test_ccf_normalization():
         ([[-15, 2], [-25, 0]], [[0], [25]], [[1, 0]], [[0]]))
 
 
+def test_radii_immutability():
+    radii = np.asarray([1, 2])
+    radii.flags.writeable = False
+    HankelNorm()(Alpha(0.1), radii=radii)
+    assert np.allclose(radii, [1, 2])  # issues/90
+
+
 @pytest.mark.parametrize("sys", [PureDelay(0.1, 4), PureDelay(0.05, 5, 5)])
 def test_balreal_normalization(sys):
     normalized, info = Balreal()(sys)

@@ -66,7 +66,8 @@ class AbstractScaleState(AbstractNormalizer):
 
     def __call__(self, sys, radii=1.0):
         sys = LinearSystem(sys)
-        radii *= np.asarray(self.radii(sys))
+        # Note: don't mutate the user's radii
+        radii = radii * np.asarray(self.radii(sys))
         return scale_state(sys, radii=radii), {'radii': radii}
 
     def radii(self, sys):
