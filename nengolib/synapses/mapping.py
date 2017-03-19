@@ -39,7 +39,7 @@ def ss2sim(sys, synapse, dt=None):
     c = synapse.den / gain
 
     A, B, C, D = sys.ss
-    k = len(sys)
+    k = len(synapse)
     powA = [matrix_power(A, i) for i in range(k + 1)]
     AH = np.sum([c[i] * powA[i] for i in range(k + 1)], axis=0)
 

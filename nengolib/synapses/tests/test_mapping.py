@@ -103,9 +103,8 @@ def test_principle3_discrete():
         ss2sim(sys, cont2discrete(syn, dt=dt), dt=None), FH)
 
 
-def test_doubleexp_continuous():
-    sys = PureDelay(0.1, order=5)
-
+@pytest.mark.parametrize("sys", [PureDelay(0.1, order=5), Lowpass(0.1)])
+def test_doubleexp_continuous(sys):
     tau1 = 0.05
     tau2 = 0.02
     syn = DoubleExp(tau1, tau2)
