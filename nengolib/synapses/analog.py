@@ -72,17 +72,18 @@ def _proper_delay(q, c):
     We use this because it is numerically stable for high q
     and doesn't have a passthrough.
     """
-    j = np.arange(1, q+1, dtype=np.float64)
-    u = (q + j - 1) * (q - j + 1) / (c * j)
+    j = np.arange(q, dtype=np.float64)
+    u = (q + j) * (q - j) / (c * (j + 1))
 
     A = np.zeros((q, q))
     B = np.zeros((q, 1))
     C = np.zeros((1, q))
     D = np.zeros((1,))
 
-    A[0, :] = B[0, 0] = -u[0]
+    A[0, :] = -u[0]
+    B[0, 0] = u[0]
     A[1:, :-1][np.diag_indices(q-1)] = u[1:]
-    C[0, :] = - j / float(q) * (-1) ** (q - j)
+    C[0, :] = (j + 1) / float(q) * (-1) ** (q - 1 - j)
     return LinearSystem((A, B, C, D), analog=True)
 
 
