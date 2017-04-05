@@ -21,15 +21,14 @@ Simply add the line **`import nengolib; nengolib.patch()`** to the top of your c
  - NengoLib extends the `LinearFilter` object by adding a language for building synaptic models. These linear systems can be scaled, added, multiplied, inverted, compared, converted to discrete time, and converted to continuous time.
  - This unifies a number of common formats (transfer function, state-space, zero-pole-gain, and `nengo.LinearFilter`) to support manipulating these systems within a common framework, with caching, error checking, and other benefits.
  - These synapses can be easily simulated within Nengo. For example, to introduce a pure delay of `k` timesteps:
-
    ```
- from nengolib.signal import s, z
- nengo.Connection(a, b, synapse=z**(-k))
+   from nengolib.signal import s, z
+   nengo.Connection(a, b, synapse=z**(-k))
    ```
    which is equivalent to using `nengolib.synapses.DiscreteDelay(k)` or `(~z)**k` by use of the _reverse shift operator_. Or we can implement a double-exponential synapse:
    ```
-nengolib.synapses.DoubleExp(tau1, tau2)
-```
+   nengolib.synapses.DoubleExp(tau1, tau2)
+   ```
    which is equivalent to using `1/((tau1*s + 1)*(tau2*s + 1))` by use of the continuous _differential operator_.
  - `nengolib.synapses.PureDelay(theta, order)` approximates a continuous-time delay of length `theta` seconds, by using a low-frequency expansion of the given order.
  - `nengolib.signal.{minreal,balreal,modred}` are tools for model order reduction using _minimal_ and _balanced realizations_. See [`doc/notebooks/research/linear_model_reduction.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/research/reservoir_computing.ipynb) for more information.
