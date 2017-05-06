@@ -14,9 +14,21 @@ __all__ = [
 
 
 class SphericalCoords(Distribution):
+    """Spherical coordinates for inverse transform method.
+
+    This is used to map the hypercube onto the hypersphere and hyperball. [1]_
+
+    References
+    ----------
+    .. [1] K.-T. Fang and Y. Wang, Number-Theoretic Methods in Statistics.
+       Chapman & Hall, 1994.
+    """
 
     def __init__(self, m):
         self.m = m
+
+    def __repr__(self):
+        return "%s(%s)" % (self.__class__.__name__, self.m)
 
     def sample(self, num, d=None, rng=np.random):
         shape = self._sample_shape(num, d)
@@ -39,6 +51,10 @@ class SphericalCoords(Distribution):
 
 
 class Sobol(Distribution):
+    """Sobol sequence for quasi Monte Carlo sampling the hypercube."""
+
+    def __repr__(self):
+        return "%s()" % (self.__class__.__name__)
 
     def sample(self, num, d=None, rng=np.random):
         num, d = self._sample_shape(num, d)
@@ -56,6 +72,20 @@ class Sobol(Distribution):
 
 
 class ScatteredHypersphere(UniformHypersphere):
+    """Number-theoretic distribution over the hypersphere and hypercube.
+
+    Applies the inverse transform method [1]_ to some number-theoretic
+    sequence (quasi Monte carlo samples from the hypercube).
+
+    References
+    ----------
+    .. [1] K.-T. Fang and Y. Wang, Number-Theoretic Methods in Statistics.
+       Chapman & Hall, 1994.
+    """
+
+    def __repr__(self):
+        return "%s(%s)" % (
+            self.__class__.__name__, "surface=True" if self.surface else "")
 
     def sample(self, num, d=1, rng=np.random, ntm=Sobol()):
         if d == 1:

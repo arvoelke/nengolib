@@ -81,3 +81,10 @@ def test_sphere(d, rng):
 
     f = _furthest(x)
     assert (f > 1.5).all()
+
+
+def test_dist_repr():
+    assert repr(SphericalCoords(4)) == "SphericalCoords(4)"
+    assert repr(Sobol()) == "Sobol()"
+    assert repr(sphere) == "ScatteredHypersphere(surface=True)"
+    assert repr(ball) == "ScatteredHypersphere()"  # False default
