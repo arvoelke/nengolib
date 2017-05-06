@@ -4,6 +4,7 @@ import numpy as np
 
 import nengo
 from nengo.utils.numpy import rmse
+from nengo.utils.testing import warns
 
 from nengolib import Connection, Network
 from nengolib.solvers import BiasedSolver
@@ -13,7 +14,7 @@ from nengolib.solvers import BiasedSolver
 def test_connection(Simulator, seed, d):
     with Network(seed=seed) as model:
         stim = nengo.Node(output=lambda t: np.sin(t*2*np.pi), size_out=d)
-        x = nengo.Ensemble(5, d, neuron_type=nengo.LIFRate())
+        x = nengo.Ensemble(1, d, intercepts=[-1], neuron_type=nengo.LIFRate())
         default = nengo.Node(size_in=d)
         improved = nengo.Node(size_in=d)
 
@@ -34,3 +35,33 @@ def test_connection(Simulator, seed, d):
 
     assert (rmse(sim.data[p_default], sim.data[p_stim]) >
             rmse(sim.data[p_improved], sim.data[p_stim]))
+
+
+def test_multiple_builds(Simulator, seed):
+    # this is not a separate test because of nengo issue #1011
+    solver = BiasedSolver()
+    A, Y = np.ones((1, 1)), np.ones((1, 1))
+    assert solver.bias is None
+    solver(A, Y)
+    assert solver.bias is not None
+    with warns(UserWarning):
+        solver(A, Y)
+
+    # issue: #99
+    with Network(seed=seed) as model:
+        stim = nengo.Node(output=0)
+        x = nengo.Ensemble(100, 1)
+        out = nengo.Node(size_in=1)
+        nengo.Connection(stim, x, synapse=None)
+        conn = Connection(x, out, synapse=None)
+        p = nengo.Probe(out, synapse=0.1)
+
+    assert isinstance(conn.solver, BiasedSolver)
+
+    with Simulator(model):
+        pass
+
+    with Simulator(model) as sim:
+        sim.run(0.1)
+
+    assert rmse(sim.data[p], 0) < 0.01

@@ -3,7 +3,6 @@ import pytest
 import numpy as np
 
 import nengo
-from nengo.exceptions import NengoException
 
 from nengolib.solvers import BiasedSolver
 from nengolib import Network
@@ -41,14 +40,3 @@ def test_biased_solver_weights(Simulator):
         nengo.Connection(x, x, solver=solver)
 
     Simulator(model)
-
-
-def test_biased_improper_usage(Simulator):
-    solver = BiasedSolver()
-    with Network() as model:
-        x = nengo.Ensemble(100, 1)
-        nengo.Connection(x, x, solver=solver)
-        nengo.Connection(x, x, solver=solver)
-
-    with pytest.raises(NengoException):  # can't use same solver twice
-        Simulator(model)
