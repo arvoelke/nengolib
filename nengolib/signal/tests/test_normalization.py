@@ -75,8 +75,8 @@ def _test_normalization(Simulator, sys, rng, normalizer, l1_lower,
         stim = nengo.Node(output=lambda t: rng.choice([-radius, radius])
                           if t < T/2 else radius)
         tau = 0.02
-        subnet = LinearNetwork(sys, n_neurons=1, synapse=tau, dt=dt,
-                               input_synapse=tau,
+        subnet = LinearNetwork(sys, n_neurons_per_ensemble=1, synapse=tau,
+                               dt=dt, input_synapse=tau,
                                radii=radius, normalizer=normalizer,
                                neuron_type=nengo.neurons.Direct())
         nengo.Connection(stim, subnet.input, synapse=None)

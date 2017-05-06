@@ -39,8 +39,8 @@ def test_linear_network(neuron_type, atol, Simulator, plt, seed, rng):
         stim = nengo.Node(
             output=nengo.processes.WhiteSignal(T, high=10, seed=seed))
         subnet = LinearNetwork(
-            sys, n_neurons, synapse=synapse, input_synapse=synapse, dt=dt,
-            neuron_type=neuron_type)
+            sys, n_neurons_per_ensemble=n_neurons, synapse=synapse,
+            input_synapse=synapse, dt=dt, neuron_type=neuron_type)
         nengo.Connection(
             stim, subnet.input, synapse=None, transform=scale_input)
 
@@ -189,7 +189,7 @@ def test_radii(Simulator, seed, plt):
         stim = nengo.Node(output=lambda t: 1 / dt if t <= dt else 0)
 
         # Set explicit radii for controllable realization
-        subnet = LinearNetwork(sys, n_neurons=1, synapse=0.2,
+        subnet = LinearNetwork(sys, n_neurons_per_ensemble=1, synapse=0.2,
                                input_synapse=0.2, dt=dt,
                                radii=radii, normalizer=Controllable(),
                                neuron_type=nengo.neurons.Direct())

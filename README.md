@@ -45,7 +45,7 @@ Simply add the line **`import nengolib; nengolib.patch()`** to the top of your c
 
 ### Installation
 
-NengoLib is tested rigorously (100% coverage) against Python 2.7, 3.4, and 3.5, and [Nengo](https://github.com/nengo/nengo/releases) 2.1.0, 2.1.2, 2.2.0, 2.3.0, and its development branch.
+NengoLib is tested rigorously (100% coverage) against Python 2.7, 3.4, and 3.5, and [Nengo](https://github.com/nengo/nengo/releases) 2.1.0, 2.1.2, 2.2.0, 2.3.0, 2.4.0, and its development branch. The Nengo GUI is not officially supported.
 
 To install the development version of NengoLib:
 ```
