@@ -14,8 +14,8 @@ class Connection(BaseConnection):
     def __init__(self, pre, post, solver=LstsqL2(), **kwargs):
         if isinstance(pre, nengo.Ensemble):
             solver = BiasedSolver(solver)
-            nengo.Connection(
-                nengo.Node(output=0, label="Bias"), post,
-                function=solver.bias_function(post.size_in), synapse=None)
+            bias = nengo.Node(output=solver.bias_function(post.size_in),
+                              label="Bias")
+            nengo.Connection(bias, post, synapse=None)
 
         super(Connection, self).__init__(pre, post, solver=solver, **kwargs)
