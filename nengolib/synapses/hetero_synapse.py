@@ -27,7 +27,7 @@ class HeteroSynapse(object):
     """
 
     def __init__(self, systems, dt=None, elementwise=False, method='zoh'):
-        if not is_iterable(systems):
+        if not is_iterable(systems) or isinstance(systems, LinearSystem):
             systems = [systems]
         self.systems = systems
         self.dt = dt

@@ -1,11 +1,14 @@
-import numpy as np
 import pytest
+
+import numpy as np
 from numpy.linalg import matrix_rank
+from scipy.linalg import inv
 
 from nengo.utils.numpy import norm
 
 from nengolib.signal.lyapunov import (
-    _H2P, state_norm, control_gram, observe_gram, l1_norm)
+    _H2P, state_norm, control_gram, observe_gram, balanced_transformation,
+    hankel, l1_norm)
 from nengolib.signal import sys2ss, impulse, cont2discrete, s, z
 from nengolib.synapses import Bandpass, PureDelay
 from nengolib import Lowpass, Alpha
@@ -64,6 +67,44 @@ def test_grams():
     Q = observe_gram(sys)
     assert np.allclose(np.dot(A.T, Q) + np.dot(Q, A), -np.dot(C.T, C))
     assert matrix_rank(Q) == len(Q)  # observable
+
+
+def test_balreal():
+    isys = Lowpass(0.05)
+    noise = 0.5*Lowpass(0.01) + 0.5*Alpha(0.005)
+    p = 0.8
+    sys = p*isys + (1-p)*noise
+
+    T, Tinv, S = balanced_transformation(sys)
+    assert np.allclose(inv(T), Tinv)
+    assert np.allclose(S, hankel(sys))
+
+    balsys = sys.transform(T, Tinv)
+    assert balsys == sys
+
+    assert np.all(S >= 0)
+    assert np.all(S[0] > 0.3)
+    assert np.all(S[1:] < 0.05)
+    assert np.allclose(sorted(S, reverse=True), S)
+
+    P = control_gram(balsys)
+    Q = observe_gram(balsys)
+
+    diag = np.diag_indices(len(P))
+    offdiag = np.ones_like(P, dtype=bool)
+    offdiag[diag] = False
+    offdiag = np.where(offdiag)
+
+    assert np.allclose(P[diag], S)
+    assert np.allclose(P[offdiag], 0)
+    assert np.allclose(Q[diag], S)
+    assert np.allclose(Q[offdiag], 0)
+
+
+@pytest.mark.parametrize("sys", [
+    PureDelay(0.1, 4), PureDelay(0.2, 5, 5), Alpha(0.2)])
+def test_hankel(sys):
+    assert np.allclose(hankel(sys), balanced_transformation(sys)[2])
 
 
 def test_l1_norm_known():

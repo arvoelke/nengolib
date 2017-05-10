@@ -7,7 +7,7 @@ from nengo.utils.testing import warns
 from nengolib.networks.linear_network import LinearNetwork
 from nengolib import Network
 from nengolib.signal import (
-    apply_filter, impulse, s, z, Controllable, canonical, decompose_states)
+    apply_filter, impulse, s, z, canonical, Identity)
 from nengolib.synapses import PureDelay, Bandpass
 
 
@@ -147,8 +147,7 @@ def test_unfiltered(Simulator, seed, rng):
 def test_unstable_warning():
     with warns(UserWarning):
         with Network():
-            LinearNetwork(
-                ~s, 1, synapse=0.02, dt=0.001, normalizer=Controllable())
+            LinearNetwork(~s, 1, synapse=0.02, dt=0.001, realizer=Identity())
 
 
 def test_output_warning():
@@ -176,7 +175,7 @@ def test_radii(Simulator, seed, plt):
 
     # Precompute the exact bounds for an impulse stimulus
     radii = []
-    for sub in decompose_states(sys):
+    for sub in sys:
         response = impulse(sub, dt=dt, length=int(T / dt))
         amplitude = np.max(abs(response))
         assert amplitude >= 1e-6  # otherwise numerical issues
@@ -189,14 +188,12 @@ def test_radii(Simulator, seed, plt):
         stim = nengo.Node(output=lambda t: 1 / dt if t <= dt else 0)
 
         # Set explicit radii for controllable realization
-        subnet = LinearNetwork(sys, n_neurons_per_ensemble=1, synapse=0.2,
-                               input_synapse=0.2, dt=dt,
-                               radii=radii, normalizer=Controllable(),
+        subnet = LinearNetwork(sys, n_neurons_per_ensemble=1,
+                               synapse=0.2, input_synapse=0.2, dt=dt,
+                               radii=radii, realizer=Identity(),
                                neuron_type=nengo.neurons.Direct())
         nengo.Connection(stim, subnet.input, synapse=None)
         p = nengo.Probe(subnet.x.output, synapse=None)
-
-    assert subnet.info == {}
 
     sim = nengo.Simulator(model, dt=dt)
     sim.run(T)

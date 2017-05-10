@@ -1,12 +1,14 @@
 import numpy as np
-from scipy.linalg import solve_lyapunov, solve_discrete_lyapunov, eig
+from scipy.linalg import (solve_lyapunov, solve_discrete_lyapunov, eig,
+                          cholesky, svd)
 from scipy.optimize import fminbound
 
 from nengolib.signal.discrete import impulse, cont2discrete
 from nengolib.signal.system import LinearSystem
 
 
-__all__ = ['state_norm', 'control_gram', 'observe_gram', 'l1_norm']
+__all__ = ['state_norm', 'control_gram', 'observe_gram',
+           'balanced_transformation', 'hankel', 'l1_norm']
 
 
 def _H2P(A, B, analog):
@@ -60,6 +62,54 @@ def observe_gram(sys):
     sys = LinearSystem(sys)
     A, B, C, D = sys.ss
     return _H2P(A.T, C.T, sys.analog)
+
+
+def balanced_transformation(sys):
+    """Computes the balancing transformation, its inverse, and eigenvalues.
+
+    The eigenvalues are precisely the hankel singular values.
+
+    References:
+        [1] http://www.mathworks.com/help/control/ref/balreal.html
+
+        [2] Laub, A.J., M.T. Heath, C.C. Paige, and R.C. Ward, "Computation of
+            System Balancing Transformations and Other Applications of
+            Simultaneous Diagonalization Algorithms," *IEEE Trans. Automatic
+            Control*, AC-32 (1987), pp. 115-122.
+    """
+    sys = LinearSystem(sys)  # cast first to memoize sys2ss in control_gram
+    if not sys.analog:
+        raise NotImplementedError("balanced digital filters not supported")
+
+    R = control_gram(sys)
+    O = observe_gram(sys)
+
+    LR = cholesky(R, lower=True)
+    LO = cholesky(O, lower=True)
+
+    U, S, V = svd(np.dot(LO.T, LR))
+
+    T = np.dot(LR, V.T) * S ** (-1. / 2)
+    Tinv = (S ** (-1. / 2))[:, None] * np.dot(U.T, LO.T)
+
+    return T, Tinv, S
+
+
+def hankel(sys):
+    """Compute Hankel singular values of a linear system.
+
+    These are precisely the eigenvalues of the balanced transformation.
+
+    References:
+        [1] Glover, Keith, and Jonathan R. Partington. "Bounds on the
+            achievable accuracy in model reduction." Modelling, robustness and
+            sensitivity reduction in control systems. Springer Berlin
+            Heidelberg, 1987. 95-118.
+    """
+    sys = LinearSystem(sys)
+    R, O = control_gram(sys), observe_gram(sys)
+    # sort needed to be consistent across different versions
+    return np.sort(np.sqrt(abs(eig(np.dot(O, R))[0])))[::-1]
 
 
 def _state_impulse(A, x0, k, delay=0):

@@ -4,18 +4,10 @@ import pytest
 from nengo.utils.numpy import rmse
 from nengo.utils.testing import warns
 
-from nengolib.signal.reduction import (
-    hankel, minreal, similarity_transform, balreal, modred, balred)
+from nengolib.signal.reduction import pole_zero_cancel, modred, balred
 from nengolib import Lowpass, Alpha
 from nengolib.signal import (
-    sys2ss, sys_equal, LinearSystem, apply_filter, control_gram, observe_gram)
-from nengolib.synapses import PureDelay
-
-
-@pytest.mark.parametrize("sys", [
-    PureDelay(0.1, 4), PureDelay(0.2, 5, 5), Alpha(0.2)])
-def test_hankel(sys):
-    assert np.allclose(hankel(sys), balreal(sys)[1])
+    LinearSystem, apply_filter, balanced_transformation)
 
 
 def test_minreal():
@@ -24,60 +16,16 @@ def test_minreal():
     sys3 = sys2*sys2
     sys4 = LinearSystem(2)
 
-    assert minreal(sys1) == sys1
-    assert minreal(sys3) == sys3
-    assert minreal(sys3/sys2, tol=1e-4) == sys2  # numpy 1.9.2
-    assert minreal(sys1*sys2/sys3, tol=1e-4) == sys1/sys2  # numpy 1.9.2
+    assert pole_zero_cancel(sys1) == sys1
+    assert pole_zero_cancel(sys3) == sys3
+    assert pole_zero_cancel(sys3/sys2, tol=1e-4) == sys2  # numpy 1.9.2
+    assert (pole_zero_cancel(sys1*sys2/sys3, tol=1e-4) ==
+            sys1/sys2)  # numpy 1.9.2
 
-    assert minreal(sys2/sys3, tol=1e-4) == minreal(~sys2)  # numpy 1.9.2
-    assert minreal(sys3*sys4) == minreal(sys4)*minreal(sys3)
-
-
-def test_similarity_transform():
-    sys = Alpha(0.1)
-
-    TA, TB, TC, TD = similarity_transform(sys, np.eye(2)).ss
-    A, B, C, D = sys2ss(sys)
-    assert np.allclose(A, TA)
-    assert np.allclose(B, TB)
-    assert np.allclose(C, TC)
-    assert np.allclose(D, TD)
-
-    T = [[1, 1], [-0.5, 0]]
-    TA, TB, TC, TD = similarity_transform(sys, T).ss
-    assert not np.allclose(A, TA)
-    assert not np.allclose(B, TB)
-    assert not np.allclose(C, TC)
-    assert np.allclose(D, TD)
-    assert sys_equal(sys, (TA, TB, TC, TD))
-
-
-def test_balreal():
-    isys = Lowpass(0.05)
-    noise = 0.5*Lowpass(0.01) + 0.5*Alpha(0.005)
-    p = 0.8
-    sys = p*isys + (1-p)*noise
-
-    balsys, S = balreal(sys)
-    assert balsys == sys
-
-    assert np.all(S >= 0)
-    assert np.all(S[0] > 0.3)
-    assert np.all(S[1:] < 0.05)
-    assert np.allclose(sorted(S, reverse=True), S)
-
-    P = control_gram(balsys)
-    Q = observe_gram(balsys)
-
-    diag = np.diag_indices(len(P))
-    offdiag = np.ones_like(P, dtype=bool)
-    offdiag[diag] = False
-    offdiag = np.where(offdiag)
-
-    assert np.allclose(P[diag], S)
-    assert np.allclose(P[offdiag], 0)
-    assert np.allclose(Q[diag], S)
-    assert np.allclose(Q[offdiag], 0)
+    assert (pole_zero_cancel(sys2/sys3, tol=1e-4) ==
+            pole_zero_cancel(~sys2))  # numpy 1.9.2
+    assert (pole_zero_cancel(sys3*sys4) ==
+            pole_zero_cancel(sys4)*pole_zero_cancel(sys3))
 
 
 def test_modred(rng):
@@ -87,23 +35,29 @@ def test_modred(rng):
     p = 0.999
     sys = p*isys + (1-p)*noise
 
-    balsys, S = balreal(sys)
-    delsys = modred(balsys, S.argmax())
-    assert delsys.order_den == 1
+    T, Tinv, S = balanced_transformation(sys)
+    balsys = sys.transform(T, Tinv)
 
-    u = rng.normal(size=2000)
-    expected = apply_filter(sys, dt, u)
-    actual = apply_filter(delsys, dt, u)
+    # Keeping just the best state should remove the 3 noise dimensions
+    # Discarding the lowest state should do at least as well
+    for keep_states in (S.argmax(),
+                        list(set(range(len(sys))) - set((S.argmin(),)))):
+        delsys = modred(balsys, keep_states)
+        assert delsys.order_den == np.asarray(keep_states).size
 
-    assert rmse(expected, actual) < 1e-4
+        u = rng.normal(size=2000)
 
-    step = np.zeros(2000)
-    step[50:] = 1.0
-    dcsys = modred(balsys, S.argmax(), method='dc')
-    expected = apply_filter(sys, dt, step)
-    actual = apply_filter(dcsys, dt, step)
+        expected = apply_filter(sys, dt, u)
+        actual = apply_filter(delsys, dt, u)
+        assert rmse(expected, actual) < 1e-4
 
-    assert rmse(expected, actual) < 1e-4
+        step = np.zeros(2000)
+        step[50:] = 1.0
+        dcsys = modred(balsys, keep_states, method='dc')
+
+        expected = apply_filter(sys, dt, step)
+        actual = apply_filter(dcsys, dt, step)
+        assert rmse(expected, actual) < 1e-4
 
 
 def test_invalid_modred():

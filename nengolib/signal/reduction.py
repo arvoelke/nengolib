@@ -2,34 +2,20 @@ import warnings
 
 import numpy as np
 
-from scipy.linalg import cholesky, svd, inv, eig
+from scipy.linalg import inv
 
-from nengolib.signal.lyapunov import control_gram, observe_gram
+from nengolib.signal.lyapunov import balanced_transformation
 from nengolib.signal.system import sys2zpk, LinearSystem
 
-__all__ = ['minreal', 'similarity_transform', 'balreal', 'modred', 'balred',
-           'hankel']
+__all__ = ['pole_zero_cancel', 'modred', 'balred']
 
 # TODO: reference linear_model_reduction.ipynb in auto-generated docs
 
 
-def hankel(sys):
-    """Compute Hankel singular values of a linear system.
-
-    References:
-        [1] Glover, Keith, and Jonathan R. Partington. "Bounds on the
-            achievable accuracy in model reduction." Modelling, robustness and
-            sensitivity reduction in control systems. Springer Berlin
-            Heidelberg, 1987. 95-118.
-    """
-    sys = LinearSystem(sys)
-    R, O = control_gram(sys), observe_gram(sys)
-    # sort needed to be consistent across different versions
-    return np.sort(np.sqrt(abs(eig(np.dot(O, R))[0])))[::-1]
-
-
-def minreal(sys, tol=1e-8):
+def pole_zero_cancel(sys, tol=1e-8):
     """Pole/zero cancellation within a given tolerance.
+
+    Sometimes referred to as the minimal realization in state-space.
 
     References:
         http://www.mathworks.com/help/control/ref/minreal.html
@@ -45,48 +31,6 @@ def minreal(sys, tol=1e-8):
         else:  # include this pole
             mp[i] = True
     return LinearSystem((z[mz], p[mp], k), analog=sys.analog)
-
-
-def similarity_transform(sys, T, Tinv=None):
-    """Changes basis of state-space (A, B, C, D) to T."""
-    sys = LinearSystem(sys)
-    A, B, C, D = sys.ss
-    if Tinv is None:
-        Tinv = inv(T)
-    TA = np.dot(Tinv, np.dot(A, T))
-    TB = np.dot(Tinv, B)
-    TC = np.dot(C, T)
-    TD = D
-    return LinearSystem((TA, TB, TC, TD), analog=sys.analog)
-
-
-def balreal(sys):
-    """Computes the balanced realization of sys and returns its eigenvalues.
-
-    References:
-        [1] http://www.mathworks.com/help/control/ref/balreal.html
-
-        [2] Laub, A.J., M.T. Heath, C.C. Paige, and R.C. Ward, "Computation of
-            System Balancing Transformations and Other Applications of
-            Simultaneous Diagonalization Algorithms," *IEEE Trans. Automatic
-            Control*, AC-32 (1987), pp. 115-122.
-    """
-    sys = LinearSystem(sys)  # cast first to memoize sys2ss
-    if not sys.analog:
-        raise NotImplementedError("balanced digital filters not supported")
-
-    R = control_gram(sys)
-    O = observe_gram(sys)
-
-    LR = cholesky(R, lower=True)
-    LO = cholesky(O, lower=True)
-
-    U, S, V = svd(np.dot(LO.T, LR))
-
-    T = np.dot(LR, V.T) * S ** (-1. / 2)
-    Tinv = (S ** (-1. / 2))[:, None] * np.dot(U.T, LO.T)
-
-    return similarity_transform(sys, T, Tinv), S
 
 
 def modred(sys, keep_states, method='del'):
@@ -140,11 +84,13 @@ def modred(sys, keep_states, method='del'):
 
 def balred(sys, order, method='del'):
     """Reduces a LinearSystem to given order using balreal and modred."""
-    sys, s = balreal(sys)
+    sys = LinearSystem(sys)
     if order < 1:
         raise ValueError("Invalid order (%s), must be at least 1" % (order,))
     if order >= len(sys):
         warnings.warn("Model is already of given order")
         return sys
+    T, Tinv, _ = balanced_transformation(sys)
+    sys = sys.transform(T, Tinv=Tinv)
     keep_states = np.arange(order)  # keep largest eigenvalues
     return modred(sys, keep_states, method)

@@ -5,10 +5,13 @@ import pytest
 
 import nengo
 
+from scipy.linalg import inv
+
 from nengolib.signal.system import (
-    sys2ss, sys2zpk, sys2tf, canonical, sys_equal, ss_equal,
-    decompose_states, LinearSystem, s, z)
+    sys2ss, sys2zpk, sys2tf, canonical, sys_equal, ss_equal, LinearSystem,
+    s, z)
 from nengolib import Network, Lowpass, Alpha, LinearFilter
+from nengolib.signal import impulse
 from nengolib.synapses import PureDelay
 
 
@@ -95,6 +98,9 @@ def test_canonical():
     csys = canonical(sys, controllable=True)
     osys = canonical(sys, controllable=False)
 
+    assert ss_equal(csys, LinearSystem(sys).controllable)
+    assert ss_equal(osys, LinearSystem(sys).observable)
+
     assert sys_equal(csys, osys)
     assert not ss_equal(csys, osys)  # different state-space realizations
 
@@ -123,7 +129,7 @@ def test_is_stable():
 
 @pytest.mark.parametrize("sys", [PureDelay(0.1, 4), PureDelay(0.2, 5, 5)])
 def test_decompose_states(sys):
-    assert np.dot(sys.C, decompose_states(sys)) + sys.D == sys
+    assert np.dot(sys.C, list(sys)) + sys.D == sys
 
 
 @pytest.mark.parametrize("sys", [
@@ -365,3 +371,35 @@ def test_invalid_operations():
 def test_hashing():
     assert len(set((z, s))) == 2
     assert len(set((s, 5*s/5))) == 1
+
+
+def test_similarity_transform():
+    sys = Alpha(0.1)
+
+    TA, TB, TC, TD = sys.transform(np.eye(2), np.eye(2)).ss
+    A, B, C, D = sys2ss(sys)
+    assert np.allclose(A, TA)
+    assert np.allclose(B, TB)
+    assert np.allclose(C, TC)
+    assert np.allclose(D, TD)
+
+    T = [[1, 1], [-0.5, 0]]
+    rsys = sys.transform(T)
+    assert ss_equal(rsys, sys.transform(T, inv(T)))
+
+    TA, TB, TC, TD = rsys.ss
+    assert not np.allclose(A, TA)
+    assert not np.allclose(B, TB)
+    assert not np.allclose(C, TC)
+    assert np.allclose(D, TD)
+    assert sys_equal(sys, (TA, TB, TC, TD))
+
+    length = 1000
+    dt = 0.001
+    x_old = np.asarray(
+        [impulse(sub, dt=dt, length=length) for sub in sys])
+    x_new = np.asarray(
+        [impulse(sub, dt=dt, length=length) for sub in rsys])
+
+    # dot(T, x_new(t)) = x_old(t)
+    assert np.allclose(np.dot(T, x_new), x_old)

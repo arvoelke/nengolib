@@ -1,6 +1,7 @@
 import warnings
 
 import numpy as np
+from scipy.linalg import inv
 from scipy.signal import (
     cont2discrete, zpk2ss, ss2tf, ss2zpk, tf2ss, tf2zpk, zpk2tf,
     normalize, abcd_normalize)
@@ -10,8 +11,7 @@ from nengo.utils.compat import is_integer, is_number, with_metaclass
 
 __all__ = [
     'sys2ss', 'sys2tf', 'sys2zpk', 'canonical', 'sys_equal', 'ss_equal',
-    'decompose_states', 'NengoLinearFilterMixin',
-    'LinearSystem', 's', 'z']
+    'NengoLinearFilterMixin', 'LinearSystem', 's', 'z']
 
 
 _LSYS, _LFILT, _NUM, _TF, _ZPK, _SS = range(6)
@@ -149,16 +149,6 @@ def ss_equal(sys1, sys2, rtol=1e-05, atol=1e-08):
             np.allclose(sys1.B, sys2.B, rtol=rtol, atol=atol) and
             np.allclose(sys1.C, sys2.C, rtol=rtol, atol=atol) and
             np.allclose(sys1.D, sys2.D, rtol=rtol, atol=atol))
-
-
-def decompose_states(sys):
-    """Returns the LinearSystem for each state."""
-    sys = LinearSystem(sys)
-    r = []
-    for i in range(len(sys)):
-        subsys = (sys.A, sys.B, np.eye(len(sys))[i:i+1, :], [[0]])
-        r.append(LinearSystem(subsys, analog=sys.analog))
-    return r
 
 
 class _DigitalStep(LinearFilter.Step):
@@ -462,6 +452,37 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
     def __hash__(self):
         num, den = normalize(*self.tf)
         return hash((tuple(num), tuple(den), self.analog))
+
+    @property
+    def controllable(self):
+        """Returns the LinearSystem in controllable canonical form."""
+        return canonical(self, controllable=True)
+
+    @property
+    def observable(self):
+        """Returns the LinearSystem in observable canonical form."""
+        return canonical(self, controllable=False)  # observable
+
+    def transform(self, T, Tinv=None):
+        """Changes basis of state-space matrices to T.
+
+        Then dot(T, x_new(t)) = x_old(t) after this transformation.
+        """
+        A, B, C, D = self.ss
+        if Tinv is None:
+            Tinv = inv(T)
+        TA = np.dot(Tinv, np.dot(A, T))
+        TB = np.dot(Tinv, B)
+        TC = np.dot(C, T)
+        TD = D
+        return LinearSystem((TA, TB, TC, TD), analog=self.analog)
+
+    def __iter__(self):
+        """Yields the LinearSystem corresponding to each state."""
+        I = np.eye(len(self))
+        for i in range(len(self)):
+            sys = (self.A, self.B, I[i:i+1, :], [[0]])
+            yield LinearSystem(sys, analog=self.analog)
 
 
 s = LinearSystem(([1, 0], [1]), analog=True)  # differential operator

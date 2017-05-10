@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from nengolib.synapses.digital import DiscreteDelay, BoxFilter
-from nengolib.signal import impulse, z, minreal
+from nengolib.signal import impulse, z, pole_zero_cancel
 
 
 @pytest.mark.parametrize("steps", [0, 1, 5])
@@ -47,5 +47,5 @@ def test_equivalent_defs():
     assert DiscreteDelay(5) == 1 / z**5
 
     # equivalent to an (undelayed) integrator convolved with a delayed cutoff
-    assert BoxFilter(6, normalized=False) == minreal(
+    assert BoxFilter(6, normalized=False) == pole_zero_cancel(
         z / (z - 1) * (1 - 1 / z**6))

@@ -6,11 +6,11 @@ from nengo.params import NumberParam, Default
 from nengo.synapses import SynapseParam
 
 from nengolib.network import Network
-from nengolib.signal.normalization import HankelNorm as default_normalizer
+from nengolib.signal.realizers import Hankel as default_realizer
 from nengolib.signal.system import LinearSystem
 from nengolib.synapses.mapping import ss2sim
 
-__all__ = ['LinearNetwork', 'default_normalizer']
+__all__ = ['LinearNetwork', 'default_realizer']
 
 
 class LinearNetwork(Network):
@@ -26,7 +26,7 @@ class LinearNetwork(Network):
 
     def __init__(self, sys, n_neurons_per_ensemble, synapse, dt, radii=1.0,
                  input_synapse=None, output_synapse=None,
-                 normalizer=default_normalizer(), solver=Default,
+                 realizer=default_realizer(), solver=Default,
                  label=None, seed=None, add_to_container=None, **ens_kwargs):
         super(LinearNetwork, self).__init__(label, seed, add_to_container)
 
@@ -38,7 +38,7 @@ class LinearNetwork(Network):
         self.radii = radii
         self.input_synapse = input_synapse
         self.output_synapse = output_synapse
-        self.normalizer = normalizer
+        self.realizer = realizer
 
         if len(self.sys) == 0:
             raise ValueError("system (%s) is zero order" % self.sys)
@@ -56,10 +56,12 @@ class LinearNetwork(Network):
             # output is now unbounded.
             warnings.warn("system (%s) is not exponentially stable" % self.sys)
 
-        # Obtain a normalized state-space representation
-        self.normalized, self.info = self.normalizer(self.sys, self.radii)
+        # Obtain state-space transformation and realization
+        self.realizer_result = self.realizer(self.sys, self.radii)
+
+        # Map the system onto the synapse
         self.A, self.B, self.C, self.D = ss2sim(
-            self.normalized, self.synapse, self.dt).ss
+            self.realizer_result.realization, self.synapse, self.dt).ss
         self.size_in = self.B.shape[1]
         self.size_state = len(self.A)
         self.size_out = len(self.C)
