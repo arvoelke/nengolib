@@ -40,6 +40,10 @@ class LinearNetwork(Network):
         self.output_synapse = output_synapse
         self.realizer = realizer
 
+        if solver is not Default:
+            # https://github.com/nengo/nengo/issues/1044
+            solver._hack = random()
+
         if len(self.sys) == 0:
             raise ValueError("system (%s) is zero order" % self.sys)
 
@@ -70,27 +74,30 @@ class LinearNetwork(Network):
             # Create internal Nengo objects
             self.input = nengo.Node(size_in=self.size_in, label="input")
             self.output = nengo.Node(size_in=self.size_out, label="output")
-            self.x = nengo.networks.EnsembleArray(
-                self.n_neurons_per_ensemble, self.size_state,
-                ens_dimensions=1, **ens_kwargs)
 
-            if solver is not Default:
-                # https://github.com/nengo/nengo/issues/1044
-                solver._hack = random()
-
-                # https://github.com/nengo/nengo/issues/1040
-                self.x.add_output('output', function=None, solver=solver)
+            x_input, x_output = self._make_core(solver, **ens_kwargs)
 
             # Connect everything up using (A, B, C, D)
             self.conn_A = nengo.Connection(
-                self.x.output, self.x.input, transform=self.A,
+                x_output, x_input, transform=self.A,
                 synapse=self.synapse)
             self.conn_B = nengo.Connection(
-                self.input, self.x.input, transform=self.B,
+                self.input, x_input, transform=self.B,
                 synapse=self.input_synapse)
             self.conn_C = nengo.Connection(
-                self.x.output, self.output, transform=self.C,
+                x_output, self.output, transform=self.C,
                 synapse=self.output_synapse)
             self.conn_D = nengo.Connection(
                 self.input, self.output, transform=self.D,
                 synapse=None)
+
+    def _make_core(self, solver, **ens_kwargs):
+        self.x = nengo.networks.EnsembleArray(
+            self.n_neurons_per_ensemble, self.size_state,
+            ens_dimensions=1, **ens_kwargs)
+
+        if solver is not Default:
+            # https://github.com/nengo/nengo/issues/1040
+            self.x.add_output('output', function=None, solver=solver)
+
+        return self.x.input, self.x.output
