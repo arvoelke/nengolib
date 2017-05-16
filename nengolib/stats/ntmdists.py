@@ -28,7 +28,7 @@ class SphericalCoords(Distribution):
         self.m = m
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__, self.m)
+        return "%s(%r)" % (self.__class__.__name__, self.m)
 
     def sample(self, num, d=None, rng=np.random):
         shape = self._sample_shape(num, d)
@@ -83,19 +83,23 @@ class ScatteredHypersphere(UniformHypersphere):
        Chapman & Hall, 1994.
     """
 
-    def __repr__(self):
-        return "%s(%s)" % (
-            self.__class__.__name__, "surface=True" if self.surface else "")
+    def __init__(self, surface, base=Sobol()):
+        super(ScatteredHypersphere, self).__init__(surface)
+        self.base = base
 
-    def sample(self, num, d=1, rng=np.random, ntm=Sobol()):
+    def __repr__(self):
+        return "%s(surface=%r, base=%r)" % (
+            self.__class__.__name__, self.surface, self.base)
+
+    def sample(self, num, d=1, rng=np.random):
         if d == 1:
             return super(ScatteredHypersphere, self).sample(num, d, rng)
 
         if self.surface:
-            cube = ntm.sample(num, d-1)
+            cube = self.base.sample(num, d-1)
             radius = 1.0
         else:
-            dcube = ntm.sample(num, d)
+            dcube = self.base.sample(num, d)
             cube, radius = dcube[:, :-1], dcube[:, -1:] ** (1.0 / d)
 
         # inverse transform method (section 1.5.2)

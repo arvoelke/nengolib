@@ -86,5 +86,5 @@ def test_sphere(d, rng):
 def test_dist_repr():
     assert repr(SphericalCoords(4)) == "SphericalCoords(4)"
     assert repr(Sobol()) == "Sobol()"
-    assert repr(sphere) == "ScatteredHypersphere(surface=True)"
-    assert repr(ball) == "ScatteredHypersphere()"  # False default
+    assert repr(sphere) == "ScatteredHypersphere(surface=True, base=Sobol())"
+    assert repr(ball) == "ScatteredHypersphere(surface=False, base=Sobol())"
