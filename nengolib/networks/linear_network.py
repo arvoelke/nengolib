@@ -1,5 +1,8 @@
+import logging
 import warnings
 from random import random
+
+import numpy as np
 
 import nengo
 from nengo.params import NumberParam, Default
@@ -87,9 +90,13 @@ class LinearNetwork(Network):
             self.conn_C = nengo.Connection(
                 x_output, self.output, transform=self.C,
                 synapse=self.output_synapse)
-            self.conn_D = nengo.Connection(
-                self.input, self.output, transform=self.D,
-                synapse=None)
+
+            if not np.allclose(self.D, 0):
+                logging.info("Passthrough (%s) on LinearNetwork with sys=%s",
+                             self.D, self.sys)
+                self.conn_D = nengo.Connection(
+                    self.input, self.output, transform=self.D,
+                    synapse=None)
 
     def _make_core(self, solver, **ens_kwargs):
         self.x = nengo.networks.EnsembleArray(
