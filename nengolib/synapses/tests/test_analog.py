@@ -4,7 +4,6 @@ import pytest
 from nengo import LinearFilter as BaseLinearFilter
 from nengo import Lowpass as BaseLowpass
 from nengo import Alpha as BaseAlpha
-from nengo.exceptions import ValidationError
 from nengo.utils.testing import warns
 
 from nengolib.synapses.analog import (
@@ -99,19 +98,19 @@ def test_pade_versions(p):
 
 
 def test_delay_invalid():
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError):
         PureDelay(1, order=0)
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError):
         PureDelay(1, order=1)
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError):
         PureDelay(1, order=2.5)
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError):
         PureDelay(1, order=2, p=0)
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError):
         PureDelay(1, order=2, p=1.5)
 
     with warns(UserWarning):

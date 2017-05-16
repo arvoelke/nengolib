@@ -4,7 +4,6 @@ import numpy as np
 import warnings
 from scipy.misc import pade, factorial
 
-from nengo.params import IntParam
 from nengo.utils.compat import is_integer
 
 from nengolib.signal.system import LinearSystem
@@ -111,8 +110,10 @@ def PureDelay(c, order, p=None):
     if p is None:
         p = q - 1
 
-    IntParam("order", low=1).validate(None, q)
-    IntParam("p", low=1).validate(None, p)
+    if order < 1 or not is_integer(order):
+        raise ValueError("order (%s) must be integer >= 1" % order)
+    if p < 1 or not is_integer(p):
+        raise ValueError("p (%s) must be integer >= 1" % p)
 
     if p == q:
         return _passthrough_delay(p, c)
