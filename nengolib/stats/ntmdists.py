@@ -10,7 +10,8 @@ from nengolib.linalg.ortho import random_orthogonal
 from nengolib.stats._sobol_seq import i4_sobol_generate
 
 __all__ = [
-    'SphericalCoords', 'Sobol', 'ScatteredHypersphere', 'sphere', 'ball']
+    'SphericalCoords', 'Sobol', 'ScatteredCube', 'ScatteredHypersphere',
+    'cube', 'sphere', 'ball']
 
 
 class SphericalCoords(Distribution):
@@ -51,7 +52,11 @@ class SphericalCoords(Distribution):
 
 
 class Sobol(Distribution):
-    """Sobol sequence for quasi Monte Carlo sampling the hypercube."""
+    """Sobol sequence for quasi Monte Carlo sampling the unit hypercube.
+
+    This is like ``np.random.uniform(0, 1, size=(num, d))`` but with each
+    ``d``-dimensional point more uniformly scattered.
+    """
 
     def __repr__(self):
         return "%s()" % (self.__class__.__name__)
@@ -71,11 +76,40 @@ class Sobol(Distribution):
         return i4_sobol_generate(d, num, skip=0)
 
 
+class ScatteredCube(Distribution):
+    """Number-theoretic distribution over the hypercube.
+
+    Transforms quasi Monte carlo samples from the unit hypercube
+    to range between ``low`` and ``high``. These bounds may optionally be
+    array-like with shape matching the sample dimensionality.
+    """
+
+    def __init__(self, low=-1, high=+1, base=Sobol()):
+        super(ScatteredCube, self).__init__()
+        self.low = np.atleast_1d(low)
+        self.high = np.atleast_1d(high)
+        self.w = self.high - self.low
+        self.base = base
+
+    def __repr__(self):
+        return "%s(low=%r, high=%r, base=%r)" % (
+            self.__class__.__name__, self.low, self.high, self.base)
+
+    def sample(self, num, d=None, rng=np.random):
+        num, d = self._sample_shape(num, d)
+        u = self.base.sample(num, d)
+
+        # shift everything by the same random constant (with wrap-around)
+        u = (u + rng.uniform(size=d)[None, :]) % 1.0
+
+        return u * self.w[None, :] + self.low[None, :]
+
+
 class ScatteredHypersphere(UniformHypersphere):
-    """Number-theoretic distribution over the hypersphere and hypercube.
+    """Number-theoretic distribution over the hypersphere and hyperball.
 
     Applies the inverse transform method [1]_ to some number-theoretic
-    sequence (quasi Monte carlo samples from the hypercube).
+    sequence (quasi Monte carlo samples from the unit hypercube).
 
     References
     ----------
@@ -120,5 +154,6 @@ class ScatteredHypersphere(UniformHypersphere):
         return np.dot(mapped * radius, rotation)
 
 
+cube = ScatteredCube()
 sphere = ScatteredHypersphere(surface=True)
 ball = ScatteredHypersphere(surface=False)
