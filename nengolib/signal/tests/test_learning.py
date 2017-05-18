@@ -23,10 +23,10 @@ def test_pes_learning_rate(Simulator, plt, seed):
         y = nengo.Node(size_in=1)
         conn = nengo.Connection(x, y, synapse=None)
 
-    sim = Simulator(model, dt=dt)
-    a = get_activities(sim.model, x, [initial])
-    d = sim.data[conn].weights
-    assert np.any(a > 0)
+    with Simulator(model, dt=dt) as sim:
+        a = get_activities(sim.model, x, [initial])
+        d = sim.data[conn].weights
+        assert np.any(a > 0)
 
     # Use util function to calculate learning_rate
     init_error = float(desired - np.dot(d, a))
@@ -48,8 +48,8 @@ def test_pes_learning_rate(Simulator, plt, seed):
         p = nengo.Probe(y, synapse=None)
         decoders = nengo.Probe(conn, 'weights', synapse=None)
 
-    sim = Simulator(model, dt=dt)
-    sim.run(T)
+    with Simulator(model, dt=dt) as sim:
+        sim.run(T)
 
     # Check that the final error is exactly epsilon
     assert np.allclose(abs(desired - sim.data[p][-1]), epsilon)

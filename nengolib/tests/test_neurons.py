@@ -16,8 +16,8 @@ def _test_lif(Simulator, seed, neuron_type, u, dt, n=500, t=2.0):
         nengo.Connection(stim, x, synapse=None)
         p = nengo.Probe(x.neurons)
 
-    sim = Simulator(model, dt=dt)
-    sim.run(t)
+    with Simulator(model, dt=dt) as sim:
+        sim.run(t)
 
     expected = get_activities(sim.model, x, [u]) * t
     actual = (sim.data[p] > 0).sum(axis=0)
@@ -48,15 +48,16 @@ def test_perfect_lif_invariance(Simulator, seed):
 def test_tanh(Simulator, seed):
     T = 0.1
     with Network(seed=seed) as model:
-        stim = nengo.Node(output=nengo.processes.WhiteSignal(T, high=10))
+        stim = nengo.Node(
+            output=nengo.processes.WhiteSignal(T, high=10, seed=seed))
         x = nengo.Ensemble(2, 1, neuron_type=Tanh())
         nengo.Connection(
             stim, x.neurons, transform=np.ones((2, 1)), synapse=None)
         p_stim = nengo.Probe(stim, synapse=None)
         p_x = nengo.Probe(x.neurons, synapse=None)
 
-    sim = nengo.Simulator(model)
-    sim.run(T)
+    with Simulator(model) as sim:
+        sim.run(T)
 
     assert np.allclose(sim.data[x].gain, 1)
     assert np.allclose(sim.data[x].bias, 0)
@@ -67,4 +68,4 @@ def test_tanh_decoding(Simulator):
     with Network() as model:
         nengo.Probe(nengo.Ensemble(10, 1, neuron_type=Tanh()), synapse=None)
     with pytest.raises(NotImplementedError):
-        nengo.Simulator(model)
+        Simulator(model)

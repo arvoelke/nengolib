@@ -46,8 +46,8 @@ def test_mapping(Simulator, plt, seed):
 
     pss, pdss, pgss, pgdss, piss, pidss = probes
 
-    sim = Simulator(model, dt=dt)
-    sim.run(1.0)
+    with Simulator(model, dt=dt) as sim:
+        sim.run(1.0)
 
     expected = apply_filter(sys, dt, sim.data[p_stim], axis=0)
 

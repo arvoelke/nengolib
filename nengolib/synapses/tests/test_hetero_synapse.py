@@ -12,7 +12,6 @@ from nengolib.synapses import Lowpass, Alpha
 
 
 def test_hetero_neurons(Simulator, rng, seed):
-
     n_neurons = 100
     dt = 0.001
     T = 0.1
@@ -36,7 +35,8 @@ def test_hetero_neurons(Simulator, rng, seed):
         stim = nengo.Node(size_in=dims_in)
         for i in range(dims_in):
             nengo.Connection(
-                nengo.Node(output=nengo.processes.WhiteSignal(T, high=10)),
+                nengo.Node(output=nengo.processes.WhiteSignal(
+                    T, high=10, seed=seed)),
                 stim[i], synapse=None)
 
         # HeteroSynapse node
@@ -62,8 +62,8 @@ def test_hetero_neurons(Simulator, rng, seed):
         p_act = nengo.Probe(x[1].neurons, synapse=None)
 
     # Check correctness
-    sim = Simulator(model, dt=dt, seed=seed)
-    sim.run(T)
+    with Simulator(model, dt=dt) as sim:
+        sim.run(T)
 
     assert np.allclose(sim.data[p_act], sim.data[p_exp])
 
@@ -83,7 +83,8 @@ def test_hetero_vector(Simulator, rng, seed):
         stim = nengo.Node(size_in=dims_in)
         for i in range(dims_in):
             nengo.Connection(
-                nengo.Node(output=nengo.processes.WhiteSignal(T, high=10)),
+                nengo.Node(output=nengo.processes.WhiteSignal(
+                    T, high=10, seed=seed)),
                 stim[i], synapse=None)
 
         # HeteroSynapse Nodes
@@ -108,8 +109,8 @@ def test_hetero_vector(Simulator, rng, seed):
         p_act_elemwise = nengo.Probe(x[1], synapse=None)
 
     # Check correctness
-    sim = Simulator(model, dt=dt, seed=seed)
-    sim.run(T)
+    with Simulator(model, dt=dt) as sim:
+        sim.run(T)
 
     assert np.allclose(sim.data[p_act_elemwise], sim.data[p_exp])
 
@@ -129,7 +130,8 @@ def test_hetero_multi_vector(Simulator, rng, seed):
         stim = nengo.Node(size_in=dims_in)
         for i in range(dims_in):
             nengo.Connection(
-                nengo.Node(output=nengo.processes.WhiteSignal(T, high=10)),
+                nengo.Node(output=nengo.processes.WhiteSignal(
+                    T, high=10, seed=seed)),
                 stim[i], synapse=None)
 
         # HeteroSynapse Nodes
@@ -164,8 +166,8 @@ def test_hetero_multi_vector(Simulator, rng, seed):
         p_act_elemwise = nengo.Probe(x[2], synapse=None)
 
     # Check correctness
-    sim = Simulator(model, dt=dt, seed=seed)
-    sim.run(T)
+    with Simulator(model, dt=dt) as sim:
+        sim.run(T)
 
     assert np.allclose(sim.data[p_act_dot], sim.data[p_exp])
     assert np.allclose(sim.data[p_act_elemwise], sim.data[p_exp])

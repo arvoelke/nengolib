@@ -195,8 +195,8 @@ def test_radii(Simulator, seed, plt):
         nengo.Connection(stim, subnet.input, synapse=None)
         p = nengo.Probe(subnet.x.output, synapse=None)
 
-    sim = nengo.Simulator(model, dt=dt)
-    sim.run(T)
+    with Simulator(model, dt=dt) as sim:
+        sim.run(T)
 
     plt.plot(sim.data[p], lw=5, alpha=0.5)
 

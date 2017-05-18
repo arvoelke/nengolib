@@ -134,13 +134,14 @@ def test_decompose_states(sys):
 
 @pytest.mark.parametrize("sys", [
     Lowpass(0.01), Alpha(0.2), LinearFilter([1, 1], [0.01, 1])])
-def test_simulation(sys, Simulator, plt):
+def test_simulation(sys, Simulator, plt, seed):
     assert isinstance(sys, LinearSystem)
     old_sys = nengo.LinearFilter(sys.num, sys.den)
     assert sys == old_sys
 
     with Network() as model:
-        stim = nengo.Node(output=nengo.processes.WhiteSignal(1.0, high=10))
+        stim = nengo.Node(output=nengo.processes.WhiteSignal(
+            1.0, high=10, seed=seed))
         out_new = nengo.Node(size_in=2)
         out_old = nengo.Node(size_in=2)
         nengo.Connection(stim, out_new, transform=[[1], [-1]], synapse=sys)
@@ -148,8 +149,8 @@ def test_simulation(sys, Simulator, plt):
         p_new = nengo.Probe(out_new)
         p_old = nengo.Probe(out_old)
 
-    sim = Simulator(model)
-    sim.run(1.0)
+    with Simulator(model) as sim:
+        sim.run(1.0)
 
     plt.figure()
     plt.plot(sim.trange(), sim.data[p_new])
@@ -169,8 +170,8 @@ def test_discrete_synapse(Simulator):
         p_stim = nengo.Probe(stim, synapse=None)
         p_output = nengo.Probe(output, synapse=None)
 
-    sim = Simulator(model)
-    sim.run(5.0)
+    with Simulator(model) as sim:
+        sim.run(5.0)
 
     assert np.allclose(sim.data[p_output][delay_steps:],
                        sim.data[p_stim][:-delay_steps])
@@ -200,8 +201,8 @@ def test_sim_new_synapse(Simulator):
         stim = nengo.Node(output=np.sin)
         x = nengo.Node(size_in=1)
         nengo.Connection(stim, x, synapse=Lowpass(0.1) - Lowpass(0.01))
-    sim = Simulator(model)
-    sim.run(0.1)
+    with Simulator(model) as sim:
+        sim.run(0.1)
 
 
 def test_linear_system():
