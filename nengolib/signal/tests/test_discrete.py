@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 
 from nengolib.signal.discrete import cont2discrete, discrete2cont, impulse
-from nengolib.signal import s, z
+from nengolib.signal import s, z, ss_equal
 from nengolib.synapses import Lowpass, Alpha, Highpass
 
 
@@ -19,10 +19,7 @@ def test_discrete(sys):
         rsys = discrete2cont(dsys, dt=dt, method=method, alpha=alpha)
         assert rsys.analog
 
-        assert np.allclose(sys.ss[0], rsys.ss[0])
-        assert np.allclose(sys.ss[1], rsys.ss[1])
-        assert np.allclose(sys.ss[2], rsys.ss[2])
-        assert np.allclose(sys.ss[3], rsys.ss[3])
+        assert ss_equal(sys, rsys, atol=1e-07)
 
 
 def test_invalid_discrete():
