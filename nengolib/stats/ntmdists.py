@@ -29,7 +29,7 @@ class SphericalCoords(Distribution):
         self.m = m
 
     def __repr__(self):
-        return "%s(%r)" % (self.__class__.__name__, self.m)
+        return "%s(%r)" % (type(self).__name__, self.m)
 
     def sample(self, num, d=None, rng=np.random):
         shape = self._sample_shape(num, d)
@@ -59,7 +59,7 @@ class Sobol(Distribution):
     """
 
     def __repr__(self):
-        return "%s()" % (self.__class__.__name__)
+        return "%s()" % (type(self).__name__)
 
     def sample(self, num, d=None, rng=np.random):
         num, d = self._sample_shape(num, d)
@@ -93,7 +93,7 @@ class ScatteredCube(Distribution):
 
     def __repr__(self):
         return "%s(low=%r, high=%r, base=%r)" % (
-            self.__class__.__name__, self.low, self.high, self.base)
+            type(self).__name__, self.low, self.high, self.base)
 
     def sample(self, num, d=None, rng=np.random):
         num, d = self._sample_shape(num, d)
@@ -123,7 +123,7 @@ class ScatteredHypersphere(UniformHypersphere):
 
     def __repr__(self):
         return "%s(surface=%r, base=%r)" % (
-            self.__class__.__name__, self.surface, self.base)
+            type(self).__name__, self.surface, self.base)
 
     def sample(self, num, d=1, rng=np.random):
         if d == 1:

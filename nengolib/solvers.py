@@ -26,7 +26,7 @@ class BiasedSolver(Solver):
         if self.bias is not None:
             # this is okay if due to multiple builds of the same network (#99)
             warnings.warn("%s called twice; ensure not being shared between "
-                          "multiple connections" % self.__class__.__name__,
+                          "multiple connections" % type(self).__name__,
                           UserWarning)
         scale = A.max()  # to make regularization consistent
         AB = np.empty((A.shape[0], A.shape[1] + 1))

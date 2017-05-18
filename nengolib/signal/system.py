@@ -366,7 +366,7 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
 
     def __repr__(self):
         return "%s(sys=(%r, %r), analog=%r)" % (
-            self.__class__.__name__, np.asarray(self.num),
+            type(self).__name__, np.asarray(self.num),
             np.asarray(self.den), self.analog)
 
     def __str__(self):
@@ -378,7 +378,7 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
             if self.analog != other.analog:
                 raise ValueError("incompatible %s objects: %s, %s; both must "
                                  "be analog or digital" % (
-                                     self.__class__.__name__, self, other))
+                                     type(self).__name__, self, other))
 
     def __neg__(self):
         n, d = self.tf
