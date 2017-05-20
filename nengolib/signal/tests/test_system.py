@@ -4,14 +4,16 @@ import numpy as np
 import pytest
 
 import nengo
+from nengo.utils.testing import warns
 
 from scipy.linalg import inv
+from scipy.signal import lfilter
 
 from nengolib.signal.system import (
     sys2ss, sys2zpk, sys2tf, canonical, sys_equal, ss_equal, LinearSystem,
     s, z)
 from nengolib import Network, Lowpass, Alpha, LinearFilter
-from nengolib.signal import impulse
+from nengolib.signal import cont2discrete, shift
 from nengolib.synapses import PureDelay
 
 
@@ -161,7 +163,7 @@ def test_simulation(sys, Simulator, plt, seed):
 
 def test_discrete_synapse(Simulator):
     # Test that discrete synapses are simulated properly
-    delay_steps = 1000
+    delay_steps = 50
 
     with Network() as model:
         stim = nengo.Node(output=np.sin)
@@ -171,25 +173,116 @@ def test_discrete_synapse(Simulator):
         p_output = nengo.Probe(output, synapse=None)
 
     with Simulator(model) as sim:
-        sim.run(5.0)
+        sim.run(1.0)
 
     assert np.allclose(sim.data[p_output][delay_steps:],
                        sim.data[p_stim][:-delay_steps])
 
 
-@pytest.mark.parametrize("y0", [0])
-def test_filt(y0):
+def _apply_filter(sys, dt, u):
+    # "Correct" implementation of filt that has a single time-step delay
+    # see Nengo issue #938
+    if dt is not None:
+        num, den = cont2discrete(sys, dt).tf
+    elif not sys.analog:
+        num, den = sys.tf
+    else:
+        raise ValueError("system (%s) must be discrete if not given dt" % sys)
+
+    # convert from the polynomial representation, and add back the leading
+    # zeros that were dropped by poly1d, since lfilter will shift it the
+    # wrong way (it will add the leading zeros back to the end, effectively
+    # removing the delay)
+    num, den = map(np.asarray, (num, den))
+    num = np.append([0]*(len(den) - len(num)), num)
+    return lfilter(num, den, u, axis=-1)
+
+
+def test_filt():
     u = np.asarray([1.0, 0, 0])
     dt = 0.1
     num, den = [1], [1, 2, 1]
     sys1 = nengo.LinearFilter(num, den)
-    sys2 = LinearFilter(num, den)
-    assert np.allclose(sys1.filt(u, dt=dt, y0=y0), sys2.filt(u, dt=dt, y0=y0))
+    sys2 = LinearFilter(num, den)  # uses a different make_step
+    y1 = sys1.filt(u, dt=dt, y0=0)
+    y2 = sys2.filt(u, dt=dt, y0=0)
+    assert np.allclose(y1, y2)
 
-    # TODO: make sure the synapses filt the same way in nengo vs nengolib
-    # with various initial y0; https://github.com/nengo/nengo/issues/1124
-    with pytest.warns(UserWarning):
-        sys2.filt(u, dt=dt, y0=1)
+
+def test_filt_issue_nengo1124():
+    with warns(UserWarning):
+        Lowpass(0.1).filt(np.asarray([1, 0]), dt=0.001, y0=1)
+
+    with warns(UserWarning):
+        Lowpass(0.1).filt(np.asarray([1, 0]), dt=0.001, y0=None)
+
+
+def test_filt_issue_64():
+    # Issue #64
+    # Note we need a double delay because of Nengo issue #938 (see below)
+    assert np.allclose((~z**2).filt([1, 0, 0]), [0, 1, 0])
+
+
+def _transclose(*arrays):
+    assert len(arrays) >= 2
+    for i in range(len(arrays)-1):
+        assert np.allclose(arrays[i], arrays[i+1]), i
+
+
+def test_filt_issue_nengo938():
+    # Testing related to nengo issue #938
+    # test combinations of _apply_filter / filt on nengo / nengolib
+    # using a passthrough / (strictly) proper and y0=0 / y0=None
+    # ... in an **ideal** world all of these would produce the same results
+    # but we assert behaviour here so that it is at least documented
+    # and so that we are alerted to any changes in these differences
+    # https://github.com/nengo/nengo/issues/938
+    # https://github.com/nengo/nengo/issues/1124
+
+    sys_prop_nengo = nengo.LinearFilter([1], [1, 0])
+    sys_prop_nglib = LinearFilter([1], [1, 0])
+    sys_pass_nengo = nengo.LinearFilter([1e-9, 1], [1, 0])
+    sys_pass_nglib = LinearFilter([1e-9, 1], [1, 0])
+
+    u = np.asarray([1.0, 0.5, 0])
+    dt = 0.001
+
+    def filt_scipy(sys):
+        return _apply_filter(sys, dt=dt, u=u)
+
+    def filt_nengo(sys, y0):
+        return sys.filt(u, dt=dt, y0=y0)
+
+    # Strictly proper transfer function
+    prop_nengo_apply = filt_scipy(sys_prop_nengo)
+    prop_nglib_apply = filt_scipy(sys_prop_nglib)
+    prop_nengo_filt0 = filt_nengo(sys_prop_nengo, y0=0)
+    prop_nglib_filt0 = filt_nengo(sys_prop_nglib, y0=0)
+    prop_nengo_filtN = filt_nengo(sys_prop_nengo, y0=None)
+    prop_nglib_filtN = filt_nengo(sys_prop_nglib, y0=None)
+
+    # => two equivalence classes
+    _transclose(prop_nengo_apply, prop_nglib_apply)
+    _transclose(prop_nengo_filt0, prop_nglib_filt0, prop_nglib_filtN)
+
+    # One-step delay difference between these two classes
+    _transclose(prop_nengo_apply[1:], prop_nengo_filt0[:-1])
+
+    # Passthrough transfer functions
+    pass_nengo_apply = filt_scipy(sys_pass_nengo)
+    pass_nglib_apply = filt_scipy(sys_pass_nglib)
+    pass_nengo_filt0 = filt_nengo(sys_pass_nengo, y0=0)
+    pass_nglib_filt0 = filt_nengo(sys_pass_nglib, y0=0)
+    pass_nengo_filtN = filt_nengo(sys_pass_nengo, y0=None)
+    pass_nglib_filtN = filt_nengo(sys_pass_nglib, y0=None)
+
+    # => almost all are equivalent (except nengo with y0=None)
+    _transclose(pass_nengo_apply, pass_nglib_apply, pass_nengo_filt0,
+                pass_nglib_filt0, pass_nglib_filtN)
+    assert not np.allclose(prop_nengo_filtN, pass_nengo_filtN)
+
+    # And belongs to the same equivalence class as the very first
+    _transclose(prop_nengo_apply, pass_nengo_apply)
 
 
 def test_sys_multiplication():
@@ -199,12 +292,19 @@ def test_sys_multiplication():
 
 def test_sim_new_synapse(Simulator):
     # Create a new synapse object and simulate it
+    synapse = Lowpass(0.1) - Lowpass(0.01)
     with Network() as model:
         stim = nengo.Node(output=np.sin)
         x = nengo.Node(size_in=1)
-        nengo.Connection(stim, x, synapse=Lowpass(0.1) - Lowpass(0.01))
+        nengo.Connection(stim, x, synapse=synapse)
+        p_stim = nengo.Probe(stim, synapse=None)
+        p_x = nengo.Probe(x, synapse=None)
+
     with Simulator(model) as sim:
         sim.run(0.1)
+
+    assert np.allclose(shift(synapse.filt(sim.data[p_stim])),
+                       sim.data[p_x])
 
 
 def test_linear_system():
@@ -400,9 +500,50 @@ def test_similarity_transform():
     length = 1000
     dt = 0.001
     x_old = np.asarray(
-        [impulse(sub, dt=dt, length=length) for sub in sys])
+        [sub.impulse(length=length, dt=dt) for sub in sys])
     x_new = np.asarray(
-        [impulse(sub, dt=dt, length=length) for sub in rsys])
+        [sub.impulse(length=length, dt=dt) for sub in rsys])
 
     # dot(T, x_new(t)) = x_old(t)
     assert np.allclose(np.dot(T, x_new), x_old)
+
+
+def test_impulse():
+    dt = 0.001
+    tau = 0.005
+    length = 500
+
+    delta = np.zeros(length)
+    delta[0] = 1. / dt
+
+    sys = Lowpass(tau)
+    response = sys.impulse(length, dt)
+    assert not np.allclose(response[0], 0)
+
+    # should give the same result as using filt
+    assert np.allclose(response, sys.filt(delta, dt))
+
+    # and should default to the same dt
+    assert sys.default_dt == dt
+    assert np.allclose(response, sys.impulse(length))
+
+    # should also accept discrete systems
+    dss = cont2discrete(sys, dt=dt)
+    assert not dss.analog
+    assert np.allclose(response, dss.impulse(length) / dt)
+    assert np.allclose(response, dss.impulse(length, dt=dt))
+
+
+def test_impulse_dt():
+    length = 1000
+    sys = Alpha(0.1)
+    # the dt should not alter the magnitude of the response
+    assert np.allclose(
+        max(sys.impulse(length, dt=0.001)),
+        max(sys.impulse(length, dt=0.0005)),
+        atol=1e-4)
+
+
+def test_invalid_impulse():
+    with pytest.raises(ValueError):
+        s.impulse(length=10, dt=None)  # must be digital if dt is None

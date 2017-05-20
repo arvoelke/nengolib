@@ -1,10 +1,10 @@
 import numpy as np
 from scipy import linalg
-from scipy.signal import cont2discrete as _cont2discrete, lfilter
+from scipy.signal import cont2discrete as _cont2discrete
 
 from nengolib.signal.system import LinearSystem
 
-__all__ = ['cont2discrete', 'discrete2cont', 'apply_filter', 'impulse']
+__all__ = ['cont2discrete', 'discrete2cont']
 
 
 def cont2discrete(sys, dt, method='zoh', alpha=None):
@@ -65,31 +65,3 @@ def discrete2cont(sys, dt, method='zoh', alpha=None):
         raise ValueError("invalid method: '%s'" % (method,))
 
     return LinearSystem((ar, br, cr, dr), analog=True)
-
-
-def apply_filter(sys, dt, u, axis=-1):
-    """Simulates sys on u for length timesteps of width dt."""
-    # TODO: properly handle SIMO systems
-    # https://github.com/scipy/scipy/issues/5753\
-    sys = LinearSystem(sys)
-    if dt is not None:
-        num, den = cont2discrete(sys, dt).tf
-    elif not sys.analog:
-        num, den = sys.tf
-    else:
-        raise ValueError("system (%s) must be discrete if not given dt" % sys)
-
-    # convert from the polynomial representation, and add back the leading
-    # zeros that were dropped by poly1d, since lfilter will shift it the
-    # wrong way (it will add the leading zeros back to the end, effectively
-    # removing the delay)
-    num, den = map(np.asarray, (num, den))
-    num = np.append([0]*(len(den) - len(num)), num)
-    return lfilter(num, den, u, axis)
-
-
-def impulse(sys, dt, length, axis=-1):
-    """Simulates sys on a delta impulse for length timesteps of width dt."""
-    impulse = np.zeros(length)
-    impulse[0] = 1. / dt if dt is not None else 1
-    return apply_filter(sys, dt, impulse, axis)

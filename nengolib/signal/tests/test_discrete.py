@@ -1,8 +1,6 @@
 import pytest
 
-import numpy as np
-
-from nengolib.signal.discrete import cont2discrete, discrete2cont, impulse
+from nengolib.signal.discrete import cont2discrete, discrete2cont
 from nengolib.signal import s, z, ss_equal
 from nengolib.synapses import Lowpass, Alpha, Highpass
 
@@ -40,38 +38,3 @@ def test_invalid_discrete():
 
     with pytest.raises(ValueError):
         cont2discrete(z, dt=dt)  # already discrete
-
-
-def test_impulse():
-    dt = 0.001
-    tau = 0.005
-    length = 500
-
-    delta = np.zeros(length)  # TODO: turn into a little helper?
-    delta[1] = 1. / dt  # starts at 1 to compensate for delay removed by nengo
-
-    sys = Lowpass(tau)
-    response = impulse(sys, dt, length)
-    assert np.allclose(response[0], 0)
-
-    # should give the same result as using filt
-    assert np.allclose(response, sys.filt(delta, dt))
-
-    # should also accept discrete systems
-    dss = cont2discrete(sys, dt=dt)
-    assert not dss.analog
-    assert np.allclose(response, impulse(dss, dt=None, length=length) / dt)
-
-
-def test_impulse_dt():
-    length = 1000
-    sys = Alpha(0.1)
-    # the dt should not alter the magnitude of the response
-    assert np.allclose(
-        max(impulse(sys, 0.001, length)), max(impulse(sys, 0.0005, length)),
-        atol=1e-4)
-
-
-def test_invalid_impulse():
-    with pytest.raises(ValueError):
-        impulse(s, dt=None, length=10)  # must be digital if dt is None

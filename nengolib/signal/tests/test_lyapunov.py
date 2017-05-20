@@ -9,7 +9,7 @@ from nengo.utils.numpy import norm
 from nengolib.signal.lyapunov import (
     _H2P, state_norm, control_gram, observe_gram, balanced_transformation,
     hankel, l1_norm)
-from nengolib.signal import sys2ss, impulse, cont2discrete, s, z
+from nengolib.signal import sys2ss, cont2discrete, s, z, LinearSystem
 from nengolib.synapses import Bandpass, PureDelay
 from nengolib import Lowpass, Alpha
 
@@ -40,7 +40,8 @@ def test_state_norm(plt):
     response = np.empty((length, len(C)))
     for i in range(len(C)):
         # Simulate the state vector
-        response[:, i] = impulse((A, B, C[i, :], D[i, :]), dt, length)
+        response[:, i] = LinearSystem(
+            (A, B, C[i, :], D[i, :])).impulse(length, dt)
 
     # Check that the power of each state equals the H2-norm of each state
     # The analog case is the same after scaling since dt is approx 0.
@@ -133,7 +134,7 @@ def test_l1_norm_unknown(sys):
     # exact L1-norm infeasible without simulation.
     dt = 0.0001
     length = 500000
-    response = impulse(sys, dt=dt, length=length)
+    response = sys.impulse(length, dt)
     assert np.allclose(response[-10:], 0)
     l1_est = np.sum(abs(response) * dt)
 

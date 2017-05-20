@@ -5,7 +5,7 @@ import nengo
 
 from nengolib.synapses.mapping import ss2sim
 from nengolib import Network, Lowpass, Alpha
-from nengolib.signal import apply_filter, s, z, ss_equal, cont2discrete
+from nengolib.signal import s, z, ss_equal, cont2discrete, shift
 from nengolib.synapses import Highpass, PureDelay, DoubleExp
 
 
@@ -49,7 +49,7 @@ def test_mapping(Simulator, plt, seed):
     with Simulator(model, dt=dt) as sim:
         sim.run(1.0)
 
-    expected = apply_filter(sys, dt, sim.data[p_stim], axis=0)
+    expected = shift(sys.filt(sim.data[p_stim], dt))
 
     plt.plot(sim.trange(), sim.data[pss], label="Continuous", alpha=0.5)
     plt.plot(sim.trange(), sim.data[pdss], label="Discrete", alpha=0.5)

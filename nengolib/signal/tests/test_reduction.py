@@ -6,8 +6,7 @@ from nengo.utils.testing import warns
 
 from nengolib.signal.reduction import pole_zero_cancel, modred, balred
 from nengolib import Lowpass, Alpha
-from nengolib.signal import (
-    LinearSystem, apply_filter, balanced_transformation)
+from nengolib.signal import LinearSystem, balanced_transformation, shift
 
 
 def test_minreal():
@@ -47,16 +46,19 @@ def test_modred(rng):
 
         u = rng.normal(size=2000)
 
-        expected = apply_filter(sys, dt, u)
-        actual = apply_filter(delsys, dt, u)
+        expected = sys.filt(u, dt)
+        actual = delsys.filt(u, dt)
         assert rmse(expected, actual) < 1e-4
 
         step = np.zeros(2000)
         step[50:] = 1.0
         dcsys = modred(balsys, keep_states, method='dc')
 
-        expected = apply_filter(sys, dt, step)
-        actual = apply_filter(dcsys, dt, step)
+        # use of shift related to nengo issue #938
+        assert not sys.has_passthrough
+        assert dcsys.has_passthrough
+        expected = shift(sys.filt(step, dt))
+        actual = dcsys.filt(step, dt)
         assert rmse(expected, actual) < 1e-4
 
 
@@ -70,12 +72,12 @@ def test_balred(rng):
     sys = Alpha(0.01) + Lowpass(0.001)
 
     u = rng.normal(size=2000)
-    expected = apply_filter(sys, dt, u)
+    expected = sys.filt(u, dt)
 
     def check(order, within, tol, method='del'):
         redsys = balred(sys, order, method=method)
         assert redsys.order_den <= order
-        actual = apply_filter(redsys, dt, u)
+        actual = redsys.filt(u, dt)
         assert abs(rmse(expected, actual) - within) < tol
 
     with warns(UserWarning):

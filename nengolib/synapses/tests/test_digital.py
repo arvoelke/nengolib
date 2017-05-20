@@ -2,15 +2,15 @@ import numpy as np
 import pytest
 
 from nengolib.synapses.digital import DiscreteDelay, BoxFilter
-from nengolib.signal import impulse, z, pole_zero_cancel
+from nengolib.signal import z, pole_zero_cancel
 
 
-@pytest.mark.parametrize("steps", [0, 1, 5])
+@pytest.mark.parametrize("steps", [1, 5])
 def test_pure_delay(steps):
     length = 20
     sys = DiscreteDelay(steps)
-    y = impulse(sys, dt=None, length=length)
-    assert np.allclose(y, [0]*steps + [1] + [0]*(length - steps - 1))
+    y = sys.impulse(length)
+    assert np.allclose(y, [0]*(steps - 1) + [1] + [0]*(length - steps))
 
 
 @pytest.mark.parametrize("width,normalized", [
@@ -18,7 +18,7 @@ def test_pure_delay(steps):
 def test_box_filter(width, normalized):
     length = 20
     sys = BoxFilter(width, normalized)
-    y = impulse(sys, dt=None, length=length)
+    y = sys.impulse(length)
 
     amplitude = 1.0 / width if normalized else 1.0
     y_ideal = amplitude * np.asarray([1]*width + [0]*(length - width))

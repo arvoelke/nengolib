@@ -6,8 +6,7 @@ from nengo.utils.testing import warns
 
 from nengolib.networks.linear_network import LinearNetwork
 from nengolib import Network
-from nengolib.signal import (
-    apply_filter, impulse, s, z, canonical, Identity)
+from nengolib.signal import s, z, canonical, Identity, shift
 from nengolib.synapses import PureDelay, Bandpass
 
 
@@ -54,7 +53,7 @@ def test_linear_network(neuron_type, atol, Simulator, plt, seed, rng):
     with Simulator(model, dt=dt) as sim:
         sim.run(T)
 
-    expected = apply_filter(sys, dt, sim.data[p_stim], axis=0)
+    expected = shift(sys.filt(sim.data[p_stim], y0=0))
 
     plt.plot(sim.trange(), sim.data[p_output], label="Actual", alpha=0.5)
     plt.plot(sim.trange(), sim.data[p_x], label="x", alpha=0.5)
@@ -176,7 +175,7 @@ def test_radii(Simulator, seed, plt):
     # Precompute the exact bounds for an impulse stimulus
     radii = []
     for sub in sys:
-        response = impulse(sub, dt=dt, length=int(T / dt))
+        response = sub.impulse(int(T / dt), dt=dt)
         amplitude = np.max(abs(response))
         assert amplitude >= 1e-6  # otherwise numerical issues
         radii.append(amplitude)

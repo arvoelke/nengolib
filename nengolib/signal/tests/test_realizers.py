@@ -10,7 +10,7 @@ from nengolib.signal.realizers import (
 from nengolib import Lowpass, Alpha, Network
 from nengolib.networks import LinearNetwork
 from nengolib.signal import (
-    ss_equal, sys_equal, state_norm, impulse, balanced_transformation)
+    ss_equal, sys_equal, state_norm, balanced_transformation)
 from nengolib.synapses import Bandpass, Highpass, PureDelay
 
 
@@ -32,10 +32,8 @@ def test_func_realize(radii):
         # Check that the state vector are related by T
         length = 1000
         dt = 0.001
-        x_old = np.asarray(
-            [impulse(sub, dt=dt, length=length) for sub in sys])
-        x_new = np.asarray(
-            [impulse(sub, dt=dt, length=length) for sub in rsys])
+        x_old = np.asarray([sub.impulse(length, dt) for sub in sys])
+        x_new = np.asarray([sub.impulse(length, dt) for sub in rsys])
 
         r = np.atleast_2d(np.asarray(radii).T).T
         assert np.allclose(np.dot(T, x_new * r), x_old)
@@ -94,7 +92,7 @@ def _test_normalization(Simulator, sys, rng, realizer, l1_lower,
                         lower, radius=5.0, dt=0.0001, T=1.0, eps=1e-5):
     l1_norms = np.empty(len(sys))
     for i, sub in enumerate(sys):
-        response = impulse(sub, dt=dt, length=int(T / dt))
+        response = sub.impulse(int(T / dt), dt=dt)
         assert np.allclose(response[-10:], 0)
         l1_norms[i] = radius * np.sum(abs(response * dt))
 

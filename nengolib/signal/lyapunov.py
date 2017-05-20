@@ -3,7 +3,7 @@ from scipy.linalg import (solve_lyapunov, solve_discrete_lyapunov, eig,
                           cholesky, svd)
 from scipy.optimize import fminbound
 
-from nengolib.signal.discrete import impulse, cont2discrete
+from nengolib.signal.discrete import cont2discrete
 from nengolib.signal.system import LinearSystem
 
 
@@ -186,8 +186,8 @@ def l1_norm(sys, rtol=1e-6, max_length=2**18):
         dsys = cont2discrete((A, B, C, 0), dt=dt)
         Phi = dsys.A
 
-        y = impulse(dsys, dt=None, length=N)
-        abs_y = abs(y[1:])
+        y = dsys.impulse(N)
+        abs_y = abs(y)
         L_impulse = np.sum(abs_y)
 
         # bound the missing response from t > T from below

@@ -3,8 +3,7 @@ import warnings
 import numpy as np
 from scipy.linalg import inv
 from scipy.signal import (
-    cont2discrete, zpk2ss, ss2tf, ss2zpk, tf2ss, tf2zpk, zpk2tf,
-    normalize, abcd_normalize)
+    cont2discrete, zpk2ss, ss2tf, ss2zpk, tf2ss, tf2zpk, zpk2tf, normalize)
 
 from nengo.synapses import LinearFilter
 from nengo.utils.compat import is_integer, is_number, with_metaclass
@@ -40,6 +39,10 @@ def _tf(num, den):
     return (np.poly1d(num), np.poly1d(den))
 
 
+def _ss(abcd):
+    return tuple(map(np.atleast_2d, abcd))
+
+
 def _ss2tf(A, B, C, D):
     # https://github.com/scipy/scipy/issues/5760
     if not (len(A) or len(B) or len(C)):
@@ -56,12 +59,12 @@ def _ss2tf(A, B, C, D):
 
 
 _sys2ss = {
-    _LSYS: lambda sys: sys.ss,
-    _LFILT: lambda sys: tf2ss(sys.num, sys.den),
-    _NUM: lambda sys: tf2ss(sys, 1),
-    _TF: lambda sys: tf2ss(*sys),
-    _ZPK: lambda sys: zpk2ss(*sys),
-    _SS: lambda sys: sys,
+    _LSYS: lambda sys: _ss(sys.ss),
+    _LFILT: lambda sys: _ss(tf2ss(sys.num, sys.den)),
+    _NUM: lambda sys: _ss(tf2ss(sys, 1)),
+    _TF: lambda sys: _ss(tf2ss(*sys)),
+    _ZPK: lambda sys: _ss(zpk2ss(*sys)),
+    _SS: lambda sys: _ss(sys),
 }
 
 _sys2zpk = {
@@ -101,6 +104,8 @@ def sys2tf(sys):
 def _is_ccf(A, B, C, D):
     """Returns true iff (A, B, C, D) is in controllable canonical form."""
     n = len(A)
+    if A.size == 0 and B.size == 0 and C.size == 0:  # scipy 0.17.0
+        return True  # TODO: assumes SISO?
     if not np.allclose(B[0], 1.0):
         return False
     if n <= 1:
@@ -114,7 +119,7 @@ def canonical(sys, controllable=True):
     """Converts SISO to controllable/observable canonical form."""
     # TODO: raise nicer error if not SISO
     sys = LinearSystem(sys)
-    ss = abcd_normalize(*sys.ss)
+    ss = sys.ss  # abcd_normalize(*sys.ss)
     if not _is_ccf(*ss):
         # TODO: if already observable than this might hurt the accuracy
         ss = sys2ss(sys2tf(ss))
@@ -166,21 +171,22 @@ class _DigitalStep(LinearFilter.Step):
         if y0 is not None:
             self.output[...] = y0
             if not np.allclose(y0, 0):
-                warnings.warn("y0 (%s) does not properly initialize the "
+                warnings.warn("y0 (%s!=0) does not properly initialize the "
                               "system; see Nengo issue #1124" % y0,
                               UserWarning)
 
-    def __call__(self, t, u):
+    def __call__(self, _, u):
         self.output[...] = np.dot(self._c, self._x) + self._d*u
         r = np.dot(self._a, self._x)
         self._x[1:, :] = self._x[:-1, :]
-        self._x[0, :] = r + u
+        self._x[:1, :] = r + u
         return self.output
 
 
 class NengoLinearFilterMixin(LinearFilter):
 
     seed = None
+    default_dt = 0.001
 
     def make_step(self, shape_in, shape_out, dt, rng, y0=None,
                   dtype=np.float64, method='zoh'):
@@ -486,6 +492,28 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
         for i in range(len(self)):
             sys = (self.A, self.B, I[i:i+1, :], [[0]])
             yield LinearSystem(sys, analog=self.analog)
+
+    def filt(self, x, *args, **kwargs):
+        """Filter the input using this linear system."""
+        x = np.asarray(x)  # nengo PR 1123
+        # Defaults y0=0 because y0=None has strange behaviour;
+        # see unit test: test_system.py -k test_filt_issue_nengo938
+        if 'y0' not in kwargs:
+            kwargs['y0'] = 0
+        return super(LinearSystem, self).filt(x, *args, **kwargs)
+
+    def impulse(self, length, dt=None):
+        """Impulse response with ``length`` timesteps and width ``dt``."""
+        if dt is None:
+            if self.analog:
+                h = 1. / self.default_dt
+            else:
+                h = 1.
+        else:
+            h = 1. / dt
+        delta = np.zeros(length)
+        delta[0] = h
+        return self.filt(delta, dt=dt, y0=0)
 
 
 s = LinearSystem(([1, 0], [1]), analog=True)  # differential operator

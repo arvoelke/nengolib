@@ -9,7 +9,7 @@ from nengo.utils.testing import warns
 from nengolib.synapses.analog import (
     Bandpass, Highpass, PureDelay, LinearFilter, Lowpass, Alpha, DoubleExp,
     _pade_delay, _passthrough_delay, _proper_delay)
-from nengolib.signal import impulse, sys_equal, s
+from nengolib.signal import sys_equal, s
 
 
 def test_nengo_analogs():
@@ -38,7 +38,7 @@ def test_bandpass(freq, Q):
     length = 10000
     dt = 0.0001
 
-    response = impulse(sys, dt, length)
+    response = sys.impulse(length, dt)
     dft = np.fft.rfft(response, axis=0)
     freqs = np.fft.rfftfreq(length, d=dt)
     cp = abs(dft).cumsum()
@@ -54,7 +54,7 @@ def test_highpass(tau, order):
     length = 1000
     dt = 0.001
 
-    response = impulse(sys, dt, length)
+    response = sys.impulse(length, dt)
     dft = np.fft.rfft(response, axis=0)
     p = abs(dft)
 
@@ -76,7 +76,7 @@ def test_pade_delay(c):
     # Note: the discretization has numerical issues
     # for larger orders here.
     sys = PureDelay(c, order=7)
-    response = impulse(sys, dt, length)
+    response = sys.impulse(length, dt)
 
     offset = int(0.1*c/dt)  # start at 10% of delay
     atol = int(0.1*c/dt)  # allow 10% margin of error
