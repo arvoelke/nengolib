@@ -159,13 +159,16 @@ class _DigitalStep(LinearFilter.Step):
         assert len(C) == 1
         self._c = C[0, :]
         assert D.size == 1
-        self._d = D.flatten()[0]
+        self._d = D.item()
         self._x = np.zeros(
             (len(self._a), len(np.atleast_1d(output))), dtype=dtype)
         self.output = output
         if y0 is not None:
             self.output[...] = y0
-            # note: we do not set x using y0, see Nengo issue #1124
+            if not np.allclose(y0, 0):
+                warnings.warn("y0 (%s) does not properly initialize the "
+                              "system; see Nengo issue #1124" % y0,
+                              UserWarning)
 
     def __call__(self, t, u):
         self.output[...] = np.dot(self._c, self._x) + self._d*u

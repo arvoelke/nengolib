@@ -179,15 +179,17 @@ def test_discrete_synapse(Simulator):
 
 @pytest.mark.parametrize("y0", [0])
 def test_filt(y0):
-    # https://github.com/nengo/nengo/issues/1124
     u = np.asarray([1.0, 0, 0])
     dt = 0.1
     num, den = [1], [1, 2, 1]
-    # make sure the synapses filt the same way in nengo vs nengolib
-    # with various initial y0
     sys1 = nengo.LinearFilter(num, den)
     sys2 = LinearFilter(num, den)
     assert np.allclose(sys1.filt(u, dt=dt, y0=y0), sys2.filt(u, dt=dt, y0=y0))
+
+    # TODO: make sure the synapses filt the same way in nengo vs nengolib
+    # with various initial y0; https://github.com/nengo/nengo/issues/1124
+    with pytest.warns(UserWarning):
+        sys2.filt(u, dt=dt, y0=1)
 
 
 def test_sys_multiplication():
