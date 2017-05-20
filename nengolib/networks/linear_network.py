@@ -67,11 +67,12 @@ class LinearNetwork(Network):
         self.realizer_result = self.realizer(self.sys, self.radii)
 
         # Map the system onto the synapse
-        self.A, self.B, self.C, self.D = ss2sim(
-            self.realizer_result.realization, self.synapse, self.dt).ss
-        self.size_in = self.B.shape[1]
-        self.size_state = len(self.A)
-        self.size_out = len(self.C)
+        mapped = ss2sim(
+            self.realizer_result.realization, self.synapse, self.dt)
+        self.A, self.B, self.C, self.D = mapped.ss
+        self.size_in = mapped.size_in
+        self.size_state = len(mapped)
+        self.size_out = mapped.size_out
 
         with self:
             # Create internal Nengo objects

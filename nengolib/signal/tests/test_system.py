@@ -134,6 +134,91 @@ def test_decompose_states(sys):
     assert np.dot(sys.C, list(sys)) + sys.D == sys
 
 
+def test_non_siso_manipulation():
+    sys = Alpha(0.1)
+    A, B, C, D = sys.ss
+
+    SIMO = LinearSystem((A, B, np.eye(len(A)), [[0], [0]]))
+    assert not SIMO.is_SISO
+    assert SIMO.size_in == 1
+    assert SIMO.size_out == 2
+    assert not SIMO.has_passthrough
+    assert ss_equal(_eval(SIMO), SIMO)
+    assert isinstance(str(SIMO), str)
+    assert ss_equal(canonical(SIMO), SIMO)
+    for sub1, sub2 in zip(sys, SIMO):
+        assert ss_equal(sub1, sub2)
+
+    MISO = LinearSystem((A, [[1, 1]], C, [[0, 1]]))
+    assert not MISO.is_SISO
+    assert MISO.size_in == 2
+    assert MISO.size_out == 1
+    assert MISO.has_passthrough
+    assert ss_equal(_eval(MISO), MISO)
+    assert isinstance(str(MISO), str)
+
+    MIMO = LinearSystem((A, [[1, 1]], np.eye(len(A)), np.zeros((2, 2))))
+    assert not MIMO.is_SISO
+    assert MIMO.size_in == MIMO.size_out == 2
+    assert not MIMO.has_passthrough
+    assert ss_equal(_eval(MIMO), MIMO)
+    assert isinstance(str(MIMO), str)
+    for sub1, sub2 in zip(MISO, MIMO):
+        assert ss_equal(sub1, sub2)
+
+
+def test_non_siso_filtering(rng):
+    sys = PureDelay(0.1, order=4)
+    length = 1000
+
+    SIMO = sys.X
+    assert not SIMO.is_SISO
+    assert SIMO.size_in == 1
+    assert SIMO.size_out == len(sys)
+
+    x = SIMO.impulse(length)
+    for i, (sub1, sub2) in enumerate(zip(sys, SIMO)):
+        assert sub1 == sub2
+        y1 = sub1.impulse(length)
+        y2 = sub2.impulse(length)
+        _transclose(shift(y1), shift(y2), x[:, i])
+
+    B = np.asarray([[1, 2, 3], [0, 0, 0], [0, 0, 0], [0, 0, 0]]) * sys.B
+    u = rng.randn(length, 3)
+
+    Bu = u.dot([1, 2, 3])
+    assert Bu.shape == (length,)
+    MISO = LinearSystem((sys.A, B, sys.C, np.zeros((1, 3))), analog=True)
+    assert not MISO.is_SISO
+    assert MISO.size_in == 3
+    assert MISO.size_out == 1
+
+    y = cont2discrete(MISO, dt=0.001).filt(u)
+    assert y.shape == (length,)
+    assert np.allclose(shift(sys.filt(Bu)), y)
+
+    MIMO = MISO.X
+    assert not MIMO.is_SISO
+    assert MIMO.size_in == 3
+    assert MIMO.size_out == 4
+
+    y = MIMO.filt(u)
+    I = np.eye(len(sys))
+    for i, sub1 in enumerate(MIMO):
+        sub2 = LinearSystem((sys.A, B, I[i:i+1], np.zeros((1, 3))))
+        _transclose(sub1.filt(u), sub2.filt(u), y[:, i])
+
+
+def test_bad_filt():
+    sys = PureDelay(0.1, order=4).X
+    with pytest.raises(ValueError):
+        sys.filt(np.ones((4, 4)))
+    with pytest.raises(ValueError):
+        sys.filt(np.ones((4, 1)), filtfilt=True)
+    with pytest.raises(ValueError):
+        sys.filt(np.ones((4,)), copy=False)
+
+
 @pytest.mark.parametrize("sys", [
     Lowpass(0.01), Alpha(0.2), LinearFilter([1, 1], [0.01, 1])])
 def test_simulation(sys, Simulator, plt, seed):
@@ -307,6 +392,11 @@ def test_sim_new_synapse(Simulator):
                        sim.data[p_x])
 
 
+def _eval(sys):
+    return eval(
+        repr(sys), {}, {'LinearSystem': LinearSystem, 'array': np.array})
+
+
 def test_linear_system():
     tau = 0.05
     sys = Lowpass(tau)
@@ -327,6 +417,11 @@ def test_linear_system():
     assert sys.is_tf
     assert sys.is_ss
     assert sys.is_zpk
+
+    # Size in/out-related properties
+    assert sys.is_SISO
+    assert dsys.is_SISO
+    assert sys.size_in == sys.size_out == dsys.size_in == dsys.size_out == 1
 
     # Test attributes
     assert np.allclose(sys.num, (1,))
@@ -383,10 +478,8 @@ def test_linear_system():
     assert inv == sys**(-1)
 
     # Test repr/str
-    copy = eval(
-        repr(sys), {}, {'LinearSystem': LinearSystem, 'array': np.array})
+    copy = _eval(sys)
     assert copy == sys
-    assert str(copy) == str(sys)
 
     # Test addition/subtraction
     assert sys + 2 == ((2*tau, 3), (tau, 1))
@@ -474,6 +567,19 @@ def test_invalid_operations():
 def test_hashing():
     assert len(set((z, s))) == 2
     assert len(set((s, 5*s/5))) == 1
+
+
+def test_zerodim_system():
+    sys = LinearSystem(1)
+    assert len(sys) == 0
+    assert ss_equal(sys, (0, 0, 0, 1))
+
+    # However, this following system could have dimension 0 or 1
+    # depending on whether we're before or after scipy 0.18
+    # see https://github.com/scipy/scipy/issues/5760
+    # TODO: ideally it would stay 0, but documenting this weirdness for now
+    ss_sys = LinearSystem(sys.ss)
+    assert len(ss_sys) in (0, 1)
 
 
 def test_similarity_transform():

@@ -9,7 +9,7 @@ from nengo.utils.numpy import norm
 from nengolib.signal.lyapunov import (
     _H2P, state_norm, control_gram, observe_gram, balanced_transformation,
     hankel, l1_norm)
-from nengolib.signal import sys2ss, cont2discrete, s, z, LinearSystem
+from nengolib.signal import sys2ss, cont2discrete, s, z
 from nengolib.synapses import Bandpass, PureDelay
 from nengolib import Lowpass, Alpha
 
@@ -30,29 +30,20 @@ def test_state_norm(plt):
     sys = Alpha(0.1)
     dt = 0.000001
     length = 2000000
-
-    # Modify the state-space to read out the state vector
-    A, B, C, D = sys2ss(sys)
-    old_C = C
-    C = np.eye(len(A))
-    D = np.zeros((len(A), B.shape[1]))
-
-    response = np.empty((length, len(C)))
-    for i in range(len(C)):
-        # Simulate the state vector
-        response[:, i] = LinearSystem(
-            (A, B, C[i, :], D[i, :])).impulse(length, dt)
+    assert np.allclose(dt*length, 2.0)
 
     # Check that the power of each state equals the H2-norm of each state
     # The analog case is the same after scaling since dt is approx 0.
+    response = sys.X.impulse(length, dt)
     actual = norm(response, axis=0) * dt
     assert np.allclose(actual, state_norm(cont2discrete(sys, dt)))
     assert np.allclose(actual, state_norm(sys) * np.sqrt(dt))
 
+    step = int(0.002/dt)
     plt.figure()
-    plt.plot(response[:, 0], label="$x_0$")
-    plt.plot(response[:, 1], label="$x_1$")
-    plt.plot(np.dot(response, old_C.T), label="$y$")
+    plt.plot(response[::step, 0], label="$x_0$")
+    plt.plot(response[::step, 1], label="$x_1$")
+    plt.plot(np.dot(response[::step], sys.C.T), label="$y$")
     plt.legend()
 
 

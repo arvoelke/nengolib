@@ -90,11 +90,9 @@ def test_balreal_normalization(sys):
 
 def _test_normalization(Simulator, sys, rng, realizer, l1_lower,
                         lower, radius=5.0, dt=0.0001, T=1.0, eps=1e-5):
-    l1_norms = np.empty(len(sys))
-    for i, sub in enumerate(sys):
-        response = sub.impulse(int(T / dt), dt=dt)
-        assert np.allclose(response[-10:], 0)
-        l1_norms[i] = radius * np.sum(abs(response * dt))
+    response = sys.X.impulse(int(T / dt), dt=dt)
+    assert np.allclose(response[-10:], 0)
+    l1_norms = radius * np.sum(abs(response * dt), axis=0)
 
     with Network() as model:
         stim = nengo.Node(output=lambda t: rng.choice([-radius, radius])

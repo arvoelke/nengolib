@@ -119,7 +119,6 @@ def _is_ccf(A, B, C, D):
 
 def canonical(sys, controllable=True):
     """Converts SISO to controllable/observable canonical form."""
-    # TODO: raise nicer error if not SISO
     sys = LinearSystem(sys)
     ss = sys.ss  # abcd_normalize(*sys.ss)
     if not _is_ccf(*ss):
@@ -158,7 +157,8 @@ def ss_equal(sys1, sys2, rtol=1e-05, atol=1e-08):
             np.allclose(sys1.D, sys2.D, rtol=rtol, atol=atol))
 
 
-class _DigitalStep(LinearFilter.Step):
+class _CanonicalStep(LinearFilter.Step):
+    """Stepper for LinearSystem in canonical SISO form."""
 
     def __init__(self, sys, output, y0=None, dtype=np.float64):
         A, B, C, D = canonical(sys).ss
@@ -167,15 +167,8 @@ class _DigitalStep(LinearFilter.Step):
         self._c = C[0, :]
         assert D.size == 1
         self._d = D.item()
-        self._x = np.zeros(
-            (len(self._a), len(np.atleast_1d(output))), dtype=dtype)
+        self._x = np.zeros((len(self._a),) + output.shape, dtype=dtype)
         self.output = output
-        if y0 is not None:
-            self.output[...] = y0
-            if not np.allclose(y0, 0):
-                warnings.warn("y0 (%s!=0) does not properly initialize the "
-                              "system; see Nengo issue #1124" % y0,
-                              UserWarning)
 
     def __call__(self, _, u):
         self.output[...] = np.dot(self._c, self._x) + self._d*u
@@ -194,9 +187,15 @@ class NengoLinearFilterMixin(LinearFilter):
                   dtype=np.float64, method='zoh'):
         assert shape_in == shape_out
         output = np.zeros(shape_out)
+        if y0 is not None:
+            output[...] = y0
+        if y0 is None or not np.allclose(y0, 0):
+            warnings.warn(
+                "y0 (%s!=0) does not properly initialize the system; see "
+                "Nengo issue #1124." % y0, UserWarning)
 
         if self.analog:
-            # Note: equivalent to cont2discrete in discrete.py, but repeated
+            # TODO: equivalent to cont2discrete in discrete.py, but repeated
             # here to avoid circular dependency.
             A, B, C, D, _ = cont2discrete(self.ss, dt, method=method)
             sys = LinearSystem((A, B, C, D), analog=False)
@@ -207,10 +206,11 @@ class NengoLinearFilterMixin(LinearFilter):
             # This makes our system behave like it does in Nengo
             sys *= z  # discrete shift of the system to remove delay
         else:
-            warnings.warn("Synapse (%s) has extra delay due to passthrough "
-                          "(https://github.com/nengo/nengo/issues/938)" % sys)
+            warnings.warn(
+                "Synapse (%s) has extra delay due to passthrough "
+                "(https://github.com/nengo/nengo/issues/938)." % sys)
 
-        return _DigitalStep(sys, output, y0=y0, dtype=dtype)
+        return _CanonicalStep(sys, output, y0=y0, dtype=dtype)
 
 
 class LinearSystemType(type):
@@ -258,7 +258,7 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
         assert analog is not None  # guaranteed by metaclass
         self._sys = sys
         self._analog = analog
-        # Don't initialize superclass so that it uses this num/den instead
+        # HACK: Don't initialize superclass, so that it uses this num/den
 
     @property
     def analog(self):
@@ -294,6 +294,22 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
     @property
     def is_zpk(self):
         return _sys2form(self._sys) == _ZPK or self._zpk is not None
+
+    @property
+    def size_in(self):
+        if self.is_ss:
+            return self.B.shape[1]
+        return 1
+
+    @property
+    def size_out(self):
+        if self.is_ss:
+            return self.C.shape[0]
+        return 1
+
+    @property
+    def is_SISO(self):
+        return self.size_in == 1 and self.size_out == 1
 
     @property
     def A(self):
@@ -352,7 +368,7 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
         # Note there may be numerical issues for values close to 0
         # since scipy routines occasionally "normalize "those to 0
         if self.is_ss:
-            return self.D != 0
+            return np.any(self.D != 0)
         return self.num[self.order_den] != 0
 
     @property
@@ -382,12 +398,14 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
         return self.order_den
 
     def __repr__(self):
-        return "%s(sys=(%r, %r), analog=%r)" % (
-            type(self).__name__, np.asarray(self.num),
-            np.asarray(self.den), self.analog)
+        return "%s(sys=%r, analog=%r)" % (
+            type(self).__name__, self._sys, self.analog)
 
     def __str__(self):
-        return "(%s, %s, %s)" % (
+        if self.is_ss:
+            return "(A=%s, B=%s, C=%s, D=%s, analog=%s)" % (
+                self.A, self.B, self.C, self.D, self.analog)
+        return "(num=%s, den=%s, analog=%s)" % (
             np.asarray(self.num), np.asarray(self.den), self.analog)
 
     def _check_other(self, other):
@@ -498,17 +516,59 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
         """Yields the LinearSystem corresponding to each state."""
         I = np.eye(len(self))
         for i in range(len(self)):
-            sys = (self.A, self.B, I[i:i+1, :], [[0]])
+            sys = (self.A, self.B, I[i:i+1, :], np.zeros((1, self.size_in)))
             yield LinearSystem(sys, analog=self.analog)
 
-    def filt(self, x, *args, **kwargs):
+    @property
+    def X(self):
+        """Returns the multiple-output system for the state-space vector."""
+        C = np.eye(len(self))
+        D = np.zeros((len(self), self.size_in))
+        return LinearSystem((self.A, self.B, C, D), analog=self.analog)
+
+    def filt(self, u, dt=None, axis=0, y0=0, copy=True, filtfilt=False):
         """Filter the input using this linear system."""
-        x = np.asarray(x)  # nengo PR 1123
         # Defaults y0=0 because y0=None has strange behaviour;
         # see unit test: test_system.py -k test_filt_issue_nengo938
-        if 'y0' not in kwargs:
-            kwargs['y0'] = 0
-        return super(LinearSystem, self).filt(x, *args, **kwargs)
+        u = np.asarray(u)  # nengo PR 1123
+        if not self.is_SISO:
+            # Work-in-progress for issue # 106
+            # TODO: relax all of these constraints
+            if u.ndim == 1:
+                u = u[:, None]
+            if u.shape[1] != self.size_in:
+                raise ValueError("Filtering with non-SISO systems requires "
+                                 "the second dimension of x (%s) to equal "
+                                 "the system's size_in (%s)." %
+                                 (u.shape[1], self.size_in))
+
+            if axis != 0 or y0 is None or not np.allclose(y0, 0) or \
+               not copy or filtfilt:
+                raise ValueError("Filtering with non-SISO systems requires "
+                                 "axis=0, y0=0, copy=True, filtfilt=False.")
+
+            warnings.warn("Filtering with non-SISO systems is an "
+                          "experimental feature that may not behave as "
+                          "expected.", UserWarning)
+
+            if self.analog:
+                dt = self.default_dt if dt is None else dt
+                A, B, C, D, _ = cont2discrete(self.ss, dt, method='zoh')
+            else:
+                A, B, C, D = self.ss
+
+            x = np.zeros(len(self), dtype=u.dtype)
+            if self.size_out > 1:
+                shape_out = (len(u), self.size_out)
+            else:
+                shape_out = (len(u),)
+            y = np.empty(shape_out, dtype=u.dtype)
+            for i, u_i in enumerate(u):
+                y[i] = np.dot(C, x) + np.dot(D, u_i)
+                x = np.dot(A, x) + np.dot(B, u_i)
+            return y
+
+        return super(LinearSystem, self).filt(u, dt, axis, y0, copy, filtfilt)
 
     def impulse(self, length, dt=None):
         """Impulse response with ``length`` timesteps and width ``dt``."""

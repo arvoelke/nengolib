@@ -26,6 +26,7 @@ class SphericalCoords(Distribution):
     """
 
     def __init__(self, m):
+        super(SphericalCoords, self).__init__()
         self.m = m
 
     def __repr__(self):
@@ -61,8 +62,7 @@ class Sobol(Distribution):
     def __repr__(self):
         return "%s()" % (type(self).__name__)
 
-    def sample(self, num, d=None, rng=np.random):
-        num, d = self._sample_shape(num, d)
+    def sample(self, num, d=1, rng=np.random):
         if d == 1:
             # Tile the points optimally. TODO: refactor
             return np.linspace(1./num, 1, num)[:, None]
@@ -95,8 +95,7 @@ class ScatteredCube(Distribution):
         return "%s(low=%r, high=%r, base=%r)" % (
             type(self).__name__, self.low, self.high, self.base)
 
-    def sample(self, num, d=None, rng=np.random):
-        num, d = self._sample_shape(num, d)
+    def sample(self, num, d=1, rng=np.random):
         u = self.base.sample(num, d)
 
         # shift everything by the same random constant (with wrap-around)
