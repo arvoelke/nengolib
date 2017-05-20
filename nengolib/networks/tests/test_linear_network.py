@@ -166,9 +166,9 @@ def test_invalid_systems():
 
 
 def test_radii(Simulator, seed, plt):
-    sys = canonical(PureDelay(0.1, order=4))
+    sys = canonical(PureDelay(0.2, order=3))
     dt = 0.001
-    T = 0.3
+    T = 0.5
 
     plt.figure()
 
@@ -177,7 +177,7 @@ def test_radii(Simulator, seed, plt):
     for sub in sys:
         response = sub.impulse(int(T / dt), dt=dt)
         amplitude = np.max(abs(response))
-        assert amplitude >= 1e-6  # otherwise numerical issues
+        assert amplitude >= 1e-4  # otherwise numerical issues
         radii.append(amplitude)
 
         plt.plot(response / amplitude, linestyle='--')
@@ -199,7 +199,7 @@ def test_radii(Simulator, seed, plt):
 
     plt.plot(sim.data[p], lw=5, alpha=0.5)
 
-    assert np.allclose(np.max(abs(sim.data[p]), axis=0), 1, atol=1e-3)
+    assert np.allclose(np.max(abs(sim.data[p]), axis=0), 1, atol=1e-4)
 
 
 def test_solver(tmpdir, Simulator, seed, rng):

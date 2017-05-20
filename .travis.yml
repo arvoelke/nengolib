@@ -36,6 +36,12 @@ matrix:
         NENGO=""
         PIP_DEPS="$PIP_DEPS nengo==2.4.0"
     - env:
+        PYTHON="2.7"
+        NENGO=""
+        PIP_DEPS="$PIP_DEPS nengo==2.4.0"
+        NUMPY="1.12.0"
+        SCIPY="0.19.0"
+    - env:
         CODE_COV="True"
         TEST_CMD="py.test nengolib --cov=nengolib"
         PYTHON="2.7"

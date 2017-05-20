@@ -60,7 +60,7 @@ def test_sys_conversions():
 
 
 def test_check_sys_equal():
-    assert not sys_equal(np.zeros(2), np.zeros(3))
+    assert not sys_equal(np.ones(2), np.ones(3))
 
     assert s != z
     assert not z == s
