@@ -52,9 +52,11 @@ def _ss2tf(A, B, C, D):
         return (D[0], 1.)  # pragma: no cover; solved in scipy>=0.18rc2
     nums, den = ss2tf(A, B, C, D)
     if len(nums) != 1:
-        # TODO: support MIMO systems
+        # TODO: support MIMO/SIMO/MISO systems
         # https://github.com/scipy/scipy/issues/5753
-        raise NotImplementedError("System must be SISO")
+        raise NotImplementedError("System (%s, %s, %s, %s) must be SISO to "
+                                  "convert to transfer function" %
+                                  (A, B, C, D))
     return nums[0], den
 
 
@@ -341,15 +343,21 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
 
     @property
     def causal(self):
+        """Returns True if and only if the system is causal / proper."""
         return self.order_num <= self.order_den
 
     @property
     def has_passthrough(self):
-        # note: may convert to transfer function
+        """Returns True if and only if the system has a passthrough."""
+        # Note there may be numerical issues for values close to 0
+        # since scipy routines occasionally "normalize "those to 0
+        if self.is_ss:
+            return self.D != 0
         return self.num[self.order_den] != 0
 
     @property
-    def proper(self):
+    def strictly_proper(self):
+        """Returns True if and only if the system is *strictly* proper."""
         return self.causal and not self.has_passthrough
 
     @property
