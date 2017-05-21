@@ -1,4 +1,5 @@
 from .discrete import *  # noqa: F403
+from .dists import *  # noqa: F403
 from .learning import *  # noqa: F403
 from .lyapunov import *  # noqa: F403
 from .realizers import *  # noqa: F403

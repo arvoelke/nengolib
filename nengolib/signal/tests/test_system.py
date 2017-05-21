@@ -142,6 +142,7 @@ def test_non_siso_manipulation():
     assert not SIMO.is_SISO
     assert SIMO.size_in == 1
     assert SIMO.size_out == 2
+    assert SIMO.shape == (2, 1)
     assert not SIMO.has_passthrough
     assert ss_equal(_eval(SIMO), SIMO)
     assert isinstance(str(SIMO), str)
@@ -153,6 +154,7 @@ def test_non_siso_manipulation():
     assert not MISO.is_SISO
     assert MISO.size_in == 2
     assert MISO.size_out == 1
+    assert MISO.shape == (1, 2)
     assert MISO.has_passthrough
     assert ss_equal(_eval(MISO), MISO)
     assert isinstance(str(MISO), str)
@@ -160,6 +162,7 @@ def test_non_siso_manipulation():
     MIMO = LinearSystem((A, [[1, 1]], np.eye(len(A)), np.zeros((2, 2))))
     assert not MIMO.is_SISO
     assert MIMO.size_in == MIMO.size_out == 2
+    assert MIMO.shape == (2, 2)
     assert not MIMO.has_passthrough
     assert ss_equal(_eval(MIMO), MIMO)
     assert isinstance(str(MIMO), str)

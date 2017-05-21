@@ -308,8 +308,12 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
         return 1
 
     @property
+    def shape(self):
+        return (self.size_out, self.size_in)
+
+    @property
     def is_SISO(self):
-        return self.size_in == 1 and self.size_out == 1
+        return self.shape == (1, 1)
 
     @property
     def A(self):
