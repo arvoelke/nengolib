@@ -5,8 +5,8 @@ import nengo
 from nengo.utils.testing import warns
 
 from nengolib.networks.linear_network import LinearNetwork
-from nengolib import Network
-from nengolib.signal import s, z, canonical, Identity, shift
+from nengolib import Network, Lowpass
+from nengolib.signal import s, z, canonical, Identity, shift, nrmse
 from nengolib.synapses import PureDelay, Bandpass
 
 
@@ -20,15 +20,16 @@ class MockSolver(nengo.solvers.LstsqL2):
         return super(MockSolver, self).__call__(A, Y, rng=rng, E=E)
 
 
-@pytest.mark.parametrize("neuron_type,atol", [(nengo.neurons.Direct(), 1e-14),
-                                              (nengo.neurons.LIFRate(), 5e-01),
-                                              (nengo.neurons.LIF(), 1e-01)])
-def test_linear_network(neuron_type, atol, Simulator, plt, seed, rng):
+@pytest.mark.parametrize("neuron_type,atol,atol_x", [
+    (nengo.neurons.Direct(), 1e-14, 1e-14),
+    (nengo.neurons.LIFRate(), 0.01, 0.01),
+    (nengo.neurons.LIF(), 0.1, 0.1)])
+def test_linear_network(Simulator, plt, seed, rng, neuron_type, atol, atol_x):
     n_neurons = 500
     dt = 0.001
     T = 1.0
 
-    sys = nengo.Lowpass(0.1)
+    sys = Lowpass(0.1)
     scale_input = 2.0
 
     synapse = 0.02
@@ -46,21 +47,28 @@ def test_linear_network(neuron_type, atol, Simulator, plt, seed, rng):
         assert subnet.synapse == subnet.input_synapse
         assert subnet.output_synapse is None
 
-        p_stim = nengo.Probe(subnet.input, synapse=tau_probe)
+        p_input = nengo.Probe(subnet.input, synapse=tau_probe)
         p_x = nengo.Probe(subnet.x.output, synapse=tau_probe)
         p_output = nengo.Probe(subnet.output, synapse=tau_probe)
 
     with Simulator(model, dt=dt) as sim:
         sim.run(T)
 
-    expected = shift(sys.filt(sim.data[p_stim], y0=0))
+    ideal_output = shift(sys.filt(sim.data[p_input]))
+    ideal_x = shift(subnet.realizer_result.realization.X.filt(
+        sim.data[p_input]))
 
-    plt.plot(sim.trange(), sim.data[p_output], label="Actual", alpha=0.5)
-    plt.plot(sim.trange(), sim.data[p_x], label="x", alpha=0.5)
-    plt.plot(sim.trange(), expected, label="Expected", alpha=0.5)
+    plt.plot(sim.trange(), sim.data[p_input], label="Input", alpha=0.5)
+    plt.plot(sim.trange(), sim.data[p_output], label="Actual y", alpha=0.5)
+    plt.plot(sim.trange(), ideal_output, label="Expected y", alpha=0.5,
+             linestyle='--')
+    plt.plot(sim.trange(), sim.data[p_x], label="Actual x", alpha=0.5)
+    plt.plot(sim.trange(), ideal_x, label="Expected x", alpha=0.5,
+             linestyle='--')
     plt.legend()
 
-    assert np.allclose(sim.data[p_output], expected, atol=atol)
+    assert nrmse(sim.data[p_output], ideal_output) < atol
+    assert nrmse(sim.data[p_x].squeeze(), ideal_x.squeeze()) < atol_x
 
 
 def test_none_dt(Simulator, seed, rng):
