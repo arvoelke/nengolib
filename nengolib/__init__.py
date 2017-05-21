@@ -12,6 +12,7 @@ from .connection import Connection # noqa: F401
 from .monkeypatch import patch, unpatch  # noqa: F401
 from .network import Network  # noqa: F401
 from .neurons import PerfectLIF  # noqa: F401
+from .processes import Callable  # noqa: F401
 
 from . import compat  # noqa: F401
 from . import linalg  # noqa: F401
