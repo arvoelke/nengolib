@@ -47,7 +47,7 @@ Simply add the line **`import nengolib; nengolib.patch()`** to the top of your c
 
 ### Installation
 
-NengoLib is tested rigorously (100% coverage) against Python 2.7, 3.4, and 3.5, and [Nengo](https://github.com/nengo/nengo/releases) 2.1.0, 2.2.0, 2.3.0, 2.4.0, and its development branch. The Nengo GUI is not officially supported.
+NengoLib is tested rigorously (100% coverage) against Python 2.7, 3.4, 3.5, and 3.6, and [Nengo](https://github.com/nengo/nengo/releases) 2.1.0, 2.2.0, 2.3.0, 2.4.0, and its development branch. The Nengo GUI is not officially supported.
 
 To install the development version of NengoLib:
 ```
@@ -57,7 +57,7 @@ pip install -r requirements.txt
 python setup.py install
 ```
 
-We require SciPy >= [0.16.0](https://github.com/scipy/scipy/releases/tag/v0.16.0) and NumPy >= [1.9.2](https://github.com/numpy/numpy/releases/tag/v1.9.2), as indicated by `requirements.txt` but recommend versions 0.17.0 and 1.10 respectively (since that is what we test against). If the above `pip install` fails, the Python distribution [Anaconda](https://www.continuum.io/downloads) may be the easiest way to obtain both packages.
+We require SciPy >= [0.17.0](https://github.com/scipy/scipy/releases/tag/v0.17.0) and NumPy >= [1.10](https://github.com/numpy/numpy/releases/tag/v1.10.0), as indicated by `requirements.txt`. If the above `pip install` fails, the Python distribution [Anaconda](https://www.continuum.io/downloads) may be the easiest way to obtain both packages.
 
 On Windows, It may be quicker to pip install the [pre-built Windows binaries](http://www.lfd.uci.edu/~gohlke/pythonlibs/) for NumPy and Scipy. For other operating systems, we refer the user to the [SciPy installation guide](http://www.scipy.org/install.html) and the [NumPy installation guide](http://docs.scipy.org/doc/numpy-1.10.1/user/install.html).
 
