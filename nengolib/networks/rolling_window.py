@@ -44,12 +44,12 @@ def readout(q, r):
 class RollingWindow(LinearNetwork):
     """Compute nonlinear functions across a rolling window of input history."""
 
-    def __init__(self, theta, n_neurons, dimensions=6, process=None,
+    def __init__(self, theta, n_neurons, process, dimensions=6,
                  synapse=0.1, dt=0.001, realizer=Balanced(),
                  solver=nengo.solvers.LstsqL2(reg=1e-2), **kwargs):
         self.theta = theta
-        self.dimensions = dimensions
         self.process = process
+        self.dimensions = dimensions
 
         super(RollingWindow, self).__init__(
             sys=PureDelay(theta, order=dimensions),

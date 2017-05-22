@@ -49,7 +49,7 @@ def test_direct_window(Simulator, seed, plt):
     with Network() as model:
         stim = nengo.Node(output=lambda t: t)
         rw = RollingWindow(theta, n_neurons=1, dimensions=12,
-                           neuron_type=nengo.Direct())
+                           neuron_type=nengo.Direct(), process=None)
         assert rw.theta == theta
         assert rw.dt == 0.001
         assert rw.process is None
@@ -79,14 +79,14 @@ def test_basis(plt):
     theta = 0.1
     d = 12
 
-    rw = RollingWindow(theta=theta, n_neurons=1, dimensions=d,
-                       realizer=Identity())
+    rw = RollingWindow(theta=theta, n_neurons=1, dimensions=d, radii=2,
+                       realizer=Identity(), process=None)
 
     B = rw.basis()
     assert B.shape == (len(t_default), d)
 
     # since using the Identity realizer
-    assert np.allclose(B, rw.canonical_basis())
+    assert np.allclose(B, rw.canonical_basis()*rw.radii)
 
     Binv = rw.inverse_basis()
     assert Binv.shape == (d, len(t_default))
@@ -127,7 +127,7 @@ def test_window_example(Simulator, seed, plt):
 
         rw_drct = RollingWindow(
             theta=theta, n_neurons=1, dimensions=d, radii=radii,
-            neuron_type=nengo.Direct(), dt=dt)
+            neuron_type=nengo.Direct(), dt=dt, process=None)
 
         def function(w):
             return -np.max(np.abs(w)), abs(w[0]*w[-1])
@@ -181,6 +181,6 @@ def test_window_function():
         RollingWindow(theta=1.0, n_neurons=1, process=process,
                       eval_points=cube)
 
-    rw = RollingWindow(theta=1.0, n_neurons=1)
+    rw = RollingWindow(theta=1.0, n_neurons=1, process=None)
     with pytest.raises(ValidationError):
         rw.add_output(function=lambda a, b: a)
