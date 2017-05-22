@@ -122,7 +122,7 @@ class RollingWindow(LinearNetwork):
         return inv(B.T.dot(B)).dot(B.T)
 
     @with_self
-    def add_output(self, name='output', t=t_default, function=lambda x_t: x_t,
+    def add_output(self, name='output', t=t_default, function=lambda w: w,
                    synapse=None, **conn_kwargs):
         """Decodes a function of the window at time points ``-t*theta``.
 
@@ -132,17 +132,18 @@ class RollingWindow(LinearNetwork):
         For example, when ``t=1`` and ``function`` is the identity,
         this is equivalent to decoding a delay of ``theta``.
         """
-        C = self.basis(t)
+        B = self.basis(t)
 
-        def wrapped_function(x_t):
-            return function(C.dot(x_t))
+        def wrapped_function(x):
+            w = B.dot(x)  # state -> window
+            return function(w)
 
         value, invoked = checked_call(
-            function, np.zeros(C.shape[0]))
+            function, np.zeros(B.shape[0]))
         if not invoked:
             raise ValidationError(
                 "'function' (%s) must accept a single np.array argument of "
-                "size=%d." % (function, C.shape[0]),
+                "size=%d." % (function, B.shape[0]),
                 attr='function', obj=self)
 
         output = nengo.Node(size_in=np.asarray(value).size, label=name)

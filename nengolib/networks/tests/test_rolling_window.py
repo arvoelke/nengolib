@@ -57,7 +57,7 @@ def test_direct_window(Simulator, seed, plt):
         assert rw.input_synapse == nengo.Lowpass(0.1)
 
         nengo.Connection(stim, rw.input, synapse=None)
-        output = rw.add_output(function=lambda x_t: np.sum(x_t**3)**2)
+        output = rw.add_output(function=lambda w: np.sum(w**3)**2)
         p_output = nengo.Probe(output, synapse=None)
 
     with Simulator(model) as sim:
@@ -129,14 +129,14 @@ def test_window_example(Simulator, seed, plt):
             theta=theta, n_neurons=1, dimensions=d, radii=radii,
             neuron_type=nengo.Direct(), dt=dt)
 
-        def function(x):
-            return -np.max(np.abs(x)), abs(x[0]*x[-1])
+        def function(w):
+            return -np.max(np.abs(w)), abs(w[0]*w[-1])
 
         nengo.Connection(stim, rw_rate.input, synapse=None)
         nengo.Connection(stim, rw_drct.input, synapse=None)
 
         delay_rate = rw_rate.add_output('delay', t=1)
-        delay_drct = rw_drct.add_output('delay', t=1)
+        delay_drct = rw_drct.output  # rw_drct.add_output('delay', t=1)
 
         output_rate = rw_rate.add_output('nonlinear', function=function)
         output_drct = rw_drct.add_output('nonlinear', function=function)

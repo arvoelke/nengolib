@@ -69,7 +69,7 @@ class Identity(AbstractRealizer):
 
 
 class Balanced(AbstractRealizer):
-    """Produces a 'balanced' realization.
+    """Balanced realization given by the Gramiam matrices.
 
     Informally, this evenly distributes the energy of the state-vector
     across all dimensions. This has the effect of normalizing the
