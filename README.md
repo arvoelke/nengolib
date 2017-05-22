@@ -34,9 +34,11 @@ Simply add the line **`import nengolib; nengolib.patch()`** to the top of your c
  - `nengolib.signal.{minreal,balreal,modred}` are tools for model order reduction using _minimal_ and _balanced realizations_. See [`doc/notebooks/research/linear_model_reduction.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/research/reservoir_computing.ipynb) for more information.
 
 ### Dynamical Systems
- - `nengolib.networks.LinearNetwork(...)` is a Nengo-style network that can map any causal linear system (including any of the synapses above) onto a recurrently connected population of neurons.
- - This uses `nengolib.synapses.ss2sim`, which maps the dynamics of the system onto the dynamics of the given synapse. This is accomplished by generalizing _Principle 3_ from the NEF to support various synapses in both digital and analog hardware implementations.
+ - `nengolib.networks.LinearNetwork(...)` is a Nengo-style network that can map any causal linear system (including any of the above systems) onto a recurrently connected population of neurons.
+ - This uses `nengolib.synapses.ss2sim`, which maps the dynamics of the system onto the dynamics of the given synapse. This is accomplished by generalizing _Principle 3_ from the NEF to support various synapses on both digital and analog hardware implementations.
  - See [`doc/notebooks/examples/linear_network.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/examples/linear_network.ipynb) for more information.
+ - `nengolib.networks.RollingWindow(...)` extends `LinearNetwork` to implement the `PureDelay` system and represent a rolling window of input history.
+ - See [`doc/notebooks/examples/rolling_window.ipynb`](https://github.com/arvoelke/nengolib/blob/master/doc/notebooks/examples/rolling_window.ipynb) for a tutorial on computing nonlinear functions from a window of history.
 
 ### Reservoir Computing
  - `nengolib.networks.Reservoir(...)` provides a flexible way of building structure into "reservoirs" using Nengo and the NEF. Arbitrary Nengo networks and ensembles can be fed a training signal, to solve for decoders over time. This allows one to obtain the benefits of reservoir computing, with faster simulations and improved performance for spiking networks.
@@ -45,7 +47,7 @@ Simply add the line **`import nengolib; nengolib.patch()`** to the top of your c
 
 ### Installation
 
-NengoLib is tested rigorously (100% coverage) against Python 2.7, 3.4, and 3.5, and [Nengo](https://github.com/nengo/nengo/releases) 2.1.0, 2.1.2, 2.2.0, 2.3.0, 2.4.0, and its development branch. The Nengo GUI is not officially supported.
+NengoLib is tested rigorously (100% coverage) against Python 2.7, 3.4, and 3.5, and [Nengo](https://github.com/nengo/nengo/releases) 2.1.0, 2.2.0, 2.3.0, 2.4.0, and its development branch. The Nengo GUI is not officially supported.
 
 To install the development version of NengoLib:
 ```
