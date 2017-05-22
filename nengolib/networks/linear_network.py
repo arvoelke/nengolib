@@ -102,7 +102,7 @@ class LinearNetwork(Network):
     def _make_core(self, solver, **ens_kwargs):
         self.x = nengo.networks.EnsembleArray(
             self.n_neurons_per_ensemble, self.size_state,
-            ens_dimensions=1, **ens_kwargs)
+            ens_dimensions=1, label="x", **ens_kwargs)
 
         if solver is not Default:
             # https://github.com/nengo/nengo/issues/1040
