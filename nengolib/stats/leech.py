@@ -5,16 +5,63 @@ from collections import Counter
 import numpy as np
 from nengo.utils.paths import cache_dir
 
-__all__ = ['leech_kissing']
+default_cache_file = os.path.join(cache_dir, "leech_kissing.npy")
+
+__all__ = ['leech_kissing', 'default_cache_file']
 
 
-def leech_kissing(cache_file=os.path.join(cache_dir, "leech_kissing.npy")):
+def leech_kissing(cache_file=None):
+    """Generates the 196,560 "kissing points" in 24 dimensions.
+
+    These are the points that are unit distance from the origin in the
+    24--dimensional Leech lattice. [#]_ Such points give the optimal
+    configuration for sphere-packing in 24 dimensions. [#]_
+
+    Parameters
+    ----------
+    cache_file : ``string``, optional
+        Name of file to cache/retrieve the results of this function call.
+        Defaults to Nengo's cache directory + ``"leech_kissing.npy"``.
+
+    Returns
+    -------
+    ``(196560, 24) np.array``
+        The kissing points in 24 dimensions.
+
+    See Also
+    --------
+    :class:`nengo.dists.CosineSimilarity`
+
+    References
+    ----------
+    .. [#] https://en.wikipedia.org/wiki/Leech_lattice
+    .. [#] https://en.wikipedia.org/wiki/Kissing_number_problem
+
+    Examples
+    --------
+    >>> from nengolib.stats import leech_kissing
+    >>> pts = leech_kissing()
+
+    We can visualize some of the lattice structure by a projection into two
+    dimensions:
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.scatter(pts[:, 0], pts[:, 1], s=40)
+    >>> plt.show()
+    """
+
+    # It was surprisingly hard to find any implementations of this online.
+    # I instead gathered the details from reading:
+    # - https://en.wikipedia.org/wiki/Golay_Code
+    # - http://www.markronan.com/mathematics/symmetry-corner/the-golay-code/
+    # - http://www.markronan.com/mathematics/symmetry-corner/leech-lattice/
+
+    if cache_file is None:  # pragma: no cover
+        cache_file = default_cache_file
+
     if os.path.exists(cache_file):
         return np.load(cache_file)
-
-    # https://en.wikipedia.org/wiki/Golay_Code
-    # http://www.markronan.com/mathematics/symmetry-corner/the-golay-code/
-    # http://www.markronan.com/mathematics/symmetry-corner/leech-lattice/
 
     A = [
         [1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1],

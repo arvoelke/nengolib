@@ -7,11 +7,14 @@ Nengolib inherits the
 which is "made available under a proprietary license that permits
 using, copying, sharing, and making derivative works
 from Nengo and its source code for any non-commercial purpose".
+This applies with exception to
+`Applied Brain Research, Inc. <http://appliedbrainresearch.com/>`_, who
+is granted a license to use nengolib for their own commercial purposes.
 
 In addition to the code
 `licensed by Nengo <https://pythonhosted.org/nengo/license.html#licensed-code>`_,
 nengolib imports the open source library `SciPy <http://scipy.org/>`_ under
-the `BSD license <https://www.scipy.org/scipylib/license.html>`_.
+the `BSD license <https://www.scipy.org/scipylib/license.html>`__.
 
 ------------
 

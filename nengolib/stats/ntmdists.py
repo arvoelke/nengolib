@@ -10,19 +10,145 @@ from nengolib.linalg.ortho import random_orthogonal
 from nengolib.stats._sobol_seq import i4_sobol_generate
 
 __all__ = [
-    'SphericalCoords', 'Sobol', 'ScatteredCube', 'ScatteredHypersphere',
-    'cube', 'sphere', 'ball']
+    'spherical_transform', 'SphericalCoords', 'Sobol', 'ScatteredCube',
+    'ScatteredHypersphere', 'cube', 'sphere', 'ball']
+
+
+def spherical_transform(samples):
+    """Map samples from the ``[0, 1]``--cube onto the hypersphere.
+
+    Applies the `inverse transform method` to the distribution
+    :class:`.SphericalCoords` to map uniform samples from the ``[0, 1]``--cube
+    onto the surface of the hypersphere. [#]_
+
+    Parameters
+    ----------
+    samples : ``(n, d) array_like``
+        ``n`` uniform samples from the d-dimensional ``[0, 1]``--cube.
+
+    Returns
+    -------
+    ``(n, d+1) np.array``
+        ``n`` uniform samples from the ``d``--dimensional sphere
+        (Euclidean dimension of ``d+1``).
+
+    See Also
+    --------
+    :class:`.Sobol`
+    :class:`.ScatteredHypersphere`
+    :class:`.SphericalCoords`
+
+    References
+    ----------
+    .. [#] K.-T. Fang and Y. Wang, Number-Theoretic Methods in Statistics.
+       Chapman & Hall, 1994.
+
+    Examples
+    --------
+    >>> from nengolib.stats import spherical_transform
+
+    In the simplest case, we can map a one-dimensional uniform distribution
+    onto a circle:
+
+    >>> line = np.linspace(0, 1, 20)
+    >>> mapped = spherical_transform(line)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(7, 3))
+    >>> plt.axis('equal')
+    >>> plt.subplot(121)
+    >>> plt.title("Original")
+    >>> plt.scatter(line, np.zeros_like(line), s=30)
+    >>> plt.subplot(122)
+    >>> plt.title("Mapped")
+    >>> plt.scatter(*mapped.T, s=25)
+    >>> plt.show()
+
+    This technique also generalizes to less trivial situations, for instance
+    mapping a square onto a sphere:
+
+    >>> square = np.asarray([[x, y] for x in line for y in line])
+    >>> mapped = spherical_transform(square)
+
+    >>> from mpl_toolkits.mplot3d import Axes3D
+    >>> plt.figure(figsize=(7, 3))
+    >>> plt.axis('equal')
+    >>> plt.subplot(121)
+    >>> plt.title("Original")
+    >>> plt.scatter(*square.T, s=15)
+    >>> ax = plt.subplot(122, projection='3d')
+    >>> ax.set_title("Mapped").set_y(1.)
+    >>> ax.patch.set_facecolor('white')
+    >>> ax.set_xlim3d(-1, 1)
+    >>> ax.set_ylim3d(-1, 1)
+    >>> ax.set_zlim3d(-1, 1)
+    >>> ax.scatter(*mapped.T, s=15)
+    >>> plt.show()
+    """
+
+    samples = np.asarray(samples)
+    samples = samples[:, None] if samples.ndim == 1 else samples
+    coords = np.empty_like(samples)
+    n, d = coords.shape
+
+    # inverse transform method (section 1.5.2)
+    for j in range(d):
+        coords[:, j] = SphericalCoords(d-j).ppf(samples[:, j])
+
+    # spherical coordinate transform
+    mapped = np.ones((n, d+1))
+    i = np.ones(d)
+    i[-1] = 2.0
+    s = np.sin(i[None, :] * np.pi * coords)
+    c = np.cos(i[None, :] * np.pi * coords)
+    mapped[:, 1:] = np.cumprod(s, axis=1)
+    mapped[:, :-1] *= c
+    return mapped
 
 
 class SphericalCoords(Distribution):
     """Spherical coordinates for inverse transform method.
 
-    This is used to map the hypercube onto the hypersphere and hyperball. [1]_
+    This is used to map the hypercube onto the hypersphere and hyperball. [#]_
+
+    Parameters
+    ----------
+    m : ``integer``
+        Positive index for spherical coordinate.
+
+    See Also
+    --------
+    :func:`.spherical_transform`
+    :class:`nengo.dists.SqrtBeta`
 
     References
     ----------
-    .. [1] K.-T. Fang and Y. Wang, Number-Theoretic Methods in Statistics.
+    .. [#] K.-T. Fang and Y. Wang, Number-Theoretic Methods in Statistics.
        Chapman & Hall, 1994.
+
+    Examples
+    --------
+    >>> from nengolib.stats import SphericalCoords
+    >>> coords = SphericalCoords(3)
+
+    >>> import matplotlib.pyplot as plt
+    >>> x = np.linspace(0, 1, 1000)
+    >>> plt.figure(figsize=(8, 8))
+    >>> plt.subplot(411)
+    >>> plt.title(str(coords))
+    >>> plt.ylabel("Samples")
+    >>> plt.hist(coords.sample(1000), bins=50, normed=True)
+    >>> plt.subplot(412)
+    >>> plt.ylabel("PDF")
+    >>> plt.plot(x, coords.pdf(x))
+    >>> plt.subplot(413)
+    >>> plt.ylabel("CDF")
+    >>> plt.plot(x, coords.cdf(x))
+    >>> plt.subplot(414)
+    >>> plt.ylabel("PPF")
+    >>> plt.plot(x, coords.ppf(x))
+    >>> plt.xlabel("x")
+    >>> plt.show()
     """
 
     def __init__(self, m):
@@ -32,20 +158,24 @@ class SphericalCoords(Distribution):
     def __repr__(self):
         return "%s(%r)" % (type(self).__name__, self.m)
 
-    def sample(self, num, d=None, rng=np.random):
-        shape = self._sample_shape(num, d)
+    def sample(self, n, d=None, rng=np.random):
+        """Samples ``n`` points in ``d`` dimensions."""
+        shape = self._sample_shape(n, d)
         y = rng.uniform(size=shape)
         return self.ppf(y)
 
     def pdf(self, x):
+        """Evaluates the PDF along the values ``x``."""
         return (np.pi * np.sin(np.pi * x) ** (self.m-1) /
                 beta(self.m / 2.0, 0.5))
 
     def cdf(self, x):
+        """Evaluates the CDF along the values ``x``."""
         y = 0.5 * betainc(self.m / 2.0, 0.5, np.sin(np.pi * x) ** 2)
         return np.where(x < 0.5, y, 1 - y)
 
     def ppf(self, y):
+        """Evaluates the inverse CDF along the values ``x``."""
         y_reflect = np.where(y < 0.5, y, 1 - y)
         z_sq = betaincinv(self.m / 2.0, 0.5, 2 * y_reflect)
         x = np.arcsin(np.sqrt(z_sq)) / np.pi
@@ -53,35 +183,106 @@ class SphericalCoords(Distribution):
 
 
 class Sobol(Distribution):
-    """Sobol sequence for quasi Monte Carlo sampling the unit hypercube.
+    """Sobol sequence for quasi Monte Carlo sampling the ``[0, 1]``--cube.
 
-    This is like ``np.random.uniform(0, 1, size=(num, d))`` but with each
-    ``d``-dimensional point more uniformly scattered.
+    This is similar to ``np.random.uniform(0, 1, size=(num, d))``, but with
+    the additional property that each ``d``--dimensional point is `uniformly
+    scattered`.
+
+    This is a wrapper around a library by the authors Corrado Chisari and
+    John Burkardt (see `License <license.html>`__). [#]_
+
+    See Also
+    --------
+    :class:`.ScatteredCube`
+    :func:`.spherical_transform`
+    :class:`.ScatteredHypersphere`
+
+    Notes
+    -----
+    This is **deterministic** for dimensions up to ``40``, although
+    it should in theory work up to ``1111``. For higher dimensions, this
+    approach will fall back to ``rng.uniform(size=(n, d))``.
+
+    References
+    ----------
+    .. [#] http://people.sc.fsu.edu/~jburkardt/py_src/sobol/sobol.html
+
+    Examples
+    --------
+    >>> from nengolib.stats import Sobol
+    >>> samples = Sobol().sample(200, 2)
+
+    >>> import matplotlib.pyplot as plt
+    >>> from mpl_toolkits.mplot3d import Axes3D
+    >>> plt.figure()
+    >>> plt.axis('equal')
+    >>> plt.scatter(*samples.T, s=20, alpha=0.8)
+    >>> plt.show()
     """
 
     def __repr__(self):
         return "%s()" % (type(self).__name__)
 
-    def sample(self, num, d=1, rng=np.random):
+    def sample(self, n, d=1, rng=np.random):
+        """Samples ``n`` points in ``d`` dimensions."""
         if d == 1:
             # Tile the points optimally. TODO: refactor
-            return np.linspace(1./num, 1, num)[:, None]
+            return np.linspace(1./n, 1, n)[:, None]
         if d is None or not is_integer(d) or d < 1:
             # TODO: this should be raised when the ensemble is created
             raise ValueError("d (%d) must be positive integer" % d)
         if d > 40:
             warnings.warn("i4_sobol_generate does not support d > 40; "
-                          "falling back to monte-carlo method", UserWarning)
-            return np.random.uniform(size=(num, d))
-        return i4_sobol_generate(d, num, skip=0)
+                          "falling back to Monte Carlo method", UserWarning)
+            return rng.uniform(size=(n, d))
+        return i4_sobol_generate(d, n, skip=0)
 
 
 class ScatteredCube(Distribution):
     """Number-theoretic distribution over the hypercube.
 
-    Transforms quasi Monte carlo samples from the unit hypercube
+    Transforms quasi Monte Carlo samples from the unit hypercube
     to range between ``low`` and ``high``. These bounds may optionally be
-    array-like with shape matching the sample dimensionality.
+    ``array_like`` with shape matching the sample dimensionality.
+
+    Parameters
+    ----------
+    low : ``float`` or ``array_like``, optional
+        Lower-bound(s) for each sample. Defaults to ``-1``.
+    high : ``float`` or ``array_like``, optional
+        Upper-bound(s) for each sample. Defaults to ``+1``.
+
+    Other Parameters
+    ----------------
+    base : :class:`nengo.dists.Distribution`, optional
+        The base distribution from which to draw `quasi Monte Carlo` samples.
+        Defaults to :class:`.Sobol` and should not be changed unless
+        you have some alternative `number-theoretic sequence` over ``[0, 1]``.
+
+    See Also
+    --------
+    :attr:`.cube`
+    :class:`.Sobol`
+    :class:`.ScatteredHypersphere`
+
+    Notes
+    -----
+    The :class:`.Sobol` distribution is deterministic.
+    Nondeterminism comes from a random ``d``--dimensional shift (with
+    wrap-around).
+
+    Examples
+    --------
+    >>> from nengolib.stats import ScatteredCube
+    >>> samples = ScatteredCube([-1, -2], [3, 4]).sample(200, 2)
+
+    >>> import matplotlib.pyplot as plt
+    >>> from mpl_toolkits.mplot3d import Axes3D
+    >>> plt.figure()
+    >>> plt.axis('equal')
+    >>> plt.scatter(*samples.T, s=20, alpha=0.8)
+    >>> plt.show()
     """
 
     def __init__(self, low=-1, high=+1, base=Sobol()):
@@ -95,8 +296,9 @@ class ScatteredCube(Distribution):
         return "%s(low=%r, high=%r, base=%r)" % (
             type(self).__name__, self.low, self.high, self.base)
 
-    def sample(self, num, d=1, rng=np.random):
-        u = self.base.sample(num, d)
+    def sample(self, n, d=1, rng=np.random):
+        """Samples ``n`` points in ``d`` dimensions."""
+        u = self.base.sample(n, d)
 
         # shift everything by the same random constant (with wrap-around)
         u = (u + rng.uniform(size=d)[None, :]) % 1.0
@@ -105,15 +307,80 @@ class ScatteredCube(Distribution):
 
 
 class ScatteredHypersphere(UniformHypersphere):
-    """Number-theoretic distribution over the hypersphere and hyperball.
+    """Number--theoretic distribution over the hypersphere and hyperball.
 
-    Applies the inverse transform method [1]_ to some number-theoretic
-    sequence (quasi Monte carlo samples from the unit hypercube).
+    Applies the :func:`.spherical_transform` to the number-theoretic
+    sequence :class:`.Sobol` to obtain uniformly scattered samples.
+
+    This distribution has the nice mathematical property that the
+    `discrepancy` between the `empirical distribution` and :math:`n` samples
+    is :math:`\\widetilde{\\mathcal{O}}\\left(\\frac{1}{n}\\right)` as opposed
+    to :math:`\\mathcal{O}\\left(\\frac{1}{\\sqrt{n}}\\right)` for the `Monte
+    Carlo` method. [#]_ This means that the number of samples are effectively
+    squared, making this useful as a means for sampling ``eval_points`` and
+    ``encoders`` in Nengo.
+
+    Parameters
+    ----------
+    surface : ``boolean``
+        Set to ``True`` to restrict the points to the surface of the ball
+        (i.e., the sphere, with one lower dimension). Set to ``False`` to
+        sample from the ball. See also :attr:`.sphere` and :attr:`.ball` for
+        pre-instantiated objects with these two options respectively.
+
+    Other Parameters
+    ----------------
+    base : :class:`nengo.dists.Distribution`, optional
+        The base distribution from which to draw `quasi Monte Carlo` samples.
+        Defaults to :class:`.Sobol` and should not be changed unless
+        you have some alternative `number-theoretic sequence` over ``[0, 1]``.
+
+    See Also
+    --------
+    :attr:`.sphere`
+    :attr:`.ball`
+    :class:`nengo.dists.UniformHypersphere`
+    :class:`.Sobol`
+    :func:`.spherical_transform`
+    :class:`.ScatteredCube`
+
+    Notes
+    -----
+    The :class:`.Sobol` distribution is deterministic.
+    Nondeterminism comes from a random ``d``--dimensional rotation.
+
+    This class (currently) only supports dimensions up to ``40``, although
+    it should in theory work up to ``1111``. For higher dimensions, this
+    approach will fall back to :class:`nengo.dists.UniformHypersphere`.
+
+    The nengolib logo was created using this class.
 
     References
     ----------
-    .. [1] K.-T. Fang and Y. Wang, Number-Theoretic Methods in Statistics.
+    .. [#] K.-T. Fang and Y. Wang, Number-Theoretic Methods in Statistics.
        Chapman & Hall, 1994.
+
+    Examples
+    --------
+    >>> from nengolib.stats import ball, sphere
+    >>> b = ball.sample(1000, 2)
+    >>> s = sphere.sample(1000, 3)
+
+    >>> import matplotlib.pyplot as plt
+    >>> from mpl_toolkits.mplot3d import Axes3D
+    >>> plt.figure(figsize=(7, 3))
+    >>> plt.axis('equal')
+    >>> plt.subplot(121)
+    >>> plt.title("Ball")
+    >>> plt.scatter(*b.T, s=10, alpha=0.5)
+    >>> ax = plt.subplot(122, projection='3d')
+    >>> ax.set_title("Sphere").set_y(1.)
+    >>> ax.patch.set_facecolor('white')
+    >>> ax.set_xlim3d(-1, 1)
+    >>> ax.set_ylim3d(-1, 1)
+    >>> ax.set_zlim3d(-1, 1)
+    >>> ax.scatter(*s.T, s=10, alpha=0.5)
+    >>> plt.show()
     """
 
     def __init__(self, surface, base=Sobol()):
@@ -124,35 +391,27 @@ class ScatteredHypersphere(UniformHypersphere):
         return "%s(surface=%r, base=%r)" % (
             type(self).__name__, self.surface, self.base)
 
-    def sample(self, num, d=1, rng=np.random):
+    def sample(self, n, d=1, rng=np.random):
+        """Samples ``n`` points in ``d`` dimensions."""
         if d == 1:
-            return super(ScatteredHypersphere, self).sample(num, d, rng)
+            return super(ScatteredHypersphere, self).sample(n, d, rng)
 
         if self.surface:
-            cube = self.base.sample(num, d-1)
+            samples = self.base.sample(n, d-1)
             radius = 1.0
         else:
-            dcube = self.base.sample(num, d)
-            cube, radius = dcube[:, :-1], dcube[:, -1:] ** (1.0 / d)
+            samples = self.base.sample(n, d)
+            samples, radius = samples[:, :-1], samples[:, -1:] ** (1.0 / d)
 
-        # inverse transform method (section 1.5.2)
-        for j in range(d-1):
-            cube[:, j] = SphericalCoords(d-1-j).ppf(cube[:, j])
+        mapped = spherical_transform(samples)
 
-        # spherical coordinate transform
-        mapped = np.ones((num, d))
-        i = np.ones(d-1)
-        i[-1] = 2.0
-        s = np.sin(i[None, :] * np.pi * cube)
-        c = np.cos(i[None, :] * np.pi * cube)
-        mapped[:, 1:] = np.cumprod(s, axis=1)
-        mapped[:, :-1] *= c
-
-        # radius adjustment for ball versus sphere, and rotate
+        # radius adjustment for ball versus sphere, and a random rotation
         rotation = random_orthogonal(d, rng=rng)
         return np.dot(mapped * radius, rotation)
 
 
 cube = ScatteredCube()
+
 sphere = ScatteredHypersphere(surface=True)
+
 ball = ScatteredHypersphere(surface=False)

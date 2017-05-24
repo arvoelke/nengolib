@@ -9,6 +9,7 @@ Additional extensions and tools for modelling dynamical systems in
    :maxdepth: 1
 
    examples
+   reference
    success
    license
 
@@ -32,3 +33,6 @@ This requires
 `scipy>=0.17.0 <https://github.com/scipy/scipy/releases/tag/v0.17.0>`_.
 If you are having difficulty installing SciPy or NumPy, we recommend the
 `Anaconda <https://www.continuum.io/downloads>`_ installer.
+
+:ref:`genindex`
+===============
