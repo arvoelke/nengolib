@@ -67,7 +67,8 @@ def spherical_transform(samples):
     This technique also generalizes to less trivial situations, for instance
     mapping a square onto a sphere:
 
-    >>> square = np.asarray([[x, y] for x in line for y in line])
+    >>> square = np.asarray([[x, y] for x in np.linspace(0, 1, 50)
+    >>>                             for y in np.linspace(0, 1, 10)])
     >>> mapped = spherical_transform(square)
 
     >>> from mpl_toolkits.mplot3d import Axes3D

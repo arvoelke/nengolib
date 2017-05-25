@@ -11,7 +11,6 @@ from os.path import relpath, dirname
 
 import matplotlib as mpl
 import seaborn as sns  # noqa: F401
-from cycler import cycler
 sns.set_style('dark')
 
 # -- General configuration ------------------------------------------------
