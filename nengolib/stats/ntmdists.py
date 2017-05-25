@@ -216,7 +216,6 @@ class Sobol(Distribution):
 
     >>> import matplotlib.pyplot as plt
     >>> from mpl_toolkits.mplot3d import Axes3D
-    >>> plt.figure()
     >>> plt.axis('equal')
     >>> plt.scatter(*samples.T, s=20, alpha=0.8)
     >>> plt.show()
@@ -280,7 +279,6 @@ class ScatteredCube(Distribution):
 
     >>> import matplotlib.pyplot as plt
     >>> from mpl_toolkits.mplot3d import Axes3D
-    >>> plt.figure()
     >>> plt.axis('equal')
     >>> plt.scatter(*samples.T, s=20, alpha=0.8)
     >>> plt.show()
