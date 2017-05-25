@@ -7,7 +7,7 @@ from scipy.linalg import inv
 from nengolib.signal.lyapunov import balanced_transformation
 from nengolib.signal.system import sys2zpk, LinearSystem
 
-__all__ = ['pole_zero_cancel', 'modred', 'balred']
+__all__ = ['pole_zero_cancel', 'modred', 'balance', 'balred']
 
 # TODO: reference linear_model_reduction.ipynb in auto-generated docs
 
@@ -82,6 +82,13 @@ def modred(sys, keep_states, method='del'):
     return LinearSystem((RA, RB, RC, RD), analog=sys.analog)
 
 
+def balance(sys):
+    """Transforms a LinearSystem to its balanced realization."""
+    sys = LinearSystem(sys)
+    T, Tinv, _ = balanced_transformation(sys)
+    return sys.transform(T, Tinv=Tinv)
+
+
 def balred(sys, order, method='del'):
     """Reduces a LinearSystem to given order using balreal and modred."""
     sys = LinearSystem(sys)
@@ -90,7 +97,6 @@ def balred(sys, order, method='del'):
     if order >= len(sys):
         warnings.warn("Model is already of given order")
         return sys
-    T, Tinv, _ = balanced_transformation(sys)
-    sys = sys.transform(T, Tinv=Tinv)
+    sys = balance(sys)
     keep_states = np.arange(order)  # keep largest eigenvalues
     return modred(sys, keep_states, method)
