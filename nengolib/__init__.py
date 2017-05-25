@@ -12,10 +12,10 @@ from .connection import Connection
 from .monkeypatch import patch, unpatch
 from .network import Network
 from .neurons import PerfectLIF
-from .processes import Callable
 
 from . import compat
 from . import networks
+from . import processes  # this is a file, not a module
 from . import signal
 from . import stats
 from . import synapses
