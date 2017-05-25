@@ -15,7 +15,6 @@ from .neurons import PerfectLIF  # noqa: F401
 from .processes import Callable  # noqa: F401
 
 from . import compat  # noqa: F401
-from . import linalg  # noqa: F401
 from . import networks  # noqa: F401
 from . import signal  # noqa: F401
 from . import stats  # noqa: F401
