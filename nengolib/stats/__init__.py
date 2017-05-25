@@ -33,6 +33,6 @@ Sphere-packing
    leech_kissing
 """
 
-from .leech import *  # noqa: F403
-from .ntmdists import *  # noqa: F403
+from .leech import *
+from .ntmdists import *
 from .ortho import *
