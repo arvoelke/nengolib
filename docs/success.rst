@@ -19,7 +19,7 @@ self-published projects. We highlight these applications below:
     [`PDF <http://compneuro.uwaterloo.ca/files/publications/voelker.2017a.pdf>`__]
     [`Poster <http://compneuro.uwaterloo.ca/files/publications/voelker.2017a.poster.pdf>`__]
     Used nengolib.synapses.HeteroSynapse, :attr:`.s`, :attr:`.z`,
-    :attr:`.ball`, and :attr:`.sphere`, and the theory behind
+    :attr:`.ball`, :attr:`.sphere`, and the theory behind
     nengolib.synapses.ss2sim to improve the accuracy of nonlinear dynamics on
     a mixed-analog-digital neuromorphic architecture.
 
@@ -31,6 +31,16 @@ self-published projects. We highlight these applications below:
     Used nengolib.networks.RollingWindow, nengolib.synapses.PureDelay,
     and nengolib.synapses.ss2sim to model time cell activity in rodents and
     improve the accuracy of dynamical systems in spiking neural networks.
+
+* James Knight, Aaron R. Voelker, Andrew Mundy, Chris Eliasmith, and Steve
+  Furber. "Efficient spinnaker simulation of a heteroassociative memory using
+  the Neural Engineering Framework". In The 2016 International Joint
+  Conference on Neural Networks (IJCNN). Vancouver, British Columbia, 07 2016.
+  IEEE.
+
+    [`Paper <https://www.researchgate.net/publication/305828018_Efficient_SpiNNaker_simulation_of_a_heteroassociative_memory_using_the_Neural_Engineering_Framework>`__]
+    Used :func:`.leech_kissing` and :attr:`.sphere` to learn an efficient
+    heteroassociative memory on SpiNNaker.
 
 * Ken E. Friedl, Aaron R. Voelker, Angelika Peer, and Chris Eliasmith.
   "Human-inspired neurorobotic system for classifying surface textures by
