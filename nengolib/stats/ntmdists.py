@@ -348,7 +348,8 @@ class ScatteredHypersphere(UniformHypersphere):
     Notes
     -----
     The :class:`.Sobol` distribution is deterministic.
-    Nondeterminism comes from a random ``d``--dimensional rotation.
+    Nondeterminism comes from a random ``d``--dimensional rotation
+    (see :func:`.random_orthogonal`).
 
     This class (currently) only supports dimensions up to ``40``, although
     it should in theory work up to ``1111``. For higher dimensions, this

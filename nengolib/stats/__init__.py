@@ -11,6 +11,7 @@ Transformations
    :toctree:
 
    spherical_transform
+   random_orthogonal
 
 Distributions
 -------------
