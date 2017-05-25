@@ -1,3 +1,18 @@
+"""
+Signal Processing (:mod:`nengolib.signal`)
+==========================================
+
+.. currentmodule:: nengolib.signal
+
+Linear Systems
+--------------
+
+.. autosummary::
+   :toctree:
+
+   LinearSystem
+"""
+
 from .discrete import *
 from .dists import *
 from .learning import *

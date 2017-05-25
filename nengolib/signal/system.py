@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import warnings
 
 import numpy as np
@@ -31,8 +32,8 @@ def _sys2form(sys):
         return _SS
     else:
         raise ValueError(
-            "sys must be an instance of LinearSystem, a scalar, or a tuple of "
-            "2 (tf), 3 (zpk), or 4 (ss) arrays.")
+            "sys must be an instance of LinearSystem, LinearFilter, a scalar, "
+            "or a tuple of 2 (tf), 3 (zpk), or 4 (ss) arrays.")
 
 
 def _tf(num, den):
@@ -158,7 +159,7 @@ def ss_equal(sys1, sys2, rtol=1e-05, atol=1e-08):
 
 
 class _CanonicalStep(LinearFilter.Step):
-    """Stepper for LinearSystem in canonical SISO form."""
+    """Stepper for ``LinearSystem`` in canonical SISO form."""
 
     def __init__(self, sys, output, y0=None, dtype=np.float64):
         A, B, C, D = canonical(sys).ss
@@ -185,6 +186,7 @@ class NengoLinearFilterMixin(LinearFilter):
 
     def make_step(self, shape_in, shape_out, dt, rng, y0=None,
                   dtype=np.float64, method='zoh'):
+        """Produces the function for filtering across one time-step."""
         assert shape_in == shape_out
         output = np.zeros(shape_out)
         if y0 is not None:
@@ -238,7 +240,133 @@ class LinearSystemType(type):
 
 
 class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
-    """Single-input single-output linear system with set of operations."""
+    """Generic linear system representation.
+
+    This extends :class:`nengo.LinearFilter` to unify a variety of
+    representations (`transfer function`, `state-space`, `zero-pole gain`)
+    in continuous (i.e., analog) and discrete (i.e., digital) time-domains.
+    Instances provide access to a number of common attributes and methods
+    that are core to a variety of routines and networks throughout nengolib.
+
+    This class can be used anywhere a :class:`nengo.synapses.Synapse` (or
+    :class:`nengo.LinearFilter`) object is expected within Nengo.
+    We advocate for using this class to represent and manipulate linear
+    systems whenever possible (e.g., to create higher-order synapses, and to
+    specify dynamical systems for modelling within the NEF).
+
+    The objects :attr:`.s` and :attr:`.z` are instances of
+    :class:`.LinearSystem` that form the basic building blocks for analog or
+    digital systems respectively (see examples). These objects respect the
+    usual interpretation of differentiation and time-shifting in the Laplace--
+    and ``z``--domains respectively.
+
+    Parameters
+    ----------
+    sys : :data:`linear_system_like`
+       Linear system representation.
+    analog : ``boolean``, optional
+       Continuous or discrete time-domain. Defaults to ``sys.analog`` if
+       ``isinstance(sys,`` :class:`nengo.LinearFilter`), otherwise ``True``.
+       If specified, it must not contradict ``sys.analog``.
+
+    See Also
+    --------
+    :attr:`.s`
+    :attr:`.z`
+    :class:`.LinearNetwork`
+    :class:`.synapses`
+
+    Notes
+    -----
+    Instances of this class are intended to be **immutable**.
+
+    Currently, support is focused primarily on SISO systems.
+    There is some limited support for SIMO, MISO, and MIMO systems within
+    state-space representations, but the functionality of such systems is
+    currently experimental / limited as they must remain in state-space form.
+
+    State-space representations must be causal (proper) and finite.
+    Transfer functions must also be finite (Padé approximants may help here)
+    but may be acausal (not necessarily proper) and must remain SISO.
+
+    Conversions between representations are cached within the object itself.
+    Redundantly casting a :class:`.LinearSystem` to itself returns the same
+    underlying object, in order to persist this cache whenever possible.
+    This is done `not` as a performance measure, but to guarad against
+    numerical issues that would result from accidentally converting back and
+    forth between the same formats.
+
+    Examples
+    --------
+    A simple continuous-time integrator:
+
+    >>> from nengolib.signal import s
+    >>> integrator = 1/s
+    >>> assert integrator == ~s == s**(-1)
+    >>> t = integrator.trange(2.)
+    >>> step = np.ones_like(t)
+    >>> cosine = np.cos(t)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.subplot(211)
+    >>> plt.title("Integrating a Step Function")
+    >>> plt.plot(t, step, label="Step Input")
+    >>> plt.plot(t, integrator.filt(step), label="Ramping Output")
+    >>> plt.legend(loc='upper left')
+    >>> plt.subplot(212)
+    >>> plt.title("Integrating a Cosine Wave")
+    >>> plt.plot(t, cosine, label="Cosine Input")
+    >>> plt.plot(t, integrator.filt(cosine), label="Sine Output")
+    >>> plt.xlabel("Time (s)")
+    >>> plt.legend(loc='upper left')
+    >>> plt.tight_layout()
+    >>> plt.show()
+
+    Building up higher-order continuous systems:
+
+    >>> sys1 = 1000/(s**2 + 2*s + 1000)   # Bandpass filtering
+    >>> sys2 = 500/(s**2 + s + 500)       # Bandpass filtering
+    >>> sys3 = .5*sys1 + .5*sys2          # Mixture of two bandpass
+    >>> assert len(sys1) == 2  # sys1.order_den
+    >>> assert len(sys2) == 2  # sys2.order_den
+    >>> assert len(sys3) == 4  # sys3.order_den
+
+    >>> plt.subplot(311)
+    >>> plt.title("sys1.impulse")
+    >>> plt.plot(t, sys1.impulse(len(t)), label="sys1")
+    >>> plt.subplot(312)
+    >>> plt.title("sys2.impulse")
+    >>> plt.plot(t, sys2.impulse(len(t)), label="sys2")
+    >>> plt.subplot(313)
+    >>> plt.title("sys3.impulse")
+    >>> plt.plot(t, sys3.impulse(len(t)), label="sys3")
+    >>> plt.xlabel("Time (s)")
+    >>> plt.tight_layout()
+    >>> plt.show()
+
+    Plotting a linear transformation of the state-space from sys3.impulse:
+
+    >>> from nengolib.signal import balance
+    >>> plt.title("balance(sys3).X.impulse")
+    >>> plt.plot(t, balance(sys3).X.impulse(len(t)))
+    >>> plt.xlabel("Time (s)")
+    >>> plt.show()
+
+    A discrete box filter:
+
+    >>> from nengolib.signal import z
+    >>> box = 1 + 1/z + 1/z**2
+    >>> t = np.arange(5)
+
+    >>> plt.title("box.impulse")
+    >>> plt.scatter(t, box.impulse(len(t)))
+    >>> plt.plot([0, 3], [1, 1], linestyle='--', alpha=0.5, c='black')
+    >>> plt.plot([3, t[-1]], [0, 0], linestyle='--', alpha=0.5, c='black')
+    >>> plt.vlines([0, 3], 0, 1, linestyle='--', alpha=0.5)
+    >>> plt.xticks(t)
+    >>> plt.xlabel("Step")
+    >>> plt.show()
+    """
 
     # Reuse the underlying system whenever it is an instance of the same
     # class. This allows us to avoid recomputing the tf/ss for the same
@@ -253,7 +381,7 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
     _ss = None
     _zpk = None
 
-    def __init__(self, sys, analog):
+    def __init__(self, sys, analog=None):
         assert not isinstance(sys, LinearSystem)  # guaranteed by metaclass
         assert analog is not None  # guaranteed by metaclass
         self._sys = sys
@@ -262,16 +390,19 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
 
     @property
     def analog(self):
+        """Boolean indicating whether system is analog or digital."""
         return self._analog
 
     @property
     def tf(self):
+        """Transfer function representation ``(num, den)``."""
         if self._tf is None:
             self._tf = sys2tf(self._sys)
         return self._tf
 
     @property
     def ss(self):
+        """State-space representation ``(A, B, C, D)``."""
         if self._ss is None:
             self._ss = sys2ss(self._sys)
             # TODO: throw nicer error if system is acausal
@@ -279,96 +410,118 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
 
     @property
     def zpk(self):
+        """Zero-pole gain representation ``(zeros, poles, gain)``."""
         if self._zpk is None:
             self._zpk = sys2zpk(self._sys)
         return self._zpk
 
     @property
     def is_tf(self):
+        """Boolean indicating whether transfer function has been computed."""
         return _sys2form(self._sys) == _TF or self._tf is not None
 
     @property
     def is_ss(self):
+        """Boolean indicating whether state-space has been computed."""
         return _sys2form(self._sys) == _SS or self._ss is not None
 
     @property
     def is_zpk(self):
+        """Boolean indicating whether zero-pole gain has been computed."""
         return _sys2form(self._sys) == _ZPK or self._zpk is not None
 
     @property
     def size_in(self):
+        """Input dimensionality (this equals 1 for SISO or SIMO)."""
         if self.is_ss:
             return self.B.shape[1]
         return 1
 
     @property
     def size_out(self):
+        """Output dimensionality (this equals 1 for SISO or MISO)."""
         if self.is_ss:
             return self.C.shape[0]
         return 1
 
     @property
     def shape(self):
+        """Short-hand for ``(.size_in, .size_out)``."""
         return (self.size_out, self.size_in)
 
     @property
     def is_SISO(self):
+        """Boolean indicating whether system is SISO."""
         return self.shape == (1, 1)
 
     @property
     def A(self):
+        """A matrix from state-space representation."""
         return self.ss[0]
 
     @property
     def B(self):
+        """B matrix from state-space representation."""
         return self.ss[1]
 
     @property
     def C(self):
+        """C matrix from state-space representation."""
         return self.ss[2]
 
     @property
     def D(self):
+        """D matrix from state-space representation."""
         return self.ss[3]
 
     @property
     def zeros(self):
+        """Zeros from zero-pole gain representation."""
         return self.zpk[0]
 
     @property
     def poles(self):
+        """Poles from zero-pole gain representation."""
         return self.zpk[1]
 
     @property
     def gain(self):
+        """Gain from zero-pole gain representation."""
         return self.zpk[2]
 
     @property
     def num(self):
+        """Numerator of transfer function."""
         return self.tf[0]
 
     @property
     def den(self):
+        """Denominator of transfer function."""
         return self.tf[1]
 
     @property
     def order_num(self):
+        """Order of transfer function's numerator."""
         return len(self.num.coeffs) - 1
 
     @property
     def order_den(self):
+        """Order of transfer function's denominator (i.e., state dimension).
+
+        Equivalent to ``__len__`` method.
+        """
         if self.is_ss:
             return len(self.A)  # avoids conversion to transfer function
         return len(self.den.coeffs) - 1
 
     @property
     def causal(self):
-        """Returns True if and only if the system is causal / proper."""
+        """Boolean indicating if the system is causal / proper."""
         return self.order_num <= self.order_den
 
     @property
     def has_passthrough(self):
-        """Returns True if and only if the system has a passthrough."""
+        """Boolean indicating if the system has a passthrough."""
         # Note there may be numerical issues for values close to 0
         # since scipy routines occasionally "normalize "those to 0
         if self.is_ss:
@@ -377,16 +530,19 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
 
     @property
     def strictly_proper(self):
-        """Returns True if and only if the system is *strictly* proper."""
+        """Boolean indicating if the system is strictly proper."""
         return self.causal and not self.has_passthrough
 
     @property
     def dcgain(self):
+        """Steady-state response to unit step input."""
         # http://www.mathworks.com/help/control/ref/dcgain.html
+        # TODO: only works for SISO
         return self(0 if self.analog else 1)
 
     @property
     def is_stable(self):
+        """Boolean indicating if system is exponentially stable."""
         w = self.poles  # eig(A)
         if not len(w):
             assert len(self) == 0  # only a passthrough
@@ -396,10 +552,16 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
         return np.max(w.real) < 0  # within left half-plane
 
     def __call__(self, s):
+        """Evaluate the transfer function at the given complex value(s)."""
         return self.num(s) / self.den(s)
 
     def __len__(self):
+        """Dimensionality of state vector."""
         return self.order_den
+
+    def __invert__(self):
+        """Reciprocal of transfer function."""
+        return self.__pow__(-1)
 
     def __repr__(self):
         return "%s(sys=%r, analog=%r)" % (
@@ -434,9 +596,6 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
         else:
             assert other == 0
             return LinearSystem(1., self.analog)
-
-    def __invert__(self):
-        return self.__pow__(-1)
 
     def __add__(self, other):
         self._check_other(other)
@@ -494,18 +653,18 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
 
     @property
     def controllable(self):
-        """Returns the LinearSystem in controllable canonical form."""
+        """Returns a new system in controllable canonical form."""
         return canonical(self, controllable=True)
 
     @property
     def observable(self):
-        """Returns the LinearSystem in observable canonical form."""
+        """Returns a new system in observable canonical form."""
         return canonical(self, controllable=False)  # observable
 
     def transform(self, T, Tinv=None):
-        """Changes basis of state-space matrices to T.
+        """Changes basis of state-space matrices to ``T``.
 
-        Then dot(T, x_new(t)) = x_old(t) after this transformation.
+        Then ``dot(T, x_new(t)) = x_old(t)`` after this transformation.
         """
         A, B, C, D = self.ss
         if Tinv is None:
@@ -517,7 +676,7 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
         return LinearSystem((TA, TB, TC, TD), analog=self.analog)
 
     def __iter__(self):
-        """Yields the LinearSystem corresponding to each state."""
+        """Yields a new system corresponding to each state."""
         I = np.eye(len(self))
         for i in range(len(self)):
             sys = (self.A, self.B, I[i:i+1, :], np.zeros((1, self.size_in)))
@@ -589,4 +748,5 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
 
 
 s = LinearSystem(([1, 0], [1]), analog=True)  # differential operator
+
 z = LinearSystem(([1, 0], [1]), analog=False)  # shift operator

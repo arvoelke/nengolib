@@ -447,6 +447,9 @@ def test_linear_system():
     assert np.allclose(sys.zeros, [0])
     assert np.allclose(sys.poles, [-1/tau])
     assert np.allclose(sys.gain, 1/tau)
+    assert np.allclose(sys.zpk[0], np.array([]))
+    assert np.allclose(sys.zpk[1], np.array([-1/tau]))
+    assert np.allclose(sys.zpk[2], 1/tau)
 
     assert sys.order_num == 0
     assert sys.order_den == 1
