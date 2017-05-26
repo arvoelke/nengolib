@@ -23,3 +23,7 @@ table.docutils td {
     /* min-width: 300px; */
     padding: 5px;
 }
+
+div.figure {
+    margin-right: 250px;
+}

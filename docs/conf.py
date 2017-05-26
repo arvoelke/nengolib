@@ -11,7 +11,7 @@ from os.path import relpath, dirname
 
 import matplotlib as mpl
 import seaborn as sns  # noqa: F401
-sns.set_style('dark')
+sns.set_style('white')
 
 # -- General configuration ------------------------------------------------
 
@@ -54,6 +54,16 @@ plot_include_source = True
 plot_html_show_formats = False
 plot_formats = [('png', 300)]
 plot_rcparams = mpl.rcParams.copy()  # use the seaborn rcParams for examples
+plot_pre_code = """
+import numpy as np
+import matplotlib.pyplot as plt
+old_show = plt.show
+def new_show(tight=True, *args, **kwargs):
+    if tight:
+        plt.tight_layout()
+    return old_show(*args, **kwargs)
+plt.show = new_show
+"""  # HACK: default to using tight_layout
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

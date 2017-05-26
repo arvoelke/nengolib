@@ -250,9 +250,11 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
 
     This class can be used anywhere a :class:`nengo.synapses.Synapse` (or
     :class:`nengo.LinearFilter`) object is expected within Nengo.
-    We advocate for using this class to represent and manipulate linear
-    systems whenever possible (e.g., to create higher-order synapses, and to
-    specify dynamical systems for modelling within the NEF).
+    If the system is analog, then it will be automatically discretized using
+    the simulation time-step (see :func:`.cont2discrete`). We advocate for
+    using this class to represent and manipulate linear systems whenever
+    possible (e.g., to create synapse objects, and to specify dynamical
+    systems, whenever modelling within the NEF).
 
     The objects :attr:`.s` and :attr:`.z` are instances of
     :class:`.LinearSystem` that form the basic building blocks for analog or
@@ -292,7 +294,7 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
     Conversions between representations are cached within the object itself.
     Redundantly casting a :class:`.LinearSystem` to itself returns the same
     underlying object, in order to persist this cache whenever possible.
-    This is done `not` as a performance measure, but to guarad against
+    This is done `not` as a performance measure, but to guard against
     numerical issues that would result from accidentally converting back and
     forth between the same formats.
 
@@ -312,14 +314,13 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
     >>> plt.title("Integrating a Step Function")
     >>> plt.plot(t, step, label="Step Input")
     >>> plt.plot(t, integrator.filt(step), label="Ramping Output")
-    >>> plt.legend(loc='upper left')
+    >>> plt.legend(loc='lower center')
     >>> plt.subplot(212)
     >>> plt.title("Integrating a Cosine Wave")
     >>> plt.plot(t, cosine, label="Cosine Input")
     >>> plt.plot(t, integrator.filt(cosine), label="Sine Output")
     >>> plt.xlabel("Time (s)")
-    >>> plt.legend(loc='upper left')
-    >>> plt.tight_layout()
+    >>> plt.legend(loc='lower center')
     >>> plt.show()
 
     Building up higher-order continuous systems:
@@ -341,7 +342,6 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
     >>> plt.title("sys3.impulse")
     >>> plt.plot(t, sys3.impulse(len(t)), label="sys3")
     >>> plt.xlabel("Time (s)")
-    >>> plt.tight_layout()
     >>> plt.show()
 
     Plotting a linear transformation of the state-space from sys3.impulse:
@@ -356,13 +356,12 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
 
     >>> from nengolib.signal import z
     >>> box = 1 + 1/z + 1/z**2
-    >>> t = np.arange(5)
+    >>> t = np.arange(6)
+    >>> y = box.impulse(len(t))
 
     >>> plt.title("box.impulse")
-    >>> plt.scatter(t, box.impulse(len(t)))
-    >>> plt.plot([0, 3], [1, 1], linestyle='--', alpha=0.5, c='black')
-    >>> plt.plot([3, t[-1]], [0, 0], linestyle='--', alpha=0.5, c='black')
-    >>> plt.vlines([0, 3], 0, 1, linestyle='--', alpha=0.5)
+    >>> plt.step(t, y, where='post')
+    >>> plt.fill_between(t, np.zeros_like(y), y, step='post', alpha=.3)
     >>> plt.xticks(t)
     >>> plt.xlabel("Step")
     >>> plt.show()

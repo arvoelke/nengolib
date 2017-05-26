@@ -11,6 +11,8 @@ Linear Systems
    :toctree:
 
    LinearSystem
+   cont2discrete
+   discrete2cont
 """
 
 from .discrete import *
