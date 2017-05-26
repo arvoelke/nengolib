@@ -54,8 +54,7 @@ def spherical_transform(samples):
     >>> mapped = spherical_transform(line)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(7, 3))
-    >>> plt.axis('equal')
+    >>> plt.figure(figsize=(6, 3))
     >>> plt.subplot(121)
     >>> plt.title("Original")
     >>> plt.scatter(line, np.zeros_like(line), s=30)
@@ -72,8 +71,7 @@ def spherical_transform(samples):
     >>> mapped = spherical_transform(square)
 
     >>> from mpl_toolkits.mplot3d import Axes3D
-    >>> plt.figure(figsize=(7, 3))
-    >>> plt.axis('equal')
+    >>> plt.figure(figsize=(6, 3))
     >>> plt.subplot(121)
     >>> plt.title("Original")
     >>> plt.scatter(*square.T, s=15)
@@ -168,19 +166,19 @@ class SphericalCoords(Distribution):
     def pdf(self, x):
         """Evaluates the PDF along the values ``x``."""
         return (np.pi * np.sin(np.pi * x) ** (self.m-1) /
-                beta(self.m / 2.0, 0.5))
+                beta(self.m / 2., .5))
 
     def cdf(self, x):
         """Evaluates the CDF along the values ``x``."""
-        y = 0.5 * betainc(self.m / 2.0, 0.5, np.sin(np.pi * x) ** 2)
-        return np.where(x < 0.5, y, 1 - y)
+        y = .5 * betainc(self.m / 2., .5, np.sin(np.pi * x) ** 2)
+        return np.where(x < .5, y, 1 - y)
 
     def ppf(self, y):
         """Evaluates the inverse CDF along the values ``x``."""
-        y_reflect = np.where(y < 0.5, y, 1 - y)
-        z_sq = betaincinv(self.m / 2.0, 0.5, 2 * y_reflect)
+        y_reflect = np.where(y < .5, y, 1 - y)
+        z_sq = betaincinv(self.m / 2., .5, 2 * y_reflect)
         x = np.arcsin(np.sqrt(z_sq)) / np.pi
-        return np.where(y < 0.5, x, 1 - x)
+        return np.where(y < .5, x, 1 - x)
 
 
 class Sobol(Distribution):
@@ -212,12 +210,12 @@ class Sobol(Distribution):
     Examples
     --------
     >>> from nengolib.stats import Sobol
-    >>> samples = Sobol().sample(200, 2)
+    >>> sobol = Sobol().sample(10000, 2)
 
     >>> import matplotlib.pyplot as plt
     >>> from mpl_toolkits.mplot3d import Axes3D
-    >>> plt.axis('equal')
-    >>> plt.scatter(*samples.T, s=20, alpha=0.8)
+    >>> plt.figure(figsize=(6, 6))
+    >>> plt.scatter(*sobol.T, c=np.arange(len(sobol)), cmap='Blues', s=7)
     >>> plt.show()
     """
 
@@ -275,12 +273,17 @@ class ScatteredCube(Distribution):
     Examples
     --------
     >>> from nengolib.stats import ScatteredCube
-    >>> samples = ScatteredCube([-1, -2], [3, 4]).sample(200, 2)
+    >>> s1 = ScatteredCube([-1, -1, -1], [1, 1, 0]).sample(1000, 3)
+    >>> s2 = ScatteredCube(0, 1).sample(1000, 3)
+    >>> s3 = ScatteredCube([-1, .5, 0], [-.5, 1, .5]).sample(1000, 3)
 
     >>> import matplotlib.pyplot as plt
     >>> from mpl_toolkits.mplot3d import Axes3D
-    >>> plt.axis('equal')
-    >>> plt.scatter(*samples.T, s=20, alpha=0.8)
+    >>> plt.figure(figsize=(6, 6))
+    >>> ax = plt.subplot(111, projection='3d')
+    >>> ax.scatter(*s1.T)
+    >>> ax.scatter(*s2.T)
+    >>> ax.scatter(*s3.T)
     >>> plt.show()
     """
 
@@ -297,7 +300,7 @@ class ScatteredCube(Distribution):
 
     def sample(self, n, d=1, rng=np.random):
         """Samples ``n`` points in ``d`` dimensions."""
-        u = self.base.sample(n, d)
+        u = self.base.sample(n, d, rng)
 
         # shift everything by the same random constant (with wrap-around)
         u = (u + rng.uniform(size=d)[None, :]) % 1.0
@@ -368,18 +371,17 @@ class ScatteredHypersphere(UniformHypersphere):
 
     >>> import matplotlib.pyplot as plt
     >>> from mpl_toolkits.mplot3d import Axes3D
-    >>> plt.figure(figsize=(7, 3))
-    >>> plt.axis('equal')
+    >>> plt.figure(figsize=(6, 3))
     >>> plt.subplot(121)
     >>> plt.title("Ball")
-    >>> plt.scatter(*b.T, s=10, alpha=0.5)
+    >>> plt.scatter(*b.T, s=10, alpha=.5)
     >>> ax = plt.subplot(122, projection='3d')
     >>> ax.set_title("Sphere").set_y(1.)
     >>> ax.patch.set_facecolor('white')
     >>> ax.set_xlim3d(-1, 1)
     >>> ax.set_ylim3d(-1, 1)
     >>> ax.set_zlim3d(-1, 1)
-    >>> ax.scatter(*s.T, s=10, alpha=0.5)
+    >>> ax.scatter(*s.T, s=10, alpha=.5)
     >>> plt.show()
     """
 
@@ -397,11 +399,11 @@ class ScatteredHypersphere(UniformHypersphere):
             return super(ScatteredHypersphere, self).sample(n, d, rng)
 
         if self.surface:
-            samples = self.base.sample(n, d-1)
-            radius = 1.0
+            samples = self.base.sample(n, d-1, rng)
+            radius = 1.
         else:
-            samples = self.base.sample(n, d)
-            samples, radius = samples[:, :-1], samples[:, -1:] ** (1.0 / d)
+            samples = self.base.sample(n, d, rng)
+            samples, radius = samples[:, :-1], samples[:, -1:] ** (1. / d)
 
         mapped = spherical_transform(samples)
 
