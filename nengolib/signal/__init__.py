@@ -14,6 +14,16 @@ Linear Systems
    cont2discrete
    discrete2cont
 
+
+Distributions
+-------------
+
+.. autosummary::
+   :toctree:
+
+   EvalPoints
+   Encoders
+
 Learning
 --------
 
