@@ -1,9 +1,25 @@
 """
-Nengo Library
-=============
+Main (:mod:`nengolib`)
+======================
 
-Nengo Library provides additional extensions for large-scale brain
-modelling with Nengo.
+.. currentmodule:: nengolib
+
+Extensions
+----------
+
+.. autosummary::
+   :toctree:
+
+   Network
+   Connection
+
+Processes
+---------
+
+.. autosummary::
+   :toctree:
+
+   processes.Callable
 """
 
 from .version import version as __version__

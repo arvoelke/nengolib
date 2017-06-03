@@ -9,7 +9,31 @@ __all__ = ['PerfectLIF', 'Unit', 'Tanh']
 
 
 class PerfectLIF(LIF):
-    """Spiking version of the leaky integrate-and-fire (LIF) neuron model."""
+    """Spiking version of the leaky integrate-and-fire (LIF) neuron model.
+
+    This model spikes with the same rate as :class:`nengo.LIFRate` assuming
+    zero-order hold (ZOH). [#]_
+
+    Parameters
+    ----------
+    *args : ``list``, optional
+        Additional arguments passed to :class:`nengo.LIF`.
+    **kwargs : ``dictionary``, optional
+        Additional keyword arguments passed to :class:`nengo.LIF`.
+
+    See Also
+    --------
+    :class:`nengo.LIF`
+    :class:`nengo.neurons.NeuronType`
+
+    Notes
+    -----
+    This is Nengo's default neuron model since ``nengo>=2.1.1``.
+
+    References
+    ----------
+    .. [#] https://github.com/nengo/nengo/pull/975
+    """
 
     def step_math(self, dt, J, spiked, voltage, refractory_time):
         # reduce all refractory times by dt

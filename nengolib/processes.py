@@ -8,7 +8,33 @@ __all__ = ['Callable']
 
 
 class Callable(Process):
-    """Wrapper to convert any callable into a Process."""
+    """Adapter to convert any callable into a :class:`nengo.Process`.
+
+    Parameters
+    ----------
+    func : ``callable``
+        A function that can be called with a single float argument (time).
+    default_dt : ``float``, optional
+        Default time-step for the process. Defaults to ``0.001`` seconds.
+    seed : ``integer``, optional
+        Seed for the process.
+
+    See Also
+    --------
+    :class:`nengo.Process`
+
+    Examples
+    --------
+    Making a sine wave process using a lambda:
+
+    >>> from nengolib.processes import Callable
+    >>> process = Callable(lambda t: np.sin(2*np.pi*t))
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.plot(process.ntrange(1000), process.run_steps(1000))
+    >>> plt.xlabel("Time (s)")
+    >>> plt.show()
+    """
 
     def __init__(self, func, default_dt=0.001, seed=None):
         if not callable(func):

@@ -6,7 +6,7 @@ Additional extensions and tools for modelling dynamical systems in
 `Nengo <https://github.com/nengo/nengo>`_.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    examples
    reference

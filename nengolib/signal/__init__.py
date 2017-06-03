@@ -1,6 +1,6 @@
 """
-Signal Processing (:mod:`nengolib.signal`)
-==========================================
+Signal (:mod:`nengolib.signal`)
+===============================
 
 .. currentmodule:: nengolib.signal
 

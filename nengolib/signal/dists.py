@@ -32,6 +32,7 @@ class EvalPoints(Distribution):
     See Also
     --------
     :class:`.Encoders`
+    :class:`.Callable`
     :class:`.RollingWindow`
     :class:`nengo.Ensemble`
     :class:`nengo.dists.Distribution`
@@ -124,6 +125,7 @@ class Encoders(EvalPoints):
     See Also
     --------
     :class:`.EvalPoints`
+    :class:`.Callable`
     :class:`.RollingWindow`
     :class:`nengo.Ensemble`
     :class:`nengo.dists.Distribution`
