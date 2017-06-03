@@ -1,5 +1,3 @@
-"""Classical analog linear filters."""
-
 import numpy as np
 import warnings
 from scipy.misc import pade, factorial
