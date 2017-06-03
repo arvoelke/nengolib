@@ -7,7 +7,7 @@ from nengo import Alpha as BaseAlpha
 from nengo.utils.testing import warns
 
 from nengolib.synapses.analog import (
-    Bandpass, Highpass, PureDelay, LinearFilter, Lowpass, Alpha, DoubleExp,
+    Bandpass, Highpass, PadeDelay, LinearFilter, Lowpass, Alpha, DoubleExp,
     _pade_delay, _passthrough_delay, _proper_delay)
 from nengolib.signal import sys_equal, s
 
@@ -75,7 +75,7 @@ def test_pade_delay(c):
 
     # Note: the discretization has numerical issues
     # for larger orders here.
-    sys = PureDelay(c, order=7)
+    sys = PadeDelay(c, order=7)
     response = sys.impulse(length, dt)
 
     offset = int(0.1*c/dt)  # start at 10% of delay
@@ -92,29 +92,29 @@ def test_pade_versions(p):
     assert _pade_delay(p, p, c) == _passthrough_delay(p, c)
 
     # consistency check on each code path within main interface
-    assert _proper_delay(p+1, c) == PureDelay(c, order=p+1)
-    assert _passthrough_delay(p, c) == PureDelay(c, order=p, p=p)
-    assert _pade_delay(p, p+2, c) == PureDelay(c, order=p+2, p=p)
+    assert _proper_delay(p+1, c) == PadeDelay(c, order=p+1)
+    assert _passthrough_delay(p, c) == PadeDelay(c, order=p, p=p)
+    assert _pade_delay(p, p+2, c) == PadeDelay(c, order=p+2, p=p)
 
 
 def test_delay_invalid():
     with pytest.raises(ValueError):
-        PureDelay(1, order=0)
+        PadeDelay(1, order=0)
 
     with pytest.raises(ValueError):
-        PureDelay(1, order=1)
+        PadeDelay(1, order=1)
 
     with pytest.raises(ValueError):
-        PureDelay(1, order=2.5)
+        PadeDelay(1, order=2.5)
 
     with pytest.raises(ValueError):
-        PureDelay(1, order=2, p=0)
+        PadeDelay(1, order=2, p=0)
 
     with pytest.raises(ValueError):
-        PureDelay(1, order=2, p=1.5)
+        PadeDelay(1, order=2, p=1.5)
 
     with warns(UserWarning):
-        PureDelay(1, order=10, p=8)
+        PadeDelay(1, order=10, p=8)
 
 
 def test_equivalent_defs():

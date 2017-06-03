@@ -14,7 +14,7 @@ from nengolib.signal.system import (
     s, z)
 from nengolib import Network, Lowpass, Alpha, LinearFilter
 from nengolib.signal import cont2discrete, shift
-from nengolib.synapses import PureDelay
+from nengolib.synapses import PadeDelay
 
 
 def test_sys_conversions():
@@ -129,7 +129,7 @@ def test_is_stable():
     assert not (z / (z - 1)).is_stable  # discrete integrator
 
 
-@pytest.mark.parametrize("sys", [PureDelay(0.1, 4), PureDelay(0.2, 5, 5)])
+@pytest.mark.parametrize("sys", [PadeDelay(0.1, 4), PadeDelay(0.2, 5, 5)])
 def test_decompose_states(sys):
     assert np.dot(sys.C, list(sys)) + sys.D == sys
 
@@ -171,7 +171,7 @@ def test_non_siso_manipulation():
 
 
 def test_non_siso_filtering(rng):
-    sys = PureDelay(0.1, order=4)
+    sys = PadeDelay(0.1, order=4)
     length = 1000
 
     SIMO = sys.X
@@ -213,7 +213,7 @@ def test_non_siso_filtering(rng):
 
 
 def test_bad_filt():
-    sys = PureDelay(0.1, order=4).X
+    sys = PadeDelay(0.1, order=4).X
     with pytest.raises(ValueError):
         sys.filt(np.ones((4, 4)))
     with pytest.raises(ValueError):

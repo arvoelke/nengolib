@@ -13,14 +13,14 @@ from nengolib import Network
 from nengolib.signal import (LinearSystem, shift, nrmse, Identity,
                              EvalPoints, Encoders)
 from nengolib.stats import cube
-from nengolib.synapses import PureDelay
+from nengolib.synapses import PadeDelay
 
 
 @pytest.mark.parametrize("d,tol", [
     (2, 0.5), (3, 0.2), (4, 0.05), (5, 1e-2), (7, 1e-4), (12, 1e-9)])
 def test_readout(d, tol):
     theta = 0.1
-    sys = PureDelay(theta, d)
+    sys = PadeDelay(theta, d)
 
     # decoding at r=1 (t=-theta) is equivalent to decoding a delay of theta
     C = readout(d, 1)

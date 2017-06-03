@@ -8,7 +8,7 @@ from nengo.processes import WhiteSignal
 
 from nengolib.signal.dists import EvalPoints, Encoders
 from nengolib import Alpha, Network
-from nengolib.synapses import PureDelay
+from nengolib.synapses import PadeDelay
 
 
 def test_alpha_whitesignal(Simulator, seed, rng, plt):
@@ -88,7 +88,7 @@ def test_given_dt():
 
 def test_invalid_sample():
     process = WhiteSignal(1.0, high=10)
-    sys = PureDelay(0.1, order=4)
+    sys = PadeDelay(0.1, order=4)
 
     dist = EvalPoints(sys, process)
     with pytest.raises(ValidationError):

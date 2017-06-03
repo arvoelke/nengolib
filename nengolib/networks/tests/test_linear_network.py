@@ -7,7 +7,7 @@ from nengo.utils.testing import warns
 from nengolib.networks.linear_network import LinearNetwork
 from nengolib import Network, Lowpass
 from nengolib.signal import s, z, canonical, Identity, shift, nrmse
-from nengolib.synapses import PureDelay, Bandpass
+from nengolib.synapses import PadeDelay, Bandpass
 
 
 _mock_solver_calls = 0  # global to keep solver's fingerprint static
@@ -101,7 +101,7 @@ def test_output_filter(Simulator, seed, rng):
     dt = 0.001
     T = 1.0
 
-    sys = PureDelay(0.1, order=3, p=3)
+    sys = PadeDelay(0.1, order=3, p=3)
     assert sys.has_passthrough
     synapse = 0.01
 
@@ -174,7 +174,7 @@ def test_invalid_systems():
 
 
 def test_radii(Simulator, seed, plt):
-    sys = canonical(PureDelay(0.2, order=3))
+    sys = canonical(PadeDelay(0.2, order=3))
     dt = 0.001
     T = 0.5
 

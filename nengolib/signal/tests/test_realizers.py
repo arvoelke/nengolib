@@ -11,7 +11,7 @@ from nengolib import Lowpass, Alpha, Network
 from nengolib.networks import LinearNetwork
 from nengolib.signal import (
     ss_equal, sys_equal, state_norm, balanced_transformation)
-from nengolib.synapses import Bandpass, Highpass, PureDelay
+from nengolib.synapses import Bandpass, Highpass, PadeDelay
 
 
 @pytest.mark.parametrize("radii", [1, 3, [1.5, 0.2]])
@@ -74,7 +74,7 @@ def test_identity(radii):
     assert np.allclose(state_norm(sys) / radii, state_norm(rsys))
 
 
-@pytest.mark.parametrize("sys", [PureDelay(0.1, 4), PureDelay(0.05, 5, 5)])
+@pytest.mark.parametrize("sys", [PadeDelay(0.1, 4), PadeDelay(0.05, 5, 5)])
 def test_balreal_normalization(sys):
     radii = np.arange(len(sys)) + 1
     realizer_result = Balanced()(sys, radii)
@@ -130,7 +130,7 @@ def _test_normalization(Simulator, sys, rng, realizer, l1_lower,
 
 @pytest.mark.parametrize("sys,lower", [
     (Lowpass(0.005), 1.0), (Alpha(0.01), 0.3), (Bandpass(50, 5), 0.05),
-    (Highpass(0.01, 4), 0.1), (PureDelay(0.1, 2, 2), 0.3)])
+    (Highpass(0.01, 4), 0.1), (PadeDelay(0.1, 2, 2), 0.3)])
 def test_hankel_normalization(Simulator, rng, sys, lower):
     _test_normalization(Simulator, sys, rng, Hankel(),
                         l1_lower=0.5, lower=lower)
@@ -145,8 +145,8 @@ def test_normalization_radius(Simulator, rng, sys, radius):
 
 @pytest.mark.parametrize("sys,lower", [
     (Alpha(0.01), 0.4), (Bandpass(50, 5), 0.1), (Highpass(0.01, 4), 0.2),
-    (PureDelay(0.1, 2, 2), 0.4), (PureDelay(0.1, 3), 0.3),
-    (PureDelay(0.1, 4, 4), 0.15)])
+    (PadeDelay(0.1, 2, 2), 0.4), (PadeDelay(0.1, 3), 0.3),
+    (PadeDelay(0.1, 4, 4), 0.15)])
 def test_l1_normalization_crossing(Simulator, rng, sys, lower):
     # note the lower bounds are higher than those for the hankel norm tests
     # for the same systems
@@ -157,8 +157,8 @@ def test_l1_normalization_crossing(Simulator, rng, sys, lower):
 
 @pytest.mark.parametrize("sys", [
     Alpha(0.01), Bandpass(50, 5), Highpass(0.01, 4),
-    PureDelay(0.1, 2, 2), PureDelay(1.0, 10),
-    PureDelay(2.0, 4, 4)])
+    PadeDelay(0.1, 2, 2), PadeDelay(1.0, 10),
+    PadeDelay(2.0, 4, 4)])
 def test_h2_realizer(sys):
     r1 = Hankel()(sys)
     r2 = H2Norm()(sys)

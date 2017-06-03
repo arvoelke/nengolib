@@ -10,7 +10,7 @@ from nengolib.signal.system import LinearSystem
 
 __all__ = [
     'LinearFilter', 'Lowpass', 'Alpha', 'DoubleExp', 'Bandpass', 'Highpass',
-    'PureDelay']
+    'PadeDelay']
 
 
 def LinearFilter(num, den, analog=True):
@@ -97,8 +97,8 @@ def _pade_delay(p, q, c):
     return LinearFilter(num, den)
 
 
-def PureDelay(c, order, p=None):
-    """Linear filter for a continuous pure delay of c seconds.
+def PadeDelay(c, order, p=None):
+    """Linear filter for a finite approximation of a pure delay of c seconds.
 
     The order is the degree of the denominator in the transfer function, also
     known as q in the Pade approximation. Parameter p is the degree of the

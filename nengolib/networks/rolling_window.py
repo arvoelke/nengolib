@@ -14,7 +14,7 @@ from nengo.utils.stdlib import checked_call
 from nengolib.networks.linear_network import LinearNetwork
 from nengolib.signal.dists import EvalPoints, Encoders
 from nengolib.signal.realizers import Balanced
-from nengolib.synapses.analog import PureDelay
+from nengolib.synapses.analog import PadeDelay
 
 __all__ = ['t_default', 'readout', 'RollingWindow']
 
@@ -52,7 +52,7 @@ class RollingWindow(LinearNetwork):
         self.dimensions = dimensions
 
         super(RollingWindow, self).__init__(
-            sys=PureDelay(theta, order=dimensions),
+            sys=PadeDelay(theta, order=dimensions),
             n_neurons_per_ensemble=n_neurons,
             input_synapse=input_synapse,
             synapse=synapse,
@@ -105,13 +105,13 @@ class RollingWindow(LinearNetwork):
         return self.state, output
 
     def canonical_basis(self, t=t_default):
-        """Temporal basis functions for PureDelay in canonical form."""
+        """Temporal basis functions for PadeDelay in canonical form."""
         t = np.atleast_1d(t)
         B = np.asarray([readout(self.dimensions, r) for r in t])
         return B
 
     def basis(self, t=t_default):
-        """Temporal basis functions for realized PureDelay."""
+        """Temporal basis functions for realized PadeDelay."""
         # Undo change of basis from realizer, and then transform into window
         B = self.canonical_basis(t)
         return B.dot(self.realizer_result.T)

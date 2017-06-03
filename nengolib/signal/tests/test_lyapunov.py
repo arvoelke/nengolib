@@ -10,7 +10,7 @@ from nengolib.signal.lyapunov import (
     _H2P, state_norm, control_gram, observe_gram, balanced_transformation,
     hankel, l1_norm)
 from nengolib.signal import sys2ss, cont2discrete, s, z
-from nengolib.synapses import Bandpass, PureDelay
+from nengolib.synapses import Bandpass, PadeDelay
 from nengolib import Lowpass, Alpha
 
 
@@ -94,7 +94,7 @@ def test_balreal():
 
 
 @pytest.mark.parametrize("sys", [
-    PureDelay(0.1, 4), PureDelay(0.2, 5, 5), Alpha(0.2)])
+    PadeDelay(0.1, 4), PadeDelay(0.2, 5, 5), Alpha(0.2)])
 def test_hankel(sys):
     assert np.allclose(hankel(sys), balanced_transformation(sys)[2])
 
@@ -118,8 +118,8 @@ def test_l1_norm_known():
 
 
 @pytest.mark.parametrize("sys", [
-    Bandpass(10, 3), Bandpass(50, 50), PureDelay(0.02, 4),
-    PureDelay(0.2, 4, 4)])
+    Bandpass(10, 3), Bandpass(50, 50), PadeDelay(0.02, 4),
+    PadeDelay(0.2, 4, 4)])
 def test_l1_norm_unknown(sys):
     # These impulse responses have zero-crossings which makes computing their
     # exact L1-norm infeasible without simulation.

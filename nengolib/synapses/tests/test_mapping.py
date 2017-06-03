@@ -6,7 +6,7 @@ import nengo
 from nengolib.synapses.mapping import ss2sim
 from nengolib import Network, Lowpass, Alpha
 from nengolib.signal import s, z, ss_equal, cont2discrete, shift
-from nengolib.synapses import Highpass, PureDelay, DoubleExp
+from nengolib.synapses import Highpass, PadeDelay, DoubleExp
 
 
 def test_mapping(Simulator, plt, seed):
@@ -69,7 +69,7 @@ def test_mapping(Simulator, plt, seed):
 
 
 def test_principle3_continuous():
-    sys = PureDelay(0.1, order=5)
+    sys = PadeDelay(0.1, order=5)
 
     tau = 0.01
     syn = Lowpass(tau)
@@ -83,7 +83,7 @@ def test_principle3_continuous():
 
 
 def test_principle3_discrete():
-    sys = PureDelay(0.1, order=5)
+    sys = PadeDelay(0.1, order=5)
 
     tau = 0.01
     dt = 0.002
@@ -103,7 +103,7 @@ def test_principle3_discrete():
         ss2sim(sys, cont2discrete(syn, dt=dt), dt=None), FH)
 
 
-@pytest.mark.parametrize("sys", [PureDelay(0.1, order=5), Lowpass(0.1)])
+@pytest.mark.parametrize("sys", [PadeDelay(0.1, order=5), Lowpass(0.1)])
 def test_doubleexp_continuous(sys):
     tau1 = 0.05
     tau2 = 0.02
@@ -122,7 +122,7 @@ def test_doubleexp_continuous(sys):
 
 
 def test_doubleexp_discrete():
-    sys = PureDelay(0.1, order=5)
+    sys = PadeDelay(0.1, order=5)
 
     tau1 = 0.05
     tau2 = 0.02
