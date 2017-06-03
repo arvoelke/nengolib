@@ -33,9 +33,8 @@ def cont2discrete(sys, dt, method='zoh', alpha=None):
 
     See Also
     --------
-    :class:`.LinearSystem`
-    :func:`scipy.signal.cont2discrete`
     :func:`.discrete2cont`
+    :func:`scipy.signal.cont2discrete`
 
     Notes
     -----
@@ -76,6 +75,45 @@ def cont2discrete(sys, dt, method='zoh', alpha=None):
 
 
 def discrete2cont(sys, dt, method='zoh', alpha=None):
+    """Convert linear system from discrete to continuous time-domain.
+
+    This is the inverse of :func:`.cont2discrete`. This will not work in
+    general, for instance with the ZOH method when the system has discrete
+    poles at ``0`` (e.g., systems with pure time-delay elements).
+
+    Parameters
+    ----------
+    sys : :data:`linear_system_like`
+       Linear system representation.
+    dt : ``float``
+       Time-step used to *undiscretize* ``sys``.
+    method : ``string``, optional
+       Method of discretization. Defaults to zero-order hold discretization
+       (``'zoh'``), which assumes that the input signal is held constant over
+       each discrete time-step.
+    alpha : ``float`` or ``None``, optional
+       Weighting parameter for use with ``method='gbt'``.
+
+    Returns
+    -------
+    :class:`.LinearSystem`
+       Continuous linear system (``analog=True``).
+
+    See Also
+    --------
+    :func:`.cont2discrete`
+    :func:`scipy.signal.cont2discrete`
+
+    Examples
+    --------
+    Converting a double-exponential synapse back and forth between domains:
+
+    >>> from nengolib.signal import discrete2cont, cont2discrete
+    >>> from nengolib import DoubleExp
+    >>> sys = DoubleExp(0.005, 0.2)
+    >>> assert dsys == discrete2cont(cont2discrete(sys, dt=0.1), dt=0.1)
+    """
+
     sys = LinearSystem(sys)
     if sys.analog:
         raise ValueError("system (%s) is already continuous" % sys)
