@@ -13,6 +13,14 @@ Linear Systems
    LinearSystem
    cont2discrete
    discrete2cont
+
+Learning
+--------
+
+.. autosummary::
+   :toctree:
+
+   pes_learning_rate
 """
 
 from .discrete import *
