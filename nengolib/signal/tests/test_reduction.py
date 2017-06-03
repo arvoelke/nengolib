@@ -53,6 +53,7 @@ def test_modred(rng):
         step = np.zeros(2000)
         step[50:] = 1.0
         dcsys = modred(balsys, keep_states, method='dc')
+        assert np.allclose(dcsys.dcgain, balsys.dcgain)
 
         # use of shift related to nengo issue #938
         assert not sys.has_passthrough

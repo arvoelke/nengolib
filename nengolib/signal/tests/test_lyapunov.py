@@ -8,7 +8,7 @@ from nengo.utils.numpy import norm
 
 from nengolib.signal.lyapunov import (
     _H2P, state_norm, control_gram, observe_gram, balanced_transformation,
-    hankel, l1_norm)
+    hsvd, l1_norm)
 from nengolib.signal import sys2ss, cont2discrete, s, z
 from nengolib.synapses import Bandpass, PadeDelay
 from nengolib import Lowpass, Alpha
@@ -69,7 +69,7 @@ def test_balreal():
 
     T, Tinv, S = balanced_transformation(sys)
     assert np.allclose(inv(T), Tinv)
-    assert np.allclose(S, hankel(sys))
+    assert np.allclose(S, hsvd(sys))
 
     balsys = sys.transform(T, Tinv)
     assert balsys == sys
@@ -96,7 +96,7 @@ def test_balreal():
 @pytest.mark.parametrize("sys", [
     PadeDelay(0.1, 4), PadeDelay(0.2, 5, 5), Alpha(0.2)])
 def test_hankel(sys):
-    assert np.allclose(hankel(sys), balanced_transformation(sys)[2])
+    assert np.allclose(hsvd(sys), balanced_transformation(sys)[2])
 
 
 def test_l1_norm_known():

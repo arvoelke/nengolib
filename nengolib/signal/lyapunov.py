@@ -8,7 +8,7 @@ from nengolib.signal.system import LinearSystem
 
 
 __all__ = ['state_norm', 'control_gram', 'observe_gram',
-           'balanced_transformation', 'hankel', 'l1_norm']
+           'balanced_transformation', 'hsvd', 'l1_norm']
 
 
 def _H2P(A, B, analog):
@@ -22,15 +22,52 @@ def _H2P(A, B, analog):
 
 
 def state_norm(sys, norm='H2'):
-    """Returns the norm of each component of x in the state-space.
+    """Computes the norm of each dimension of ``x`` in the state-space.
 
-    The H2-norm gives the power of each component of x in response to
-    white-noise input with uniform power, or equivalently the total power of
-    each component of x in response to a delta impulse.
+    Parameters
+    ----------
+    sys : :data:`linear_system_like`
+       Linear system representation.
+    norm : ``string``, optional
+       Defaults to ``'H2'``. Must be one of:
 
-    Reference:
-        http://www.maplesoft.com/support/help/maple/view.aspx?path=DynamicSystems%2FNormH2  # noqa: E501
-    """
+       * ``'H2'`` : The power of each dimension in response to white-noise
+         input with uniform power, or equivalently in response to a delta
+         impulse. [#]_
+
+    Returns
+    -------
+    ``(len(sys),) np.array``
+       The norm of each dimension in ``sys``.
+
+    See Also
+    --------
+    :class:`.H2Norm`
+    :func:`.l1_norm`
+
+    References
+    ----------
+    .. [#] http://www.maplesoft.com/support/help/maple/view.aspx?path=DynamicSystems%2FNormH2
+
+    Examples
+    --------
+    >>> from nengolib.signal import state_norm
+    >>> from nengolib.synapses import PadeDelay
+    >>> sys = PadeDelay(.1, order=4)
+    >>> dt = 1e-4
+    >>> y = sys.X.impulse(2500, dt=dt)
+
+    Comparing the analytical H2-norm of the delay state to its simulated value:
+
+    >>> assert np.allclose(np.linalg.norm(y, axis=0) * np.sqrt(dt),
+    >>>                    state_norm(sys), atol=1e-4)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.plot(sys.ntrange(len(y), dt=dt), y)
+    >>> plt.xlabel("Time (s)")
+    >>> plt.show()
+    """  # noqa: E501
+
     if norm == 'H2':
         # TODO: accept an additional sys describing the filtering on the input
         # so that we can get the norm in response to different input spectra.
@@ -39,15 +76,32 @@ def state_norm(sys, norm='H2'):
         P = _H2P(A, B, sys.analog)
         return np.sqrt(P[np.diag_indices(len(P))])
     else:
-        raise NotImplementedError("norm must be one of: H2")
+        raise NotImplementedError("norm (%s) must be one of: 'H2'" % (norm,))
 
 
 def control_gram(sys):
     """Computes the controllability/reachability gramiam of a linear system.
 
-    Reference:
-        https://en.wikibooks.org/wiki/Control_Systems/Controllability_and_Observability  # noqa: E501
-    """
+    Parameters
+    ----------
+    sys : :data:`linear_system_like`
+       Linear system representation.
+
+    Returns
+    -------
+    ``(len(sys), len(sys)) np.array``
+       The controllability/reachability gramiam matrix.
+
+    See Also
+    --------
+    :func:`.observe_gram`
+    :func:`.balanced_transformation`
+
+    References
+    ----------
+    .. [#] https://en.wikibooks.org/wiki/Control_Systems/Controllability_and_Observability
+    """  # noqa: E501
+
     sys = LinearSystem(sys)
     A, B, C, D = sys.ss
     return _H2P(A, B, sys.analog)
@@ -56,9 +110,26 @@ def control_gram(sys):
 def observe_gram(sys):
     """Computes the observability gramiam of a linear system.
 
-    Reference:
-        https://en.wikibooks.org/wiki/Control_Systems/Controllability_and_Observability  # noqa: E501
-    """
+    Parameters
+    ----------
+    sys : :data:`linear_system_like`
+       Linear system representation.
+
+    Returns
+    -------
+    ``(len(sys), len(sys)) np.array``
+       The observability gramiam matrix.
+
+    See Also
+    --------
+    :func:`.control_gram`
+    :func:`.balanced_transformation`
+
+    References
+    ----------
+    .. [#] https://en.wikibooks.org/wiki/Control_Systems/Controllability_and_Observability
+    """  # noqa: E501
+
     sys = LinearSystem(sys)
     A, B, C, D = sys.ss
     return _H2P(A.T, C.T, sys.analog)
@@ -67,16 +138,37 @@ def observe_gram(sys):
 def balanced_transformation(sys):
     """Computes the balancing transformation, its inverse, and eigenvalues.
 
-    The eigenvalues are precisely the hankel singular values.
+    Parameters
+    ----------
+    sys : :data:`linear_system_like`
+       Linear system representation.
 
-    References:
-        [1] http://www.mathworks.com/help/control/ref/balreal.html
+    Returns
+    -------
+    ``(len(sys), len(sys)) np.array``
+       Similarity transformation matrix.
+    ``(len(sys), len(sys)) np.array``
+       Inverse of similarity transformation matrix.
+    ``(len(sys),) np.array``
+       Hankel singular values (see :func:`.hsvd`).
 
-        [2] Laub, A.J., M.T. Heath, C.C. Paige, and R.C. Ward, "Computation of
-            System Balancing Transformations and Other Applications of
-            Simultaneous Diagonalization Algorithms," *IEEE Trans. Automatic
-            Control*, AC-32 (1987), pp. 115-122.
+    See Also
+    --------
+    :func:`.balance`
+    :class:`.Balanced`
+    :func:`.hsvd`
+    :func:`.LinearSystem.transform`
+
+    References
+    ----------
+    .. [#] Laub, A.J., M.T. Heath, C.C. Paige, and R.C. Ward, "Computation of
+       System Balancing Transformations and Other Applications of
+       Simultaneous Diagonalization Algorithms," *IEEE Trans. Automatic
+       Control*, AC-32 (1987), pp. 115-122.
+
+    .. [#] http://www.mathworks.com/help/control/ref/balreal.html
     """
+
     sys = LinearSystem(sys)  # cast first to memoize sys2ss in control_gram
     if not sys.analog:
         raise NotImplementedError("balanced digital filters not supported")
@@ -95,17 +187,34 @@ def balanced_transformation(sys):
     return T, Tinv, S
 
 
-def hankel(sys):
+def hsvd(sys):
     """Compute Hankel singular values of a linear system.
 
-    These are precisely the eigenvalues of the balanced transformation.
+    Parameters
+    ----------
+    sys : :data:`linear_system_like`
+       Linear system representation.
 
-    References:
-        [1] Glover, Keith, and Jonathan R. Partington. "Bounds on the
-            achievable accuracy in model reduction." Modelling, robustness and
-            sensitivity reduction in control systems. Springer Berlin
-            Heidelberg, 1987. 95-118.
+    Returns
+    -------
+    ``(len(sys),) np.array``
+       Hankel singular values.
+
+    See Also
+    --------
+    :class:`.Hankel`
+    :func:`.balanced_transformation`
+
+    References
+    ----------
+    .. [#] Glover, Keith, and Jonathan R. Partington. "Bounds on the
+       achievable accuracy in model reduction." Modelling, robustness and
+       sensitivity reduction in control systems. Springer Berlin
+       Heidelberg, 1987. 95-118.
+
+    .. [#] https://www.mathworks.com/help/control/ref/hsvd.html
     """
+
     sys = LinearSystem(sys)
     R, O = control_gram(sys), observe_gram(sys)
     # sort needed to be consistent across different versions
@@ -117,12 +226,12 @@ def _state_impulse(A, x0, k, delay=0):
     x = np.zeros((k, len(A)))
     x[delay, :] = np.squeeze(x0)
     for i in range(delay+1, k):
-        x[i, :] = np.dot(A, x[i-1, :])  # note: doesn't assume canonical form
+        x[i, :] = np.dot(A, x[i-1, :])  # Note: doesn't assume canonical form
     return x
 
 
 def l1_norm(sys, rtol=1e-6, max_length=2**18):
-    """Returns the L1-norm of a linear system within a relative tolerance.
+    """Computes the L1-norm of a linear system within a relative tolerance.
 
     The L1-norm of a (BIBO stable) linear system is the integral of the
     absolute value of its impulse response. For unstable systems this will be
@@ -132,20 +241,50 @@ def l1_norm(sys, rtol=1e-6, max_length=2**18):
     between -1 and 1 during the intervals where the impulse response is
     negative or positive, respectively (in the limit as T -> infinity).
 
-    Algorithm adapted from [1]_ following the methods of [2]_. This works by
+    Algorithm adapted from [#]_ following the methods of [#]_. This works by
     iteratively refining lower and upper bounds using progressively longer
     simulations and smaller timesteps. The lower bound is given by the
     absolute values of the discretized response. The upper bound is given by
     refining the time-step intervals where zero-crossings may have occurred.
 
-    References:
-        [1] http://www.mathworks.com/matlabcentral/fileexchange/41587-system-l1-norm/content/l1norm.m  # noqa: E501
-            J.F. Whidborne (April 28, 1995).
+    Parameters
+    ----------
+    sys : :data:`linear_system_like`
+       Linear system representation.
+    rtol : ``float``, optional
+       Desired error (relative tolerance).
+       Smaller tolerances require more compute time.
+       Defaults to ``1e-6``.
+    max_length : ``integer``, optional
+       Maximum number of time-steps to simulate the system's impulse response.
+       The simulation time-step is varied by the algorithm.
+       Defaults to ``2**18``.
 
-        [2] Rutland, Neil K., and Paul G. Lane. "Computing the 1-norm of the
-            impulse response of linear time-invariant systems."
-            Systems & control letters 26.3 (1995): 211-221.
-    """
+    Returns
+    -------
+    ``float``
+       L1-norm of the output.
+
+    See Also
+    --------
+    :class:`.L1Norm`
+    :func:`.state_norm`
+
+    Notes
+    -----
+    The algorithm will terminate after either ``rtol`` tolerance is met, or
+    ``max_length`` simulation steps are required --- whichever occurs first.
+
+    References
+    ----------
+    .. [#] http://www.mathworks.com/matlabcentral/fileexchange/41587-system-l1-norm/content/l1norm.m
+       J.F. Whidborne (April 28, 1995).
+
+    .. [#] Rutland, Neil K., and Paul G. Lane. "Computing the 1-norm of the
+       impulse response of linear time-invariant systems."
+       Systems & control letters 26.3 (1995): 211-221.
+    """  # noqa: E501
+
     sys = LinearSystem(sys)
     if not sys.analog:
         raise ValueError("system (%s) must be analog" % sys)

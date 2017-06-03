@@ -15,11 +15,33 @@ __all__ = ['pole_zero_cancel', 'modred', 'balance', 'balred']
 def pole_zero_cancel(sys, tol=1e-8):
     """Pole/zero cancellation within a given tolerance.
 
-    Sometimes referred to as the minimal realization in state-space.
+    Sometimes referred to as the minimal realization in state-space. [#]_
+    This (greedily) finds pole-zero pairs within a given tolerance, and
+    removes them from the transfer function representation.
 
-    References:
-        http://www.mathworks.com/help/control/ref/minreal.html
+    Parameters
+    ----------
+    sys : :data:`linear_system_like`
+       Linear system representation.
+    tol : ``float``, optional
+       Absolute tolerance to identify pole-zero pairs. Defaults to ``1e-8``.
+
+    Returns
+    -------
+    :class:`.LinearSystem`
+       Reduced linear system in zero-pole-gain form.
+
+    References
+    ----------
+    .. [#] http://www.mathworks.com/help/control/ref/minreal.html
+
+    Examples
+    --------
+    >>> from nengolib.signal import pole_zero_cancel, s
+    >>> sys = (s - 1) / ((s - 1) * (s + 1))
+    >>> assert pole_zero_cancel(sys) == 1 / (s + 1)
     """
+
     z, p, k = sys2zpk(sys)
     mz = np.ones(len(z), dtype=bool)  # start with all zeros
     mp = np.zeros(len(p), dtype=bool)  # and no poles
@@ -34,11 +56,37 @@ def pole_zero_cancel(sys, tol=1e-8):
 
 
 def modred(sys, keep_states, method='del'):
-    """Reduces model order by eliminating states.
+    """Reduces model order by eliminating a subset of states.
 
-    References:
-        http://www.mathworks.com/help/control/ref/modred.html
+    Parameters
+    ----------
+    sys : :data:`linear_system_like`
+       Linear system representation.
+    keep_states : ``array_like``
+       Subset of dimensions (integer indices between ``0`` and
+       ``len(sys)-1``, inclusive) to keep.
+    method : ``string``, optional
+       Defaults to ``'del'``. Must be one of:
+
+       * ``'del'`` : Delete the states entirely.
+
+       * ``'dc'`` : Transform the remaining states to maintain the same
+         DC gain. [#]_
+
+    Returns
+    -------
+    :class:`.LinearSystem`
+       Reduced linear system in state-space form.
+
+    See Also
+    --------
+    :func:`.balred`
+
+    References
+    ----------
+    .. [#] http://www.mathworks.com/help/control/ref/modred.html
     """
+
     sys = LinearSystem(sys)
     A, B, C, D = sys.ss
     if not sys.analog:
@@ -83,14 +131,80 @@ def modred(sys, keep_states, method='del'):
 
 
 def balance(sys):
-    """Transforms a LinearSystem to its balanced realization."""
+    """Transforms a linear system to its balanced realization.
+
+    Parameters
+    ----------
+    sys : :data:`linear_system_like`
+       Linear system representation.
+
+    Returns
+    -------
+    :class:`.LinearSystem`
+       Balanced linear system in state-space form.
+
+    See Also
+    --------
+    :func:`.balred`
+    :func:`.balanced_transformation`
+    :class:`.Balanced`
+
+    References
+    ----------
+    .. [#] https://www.mathworks.com/help/control/ref/balreal.html
+
+    Examples
+    --------
+    >>> from nengolib.signal import balance, s
+    >>> before = 10 / ((s + 10) * (s + 20) * (s + 30) * (s + 40))
+    >>> after = balance(before)
+
+    Effect of balancing some arbitrary system:
+
+    >>> import matplotlib.pyplot as plt
+    >>> length = 500
+    >>> plt.subplot(211)
+    >>> plt.title("Impulse -- Before")
+    >>> plt.plot(before.ntrange(length), before.X.impulse(length))
+    >>> plt.subplot(212)
+    >>> plt.title("Impulse -- After")
+    >>> plt.plot(after.ntrange(length), after.X.impulse(length))
+    >>> plt.xlabel("Time (s)")
+    >>> plt.show()
+    """
+
     sys = LinearSystem(sys)
     T, Tinv, _ = balanced_transformation(sys)
     return sys.transform(T, Tinv=Tinv)
 
 
 def balred(sys, order, method='del'):
-    """Reduces a LinearSystem to given order using balreal and modred."""
+    """Reduces a linear system to given order using balance and modred.
+
+    Parameters
+    ----------
+    sys : :data:`linear_system_like`
+       Linear system representation.
+    order : ``integer``
+       Number of dimensions to keep.
+    method : ``string``, optional
+       Model order reduction method passed to :func:`.modred`.
+
+    Returns
+    -------
+    :class:`.LinearSystem`
+       Balanced and reduced linear system in state-space form.
+
+    See Also
+    --------
+    :func:`.balance`
+    :func:`.modred`
+
+    References
+    ----------
+    .. [#] https://www.mathworks.com/help/control/ref/balred.html
+    """
+
     sys = LinearSystem(sys)
     if order < 1:
         raise ValueError("Invalid order (%s), must be at least 1" % (order,))

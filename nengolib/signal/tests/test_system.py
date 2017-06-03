@@ -12,7 +12,7 @@ from scipy.signal import lfilter
 from nengolib.signal.system import (
     sys2ss, sys2zpk, sys2tf, canonical, sys_equal, ss_equal, LinearSystem,
     s, z)
-from nengolib import Network, Lowpass, Alpha, LinearFilter
+from nengolib import Network, Lowpass, Alpha
 from nengolib.signal import cont2discrete, shift
 from nengolib.synapses import PadeDelay
 
@@ -120,8 +120,7 @@ def test_is_stable():
     sys = Lowpass(0.1)
     assert sys.is_stable
 
-    sys = LinearFilter([1], [1, 0])  # integrator
-    assert not sys.is_stable
+    assert not (~s).is_stable  # integrator
 
     assert LinearSystem(1).is_stable
 
@@ -223,7 +222,7 @@ def test_bad_filt():
 
 
 @pytest.mark.parametrize("sys", [
-    Lowpass(0.01), Alpha(0.2), LinearFilter([1, 1], [0.01, 1])])
+    Lowpass(0.01), Alpha(0.2), LinearSystem(([1, 1], [0.01, 1]))])
 def test_simulation(sys, Simulator, plt, seed):
     assert isinstance(sys, LinearSystem)
     old_sys = nengo.LinearFilter(sys.num, sys.den)
@@ -291,7 +290,7 @@ def test_filt():
     dt = 0.1
     num, den = [1], [1, 2, 1]
     sys1 = nengo.LinearFilter(num, den)
-    sys2 = LinearFilter(num, den)  # uses a different make_step
+    sys2 = LinearSystem((num, den))  # uses a different make_step
     y1 = sys1.filt(u, dt=dt, y0=0)
     y2 = sys2.filt(u, dt=dt, y0=0)
     assert np.allclose(y1, y2)
@@ -328,9 +327,9 @@ def test_filt_issue_nengo938():
     # https://github.com/nengo/nengo/issues/1124
 
     sys_prop_nengo = nengo.LinearFilter([1], [1, 0])
-    sys_prop_nglib = LinearFilter([1], [1, 0])
+    sys_prop_nglib = LinearSystem(([1], [1, 0]))
     sys_pass_nengo = nengo.LinearFilter([1e-9, 1], [1, 0])
-    sys_pass_nglib = LinearFilter([1e-9, 1], [1, 0])
+    sys_pass_nglib = LinearSystem(([1e-9, 1], [1, 0]))
 
     u = np.asarray([1.0, 0.5, 0])
     dt = 0.001
@@ -427,8 +426,8 @@ def test_linear_system():
     assert sys.size_in == sys.size_out == dsys.size_in == dsys.size_out == 1
 
     # Test attributes
-    assert np.allclose(sys.num, (1,))
-    assert np.allclose(sys.den, (tau, 1))
+    assert np.allclose(sys.num, (1/tau,))
+    assert np.allclose(sys.den, (1, 1/tau))
     assert sys.causal
     assert sys.strictly_proper
     assert not sys.has_passthrough
@@ -531,7 +530,7 @@ def test_linear_system_type():
     assert not LinearSystem(z).analog
     assert not LinearSystem(z, analog=False).analog
     assert LinearSystem(nengo.Lowpass(0.1)).analog
-    assert not LinearSystem(LinearFilter([1], [1], analog=False)).analog
+    assert not LinearSystem(LinearSystem(([1], [1]), analog=False)).analog
 
     # Test that analog argument must match
     with pytest.raises(TypeError):
@@ -550,10 +549,10 @@ def test_linear_system_type():
         LinearSystem(z, analog=True)
 
     with pytest.raises(TypeError):
-        LinearSystem(LinearFilter([1], [1], analog=True), analog=False)
+        LinearSystem(LinearSystem(([1], [1]), analog=True), analog=False)
 
     with pytest.raises(TypeError):
-        LinearSystem(LinearFilter([1], [1], analog=False), analog=True)
+        LinearSystem(LinearSystem(([1], [1]), analog=False), analog=True)
 
 
 def test_invalid_operations():

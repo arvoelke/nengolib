@@ -18,7 +18,7 @@ self-published projects. We highlight these applications below:
 
     [`PDF <http://compneuro.uwaterloo.ca/files/publications/voelker.2017a.pdf>`__]
     [`Poster <http://compneuro.uwaterloo.ca/files/publications/voelker.2017a.poster.pdf>`__]
-    Used nengolib.synapses.HeteroSynapse, :attr:`.s`, :attr:`.z`,
+    Used :class:`.HeteroSynapse`, :attr:`.s`, :attr:`.z`,
     :attr:`.ball`, :attr:`.sphere`, and the theory behind
     nengolib.synapses.ss2sim to improve the accuracy of nonlinear dynamics on
     a mixed-analog-digital neuromorphic architecture.
@@ -28,8 +28,8 @@ self-published projects. We highlight these applications below:
 
     [`PDF <https://github.com/arvoelke/delay2017/raw/master/delay2017.compressed.pdf>`__]
     [`Code <https://github.com/arvoelke/delay2017>`_]
-    Used nengolib.networks.RollingWindow, nengolib.synapses.PureDelay,
-    and nengolib.synapses.ss2sim to model time cell activity in rodents and
+    Used :class:`.RollingWindow`, :func:`.PadeDelay`,
+    and :func:`.ss2sim` to model time cell activity in rodents and
     improve the accuracy of dynamical systems in spiking neural networks.
 
 * James Knight, Aaron R. Voelker, Andrew Mundy, Chris Eliasmith, and Steve
