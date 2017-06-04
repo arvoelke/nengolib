@@ -9,7 +9,7 @@ self-published projects. We highlight these applications below:
   than continuous filter dynamics when simulating on digital systems", 05 2017.
 
     [`Blog <https://studywolf.wordpress.com/2017/05/21/improving-neural-models-by-compensating-for-discrete-rather-than-continuous-time-filter-dynamics-when-simulating-on-digital-systems/>`__]
-    Used nengolib.synapses.ss2sim to improve the accuracy of a point attractor.
+    Used :func:`.ss2sim` to improve the accuracy of a point attractor.
 
 * Aaron R. Voelker, Ben V. Benjamin, Terrence C. Stewart, Kwabena Boahen, and
   Chris Eliasmith. "Extending the Neural Engineering Framework for nonideal
@@ -20,7 +20,7 @@ self-published projects. We highlight these applications below:
     [`Poster <http://compneuro.uwaterloo.ca/files/publications/voelker.2017a.poster.pdf>`__]
     Used :class:`.HeteroSynapse`, :attr:`.s`, :attr:`.z`,
     :attr:`.ball`, :attr:`.sphere`, and the theory behind
-    nengolib.synapses.ss2sim to improve the accuracy of nonlinear dynamics on
+    :func:`.ss2sim` to improve the accuracy of nonlinear dynamics on
     a mixed-analog-digital neuromorphic architecture.
 
 * Aaron R. Voelker and Chris Eliasmith, "Improving spiking dynamical networks:
@@ -48,5 +48,6 @@ self-published projects. We highlight these applications below:
   http://dx.doi.org/10.1109/LRA.2016.2517213, doi:10.1109/LRA.2016.2517213.
 
     [`PDF <http://compneuro.uwaterloo.ca/files/publications/voelker.2016a.pdf>`__]
-    Used nengolib.synapses.HeteroSynapse to improve online tactile
-    classification of surface textures.
+    Used :class:`.HeteroSynapse`, :func:`.Bandpass`, and :func:`.Highpass` to
+    engineer a biologically inspired approach to online tactile classification
+    of surface textures.

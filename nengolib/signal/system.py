@@ -248,8 +248,10 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
     Instances provide access to a number of common attributes and methods
     that are core to a variety of routines and networks throughout nengolib.
 
-    This class can be used anywhere a :class:`nengo.synapses.Synapse` (or
-    :class:`nengo.LinearFilter`) object is expected within Nengo.
+    This can be used anywhere a :class:`nengo.synapses.Synapse` (or
+    :class:`nengo.LinearFilter`) object is expected within Nengo. For
+    instance, this can be passed as a ``synapse`` parameter to
+    :class:`nengo.Connection`.
     If the system is analog, then it will be automatically discretized using
     the simulation time-step (see :func:`.cont2discrete`). We advocate for
     using this class to represent and manipulate linear systems whenever
@@ -276,7 +278,8 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
     :attr:`.s`
     :attr:`.z`
     :class:`.LinearNetwork`
-    :class:`.synapses`
+    :func:`.ss2sim`
+    :mod:`.synapses`
 
     Notes
     -----
@@ -352,14 +355,14 @@ class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
     >>> plt.xlabel("Time (s)")
     >>> plt.show()
 
-    A discrete box filter:
+    A discrete trajectory:
 
     >>> from nengolib.signal import z
-    >>> box = 1 + 1/z + 1/z**2
-    >>> t = np.arange(6)
-    >>> y = box.impulse(len(t))
+    >>> trajectory = 1 - .5/z + 2/z**3 + .5/z**4
+    >>> t = np.arange(7)
+    >>> y = trajectory.impulse(len(t))
 
-    >>> plt.title("box.impulse")
+    >>> plt.title("trajectory.impulse")
     >>> plt.step(t, y, where='post')
     >>> plt.fill_between(t, np.zeros_like(y), y, step='post', alpha=.3)
     >>> plt.xticks(t)

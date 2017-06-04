@@ -10,20 +10,43 @@ __all__ = ['HeteroSynapse']
 
 
 class HeteroSynapse(object):
-    """Callable class for applying different synapses to a vector.
+    """Callable class for applying different synapses to an input vector.
 
-    If `elementwise == False` (default), each synapse is applied to every
-        dimension, and so `size_out == size_in * len(synapses)`. The
+    This is typically to be used as the ``output`` parameter for some
+    intermediate :class:`nengo.Node` in a Nengo model.
+
+    Parameters
+    ----------
+    systems : (one or more) :data:`linear_system_like`
+        One or more linear system representations, providing each synapse.
+    dt : ``float``, optional
+        Simulation time-step used to discretize each of the systems.
+        If ``dt`` is ``None`` (the default), then all of the systems must
+        already be digital.
+    elementwise : ``boolean``, optional
+        If ``elementwise == False`` (default), each synapse is applied to every
+        dimension, and so ``size_out == size_in*len(synapses)``. The
         output dimensions are ordered by input dimension, such that
-        index `i*len(synapses) + j` is the `i`'th input dimension convolved
-        with the `j`'th filter.
+        index ``i*len(synapses) + j`` is the ``i``'th input dimension convolved
+        with the ``j``'th filter.
 
-    If `elementwise == True`, `len(synapses)` must match `size_in`, in
-        which case each synapse is applied separately to each dimension,
-        and so `size_out == size_in`.
+        If ``elementwise == True``, ``len(synapses)`` must match ``size_in``,
+        in which case each synapse is applied separately to each dimension,
+        and so ``size_out == size_in``.
 
-    The latter can be used to connect to a population of neurons with a
-    different synapse for each neuron.
+        The latter can be used to connect to a population of neurons with a
+        different synapse for each neuron. The former can be used to apply a
+        number of synapses to each dimension in state-space.
+    method : ``string``, optional
+        Method passed to :func:`.cont2discrete`. Defaults to ``'zoh'``.
+
+    See Also
+    --------
+    :class:`.LinearSystem`
+
+    Examples
+    --------
+    TODO: see notebook example.
     """
 
     def __init__(self, systems, dt=None, elementwise=False, method='zoh'):
@@ -69,13 +92,17 @@ class HeteroSynapse(object):
         self._x = np.zeros(len(self.A))[:, None]
 
     def __call__(self, t, u):
+        """Node function called by simulator on each time-step."""
         u = u[:, None] if self.elementwise else u[None, :]
         y = np.dot(self.C, self._x) + np.dot(self.D, u)
         self._x = np.dot(self.A, self._x) + np.dot(self.B, u)
         return self.to_vector(y)
 
     def to_vector(self, y):
+        """Inverse of ``from_vector``; flattens matrix into an output vector.
+        """
         return y.flatten(order='C')
 
     def from_vector(self, x):
+        """Inverse of ``to_vector``; recovers matrix from output vector."""
         return x.reshape(*self._x.shape, order='C')

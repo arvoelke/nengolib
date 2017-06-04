@@ -164,10 +164,10 @@ def balance(sys):
     >>> import matplotlib.pyplot as plt
     >>> length = 500
     >>> plt.subplot(211)
-    >>> plt.title("Impulse -- Before")
+    >>> plt.title("Impulse - Before")
     >>> plt.plot(before.ntrange(length), before.X.impulse(length))
     >>> plt.subplot(212)
-    >>> plt.title("Impulse -- After")
+    >>> plt.title("Impulse - After")
     >>> plt.plot(after.ntrange(length), after.X.impulse(length))
     >>> plt.xlabel("Time (s)")
     >>> plt.show()

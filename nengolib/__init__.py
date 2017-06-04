@@ -35,4 +35,4 @@ from . import processes  # this is a file, not a module
 from . import signal
 from . import stats
 from . import synapses
-from .synapses import LinearFilter, Lowpass, Alpha, HeteroSynapse
+from .synapses import Lowpass, Alpha, DoubleExp

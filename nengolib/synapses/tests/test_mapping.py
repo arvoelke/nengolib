@@ -16,11 +16,11 @@ def test_mapping(Simulator, plt, seed):
     isyn = 2/s  # scaled integrator
     dt = 0.001
 
-    ss = ss2sim(sys, syn)  # normal lowpass, continuous
+    ss = ss2sim(sys, syn, None)  # normal lowpass, continuous
     dss = ss2sim(sys, syn, dt)  # normal lowpass, discrete
-    gss = ss2sim(sys, gsyn)  # scaled lowpass, continuous
+    gss = ss2sim(sys, gsyn, None)  # scaled lowpass, continuous
     gdss = ss2sim(sys, gsyn, dt)  # scaled lowpass, discrete
-    iss = ss2sim(sys, isyn)  # scaled integrator, continuous
+    iss = ss2sim(sys, isyn, None)  # scaled integrator, continuous
     idss = ss2sim(sys, isyn, dt)  # scaled integrator, discrete
     assert ss.analog and gss.analog and iss.analog
     assert not (dss.analog or gdss.analog or idss.analog)
@@ -152,13 +152,13 @@ def test_unsupported_mapping():
     lpf = Lowpass(0.1)
 
     with pytest.raises(ValueError):
-        ss2sim(sys=lpf, synapse=Highpass(0.1))
+        ss2sim(sys=lpf, synapse=Highpass(0.1), dt=None)
 
     with pytest.raises(ValueError):
-        ss2sim(sys=~z, synapse=lpf)
+        ss2sim(sys=~z, synapse=lpf, dt=None)
 
     with pytest.raises(ValueError):
-        ss2sim(sys=lpf, synapse=~z)
+        ss2sim(sys=lpf, synapse=~z, dt=None)
 
     with pytest.raises(ValueError):
         ss2sim(sys=~z, synapse=~z, dt=1.)

@@ -8,3 +8,4 @@ Reference
    nengolib
    nengolib.signal
    nengolib.stats
+   nengolib.synapses

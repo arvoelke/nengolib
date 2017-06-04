@@ -236,10 +236,10 @@ def l1_norm(sys, rtol=1e-6, max_length=2**18):
     The L1-norm of a (BIBO stable) linear system is the integral of the
     absolute value of its impulse response. For unstable systems this will be
     infinite. The L1-norm is important because it bounds the worst-case
-    output of the system for arbitrary inputs within [-1, 1]. In fact,
+    output of the system for arbitrary inputs within ``[-1, 1]``. In fact,
     this worst-case output is achieved by reversing the input which alternates
-    between -1 and 1 during the intervals where the impulse response is
-    negative or positive, respectively (in the limit as T -> infinity).
+    between ``-1`` and ``1`` during the intervals where the impulse response is
+    negative or positive, respectively (in the limit as ``T -> infinity``).
 
     Algorithm adapted from [#]_ following the methods of [#]_. This works by
     iteratively refining lower and upper bounds using progressively longer

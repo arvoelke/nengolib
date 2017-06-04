@@ -1,46 +1,255 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import warnings
 from scipy.misc import pade, factorial
 
 from nengo.utils.compat import is_integer
 
-from nengolib.signal.system import LinearSystem
+from nengolib.signal.system import LinearSystem, s
 
 __all__ = [
-    'LinearFilter', 'Lowpass', 'Alpha', 'DoubleExp', 'Bandpass', 'Highpass',
-    'PadeDelay']
-
-
-def LinearFilter(num, den, analog=True):
-    # don't inherit from LinearSystem, otherwise we get its metaclass too
-    # what we really want to have is something that returns a LinearSystem
-    return LinearSystem((num, den), analog=analog)
+    'Lowpass', 'Alpha', 'DoubleExp', 'Bandpass', 'Highpass', 'PadeDelay']
 
 
 def Lowpass(tau):
-    return LinearFilter([1], [tau, 1])
+    """A first-order lowpass: ``1/(tau*s + 1)``.
+
+    Parameters
+    ----------
+    tau : ``float``
+        Time-constant of exponential decay.
+
+    Returns
+    -------
+    :class:`.LinearSystem`
+        First-order lowpass.
+
+    See Also
+    --------
+    :class:`nengo.Lowpass`
+    :attr:`.s`
+
+    Examples
+    --------
+    >>> from nengolib import Lowpass
+    >>> import matplotlib.pyplot as plt
+    >>> taus = np.linspace(.01, .05, 5)
+    >>> for tau in taus:
+    >>>     sys = Lowpass(tau)
+    >>>     plt.plot(sys.ntrange(100), sys.impulse(100),
+    >>>              label=r"$\\tau=%s$" % tau)
+    >>> plt.xlabel("Time (s)")
+    >>> plt.legend()
+    >>> plt.show()
+    """
+
+    return 1 / (tau*s + 1)
 
 
 def Alpha(tau):
-    return LinearFilter([1], [tau**2, 2*tau, 1])
+    """A second-order lowpass: ``1/(tau*s + 1)**2``.
+
+    Equivalent to convolving two identical lowpass synapses together.
+
+    Parameters
+    ----------
+    tau : ``float``
+        Time-constant of exponential decay.
+
+    Returns
+    -------
+    :class:`.LinearSystem`
+        Second-order lowpass with identical time-constants.
+
+    See Also
+    --------
+    :class:`nengo.Alpha`
+    :func:`.Lowpass`
+    :func:`.DoubleExp`
+
+    Examples
+    --------
+    >>> from nengolib import Alpha
+    >>> import matplotlib.pyplot as plt
+    >>> taus = np.linspace(.01, .05, 5)
+    >>> for tau in taus:
+    >>>     sys = Alpha(tau)
+    >>>     plt.plot(sys.ntrange(100), sys.impulse(100),
+    >>>              label=r"$\\tau=%s$" % tau)
+    >>> plt.xlabel("Time (s)")
+    >>> plt.legend()
+    >>> plt.show()
+    """
+
+    return DoubleExp(tau, tau)
 
 
 def DoubleExp(tau1, tau2):
-    return LinearFilter([1], [tau1*tau2, tau1 + tau2, 1])
+    """A second-order lowpass: ``1/((tau1*s + 1)*(tau2*s + 1))``.
+
+    Equivalent to convolving two lowpass synapses together with potentially
+    different time-constants, in either order.
+
+    Parameters
+    ----------
+    tau1 : ``float``
+        Time-constant of one exponential decay.
+    tau2 : ``float``
+        Time-constant of another exponential decay.
+
+    Returns
+    -------
+    :class:`.LinearSystem`
+        Second-order lowpass with potentially different time-constants.
+
+    See Also
+    --------
+    :func:`.Lowpass`
+    :func:`.Alpha`
+
+    Examples
+    --------
+    >>> from nengolib import DoubleExp
+    >>> import matplotlib.pyplot as plt
+    >>> tau1 = .03
+    >>> taus = np.linspace(.01, .05, 5)
+    >>> plt.title(r"$\\tau_1=%s$" % tau1)
+    >>> for tau2 in taus:
+    >>>     sys = DoubleExp(tau1, tau2)
+    >>>     plt.plot(sys.ntrange(100), sys.impulse(100),
+    >>>              label=r"$\\tau_2=%s$" % tau2)
+    >>> plt.xlabel("Time (s)")
+    >>> plt.legend()
+    >>> plt.show()
+    """
+
+    return Lowpass(tau1) * Lowpass(tau2)
 
 
 def Bandpass(freq, Q):
-    # http://www.analog.com/library/analogDialogue/archives/43-09/EDCh%208%20filter.pdf  # noqa: E501
+    """A second-order bandpass with given frequency and width.
+
+    Parameters
+    ----------
+    freq : ``float``
+        Frequency (in hertz) of the peak of the bandpass.
+    Q : ``float``
+        Inversely proportional to width of bandpass.
+
+    Returns
+    -------
+    :class:`.LinearSystem`
+        Second-order lowpass with complex poles.
+
+    See Also
+    --------
+    :func:`nengo.networks.Oscillator`
+
+    Notes
+    -----
+    The state of this system is isomorphic to a decaying 2--dimensional
+    oscillator with speed given by ``freq`` and decay given by ``Q``.
+
+    References
+    ----------
+    .. [#] http://www.analog.com/library/analogDialogue/archives/43-09/EDCh%208%20filter.pdf
+
+    Examples
+    --------
+    Bandpass filters centered around 20 Hz with varying bandwidths:
+
+    >>> from nengolib.synapses import Bandpass
+    >>> freq = 20
+    >>> Qs = np.linspace(4, 40, 5)
+
+    Evaluate each impulse (time-domain) response:
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.subplot(121)
+    >>> for Q in Qs:
+    >>>     sys = Bandpass(freq, Q)
+    >>>     plt.plot(sys.ntrange(1000), sys.impulse(1000),
+    >>>              label=r"$Q=%s$" % Q)
+    >>> plt.xlabel("Time (s)")
+    >>> plt.legend()
+
+    Evaluate each frequency responses:
+
+    >>> plt.subplot(122)
+    >>> freqs = np.linspace(0, 40, 100)  # to evaluate
+    >>> for Q in Qs:
+    >>>     sys = Bandpass(freq, Q)
+    >>>     plt.plot(freqs, np.abs(sys.evaluate(freqs)),
+    >>>              label=r"$Q=%s$" % Q)
+    >>> plt.xlabel("Frequency (Hz)")
+    >>> plt.legend()
+    >>> plt.show()
+
+    Evaluate each state-space impulse (trajectory) after balancing:
+
+    >>> from nengolib.signal import balance
+    >>> for Q in Qs:
+    >>>     plt.plot(*balance(Bandpass(freq, Q)).X.impulse(1000).T,
+    >>>              label=r"$Q=%s$" % Q)
+    >>> plt.legend()
+    >>> plt.axis('equal')
+    >>> plt.show()
+    """  # noqa: E501
+
     w_0 = freq * (2*np.pi)
-    return LinearFilter([1], [1./w_0**2, 1./(w_0*Q), 1])
+    return 1 / ((s/w_0)**2 + s/(w_0*Q) + 1)
 
 
 def Highpass(tau, order=1):
-    """Differentiated lowpass, raised to a given power."""
+    """A differentiated lowpass of given order: ``(tau*s/(tau*s + 1))**order``.
+
+    Equivalent to differentiating the input, scaling by ``tau``,
+    lowpass filtering with time-constant ``tau``, and finally repeating
+    this ``order`` times. The lowpass filter is required to make this causal.
+
+    Parameters
+    ----------
+    tau : ``float``
+        Time-constant of the lowpass filter, and highpass gain.
+    order : ``integer``, optional
+        Dimension of the resulting linear system. Defaults to ``1``.
+
+    Returns
+    -------
+    :class:`.LinearSystem`
+        Highpass filter with time-constant ``tau`` and dimension ``order``.
+
+    See Also
+    --------
+    :func:`.Lowpass`
+    :attr:`.s`
+
+    Examples
+    --------
+    >>> from nengolib.synapses import Highpass
+
+    Evaluate the highpass in the frequency domain with a time-constant of 10 ms
+    and with a variety of orders:
+
+    >>> tau = 1e-2
+    >>> orders = list(range(1, 9))
+    >>> freqs = np.linspace(0, 50, 100)  # to evaluate
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.title(r"$\\tau=%s$" % tau)
+    >>> for order in orders:
+    >>>     sys = Highpass(tau, order)
+    >>>     assert len(sys) == order
+    >>>     plt.plot(freqs, np.abs(sys.evaluate(freqs)),
+    >>>              label=r"order=%s" % order)
+    >>> plt.xlabel("Frequency (Hz)")
+    >>> plt.legend()
+    >>> plt.show()
+    """
+
     if order < 1 or not is_integer(order):
         raise ValueError("order (%s) must be integer >= 1" % order)
-    num, den = map(np.poly1d, ([tau, 0], [tau, 1]))
-    return LinearFilter(num**order, den**order)
+    return (tau*s * Lowpass(tau))**order
 
 
 def _passthrough_delay(m, c):
@@ -92,18 +301,72 @@ def _pade_delay(p, q, c):
     i = np.arange(1, p+q+1, dtype=np.float64)
     taylor = np.append([1.0], (-c)**i / factorial(i))
     num, den = pade(taylor, q)
-    return LinearFilter(num, den)
+    return LinearSystem((num, den))
 
 
-def PadeDelay(c, order, p=None):
-    """Linear filter for a finite approximation of a pure delay of c seconds.
+def PadeDelay(theta, order, p=None):
+    """A finite-order approximation of a pure time-delay.
 
-    The order is the degree of the denominator in the transfer function, also
-    known as q in the Pade approximation. Parameter p is the degree of the
-    numerator. If p is equal to q, then the system will have a passthrough.
-    If None (default), then p = q - 1. Either of these choices will be
-    significantly more accurate than other choices of p when q is large.
+    This is the optimal approximation for a time-delay system given
+    low-frequency inputs implemented using a finite-dimensional state.
+    This is achieved via Padé approximants. The state-space of the
+    system encodes a rolling window of input history
+    (see :class:`.RollingWindow`). This can be used to approximate
+    FIR filters and window functions in continuous time. [#]_
+
+    Parameters
+    ----------
+    theta : ``float``
+        Length of time-delay in seconds.
+    order : ``integer``
+        Order of approximation in the denominator
+        (dimensionality of resulting system).
+    p : ``integer``, optional
+        Order of approximation in the numerator. Defaults to ``p=order-1``,
+        since this gives the highest-order approximation without a passthrough.
+        If ``p=order``, then the system will have a passthrough, which has
+        a nonideal step response.
+
+    Returns
+    -------
+    :class:`.LinearSystem`
+        Finite-order approximation of a pure time-delay.
+
+    See Also
+    --------
+    :class:`.RollingWindow`
+    :func:`.DiscreteDelay`
+    :func:`scipy.misc.pade`
+
+    References
+    ----------
+    .. [#] A. R. Voelker and C. Eliasmith, "Improving spiking dynamical
+       networks: Accurate delays, higher-order synapses, and time cells",
+       2017, Submitted. [`URL <https://github.com/arvoelke/delay2017>`__]
+
+    Examples
+    --------
+    >>> from nengolib.synapses import PadeDelay
+
+    Delay 15 Hz band-limited white noise by 100 ms using various orders of
+    approximations:
+
+    >>> from nengolib.signal import z
+    >>> from nengo.processes import WhiteSignal
+    >>> import matplotlib.pyplot as plt
+    >>> process = WhiteSignal(10., high=15, y0=0)
+    >>> u = process.run_steps(500)
+    >>> t = process.ntrange(len(u))
+    >>> plt.plot(t, (z**-100).filt(u), linestyle='--', lw=4, label="Ideal")
+    >>> for order in list(range(4, 9)):
+    >>>     sys = PadeDelay(.1, order=order)
+    >>>     assert len(sys) == order
+    >>>     plt.plot(t, sys.filt(u), label="order=%s" % order)
+    >>> plt.xlabel("Time (s)")
+    >>> plt.legend()
+    >>> plt.show()
     """
+
     q = order
     if p is None:
         p = q - 1
@@ -114,11 +377,11 @@ def PadeDelay(c, order, p=None):
         raise ValueError("p (%s) must be integer >= 1" % p)
 
     if p == q:
-        return _passthrough_delay(p, c)
+        return _passthrough_delay(p, theta)
     elif p == q - 1:
-        return _proper_delay(q, c)
+        return _proper_delay(q, theta)
     else:
         if q >= 10:
             warnings.warn("For large values of q (>= 10), p should either be "
                           "None, q - 1, or q.")
-        return _pade_delay(p, q, c)
+        return _pade_delay(p, q, theta)

@@ -7,13 +7,14 @@ from nengo import Alpha as BaseAlpha
 from nengo.utils.testing import warns
 
 from nengolib.synapses.analog import (
-    Bandpass, Highpass, PadeDelay, LinearFilter, Lowpass, Alpha, DoubleExp,
+    Bandpass, Highpass, PadeDelay, Lowpass, Alpha, DoubleExp,
     _pade_delay, _passthrough_delay, _proper_delay)
-from nengolib.signal import sys_equal, s
+from nengolib.signal import sys_equal, s, LinearSystem
 
 
 def test_nengo_analogs():
-    assert sys_equal(BaseLinearFilter([1], [1, 0]), LinearFilter([1], [1, 0]))
+    assert sys_equal(BaseLinearFilter([1], [1, 0]),
+                     LinearSystem(([1], [1, 0])))
     assert sys_equal(BaseLowpass(0.1), Lowpass(0.1))
     assert sys_equal(BaseAlpha(0.1), Alpha(0.1))
     assert sys_equal(BaseAlpha(0.1), DoubleExp(0.1, 0.1))
@@ -23,6 +24,8 @@ def test_double_exp():
     tau1 = 0.005
     tau2 = 0.008
     sys = DoubleExp(tau1, tau2)
+
+    assert sys_equal(sys, ([1], [tau1*tau2, tau1 + tau2, 1]))
 
     assert sys == Lowpass(tau1) * Lowpass(tau2)
     assert sys == 1 / ((tau1*s + 1) * (tau2*s + 1))
@@ -34,6 +37,9 @@ def test_double_exp():
 @pytest.mark.parametrize("freq,Q", [(5, 2), (50, 50), (200, 4)])
 def test_bandpass(freq, Q):
     sys = Bandpass(freq, Q)
+
+    w_0 = freq * (2*np.pi)
+    assert sys_equal(sys, ([1], [1./w_0**2, 1./(w_0*Q), 1]))
 
     length = 10000
     dt = 0.0001
@@ -50,6 +56,9 @@ def test_bandpass(freq, Q):
 @pytest.mark.parametrize("tau,order", [(0.01, 1), (0.2, 2), (0.0001, 5)])
 def test_highpass(tau, order):
     sys = Highpass(tau, order)
+
+    num, den = map(np.poly1d, ([tau, 0], [tau, 1]))
+    assert sys_equal(sys, LinearSystem((num**order, den**order)))
 
     length = 1000
     dt = 0.001
