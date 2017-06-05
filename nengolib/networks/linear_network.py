@@ -17,10 +17,12 @@ __all__ = ['LinearNetwork', 'default_realizer']
 
 
 class LinearNetwork(Network):
-    """Network implementing a linear time-invariant (LTI) system."""
+    """Network implementing a linear time-invariant (LTI) system.
 
-    # TODO: document the fact that 'radii' is a misnomer because the encoders
-    # are on a hypercube, not a hypersphere (and for tractibility reasons).
+    See Also
+    --------
+    :class:`.Network`
+    """
 
     synapse = SynapseParam('synapse')
     input_synapse = SynapseParam('input_synapse', optional=True)
@@ -65,6 +67,7 @@ class LinearNetwork(Network):
 
         # Obtain state-space transformation and realization
         self.realizer_result = self.realizer(self.sys, self.radii)
+        self.realization = self.realizer_result.realization  # convenience
 
         # Map the system onto the synapse
         mapped = ss2sim(

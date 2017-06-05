@@ -1,6 +1,11 @@
+.. currentmodule:: nengolib.synapses
+
 nengolib\.synapses\.PadeDelay
 =============================
 
-.. currentmodule:: nengolib.synapses
-
 .. autofunction:: nengolib.synapses.PadeDelay
+
+nengolib\.synapses\.pade\_delay\_error
+======================================
+
+.. autofunction:: nengolib.synapses.pade_delay_error

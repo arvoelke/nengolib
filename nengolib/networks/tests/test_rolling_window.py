@@ -135,11 +135,11 @@ def test_window_example(Simulator, seed, plt):
         nengo.Connection(stim, rw_rate.input, synapse=None)
         nengo.Connection(stim, rw_drct.input, synapse=None)
 
-        delay_rate = rw_rate.add_output('delay', t=1)
+        delay_rate = rw_rate.add_output(t=1)
         delay_drct = rw_drct.output  # rw_drct.add_output('delay', t=1)
 
-        output_rate = rw_rate.add_output('nonlinear', function=function)
-        output_drct = rw_drct.add_output('nonlinear', function=function)
+        output_rate = rw_rate.add_output(function=function)
+        output_drct = rw_drct.add_output(function=function)
 
         p_stim = nengo.Probe(stim, synapse=tau_probe)
         p_delay_rate = nengo.Probe(delay_rate, synapse=tau_probe)

@@ -7,7 +7,7 @@ from nengo import Alpha as BaseAlpha
 from nengo.utils.testing import warns
 
 from nengolib.synapses.analog import (
-    Bandpass, Highpass, PadeDelay, Lowpass, Alpha, DoubleExp,
+    Bandpass, Highpass, pade_delay_error, PadeDelay, Lowpass, Alpha, DoubleExp,
     _pade_delay, _passthrough_delay, _proper_delay)
 from nengolib.signal import sys_equal, s, LinearSystem
 
@@ -91,6 +91,25 @@ def test_pade_delay(c):
     atol = int(0.1*c/dt)  # allow 10% margin of error
     assert np.allclose(
         (np.argmax(response[offset:])+offset), int(c/dt), atol=atol)
+
+
+def test_pade_error(plt):
+    assert np.allclose(pade_delay_error(0, order=2), 0)
+    assert np.allclose(abs(pade_delay_error(1e5, order=12)), 1)
+
+    # Monotonically decreasing in order
+    # Note: these constants appear in examples
+    assert np.allclose(abs(pade_delay_error(1, order=5)), 0.066858, atol=1e-6)
+    assert np.allclose(abs(pade_delay_error(1, order=6)), 0.007035, atol=1e-6)
+    assert np.allclose(abs(pade_delay_error(1, order=7)), 0.000476, atol=1e-6)
+
+    # Monotonically increasing in theta_times_freq
+    # (until it oscillates around 1 <-- not part of unit test)
+    ttf = np.linspace(0, 2, 100)
+    for order in (6, 12, 18):
+        error = np.abs(pade_delay_error(ttf, order=order))
+        plt.plot(error)
+        assert np.all(np.diff(error) > -1e-13), order
 
 
 @pytest.mark.parametrize("p", [1, 2, 3])

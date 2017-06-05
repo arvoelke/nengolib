@@ -53,8 +53,11 @@ def test_invalid_realize():
 def test_identity(radii):
     sys = Alpha(0.1)
 
+    identity = Identity()
+    assert repr(identity) == "Identity()"
+
     I = np.eye(len(sys))
-    realize_result = Identity()(sys, radii)
+    realize_result = identity(sys, radii)
     assert realize_result.sys is sys
     assert np.allclose(realize_result.T, I * radii)
     assert np.allclose(realize_result.Tinv, inv(I * radii))
@@ -77,7 +80,11 @@ def test_identity(radii):
 @pytest.mark.parametrize("sys", [PadeDelay(0.1, 4), PadeDelay(0.05, 5, 5)])
 def test_balreal_normalization(sys):
     radii = np.arange(len(sys)) + 1
-    realizer_result = Balanced()(sys, radii)
+
+    balanced = Balanced()
+    assert repr(balanced) == "Balanced()"
+
+    realizer_result = balanced(sys, radii)
 
     T, Tinv, _ = balanced_transformation(sys)
 
@@ -126,6 +133,11 @@ def _test_normalization(Simulator, sys, rng, realizer, l1_lower,
     worst_x = np.max(abs(sim.data[p]), axis=0)
     assert (lower <= worst_x + eps).all()
     assert (worst_x <= 1 + eps).all()
+
+
+def test_l1_repr():
+    assert (repr(L1Norm(rtol=.1, max_length=10)) ==
+            "L1Norm(rtol=0.1, max_length=10)")
 
 
 @pytest.mark.parametrize("sys,lower", [

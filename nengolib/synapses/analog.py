@@ -8,7 +8,8 @@ from nengo.utils.compat import is_integer
 from nengolib.signal.system import LinearSystem, s
 
 __all__ = [
-    'Lowpass', 'Alpha', 'DoubleExp', 'Bandpass', 'Highpass', 'PadeDelay']
+    'Lowpass', 'Alpha', 'DoubleExp', 'Bandpass', 'Highpass',
+    'pade_delay_error', 'PadeDelay']
 
 
 def Lowpass(tau):
@@ -304,15 +305,88 @@ def _pade_delay(p, q, c):
     return LinearSystem((num, den))
 
 
+def pade_delay_error(theta_times_freq, order, p=None):
+    """Computes the approximation error in :func:`.PadeDelay`.
+
+    For a given order, the difficulty of the delay is a function of the
+    input frequency (:math:`s = 2j \\pi f`) times the delay length
+    (:math:`\\theta`).
+
+    Parameters
+    ----------
+    theta_times_freq : ``array_like``
+        A float or array of floats (delay length times frequency) at which to
+        evaluate the error.
+    order : ``integer``
+        ``order`` parameter passed to :func:`.PadeDelay`.
+    p : ``integer``, optional
+        ``p`` parameter passed to :func:`.PadeDelay`. Defaults to ``None``.
+
+    Returns
+    -------
+    ``np.array`` of ``np.complex``
+        Shaped like ``theta_times_freq``, with each element corresponding
+        to the complex error term
+
+        .. math::
+
+            F(2j \\pi f) - e^{-\\theta \\times 2j \\pi f}
+
+        where :math:`F(s)` is the transfer function constructed by
+        :func:`.PadeDelay` for a delay of length :math:`\\theta`.
+
+    See Also
+    --------
+    :func:`.PadeDelay`
+
+    Examples
+    --------
+    >>> from nengolib.synapses import pade_delay_error
+    >>> abs(pade_delay_error(1, order=6))
+    0.0070350205992081461
+
+    This means that for ``order=6`` and frequencies less than ``1/theta``,
+    the approximation error is less than one percent!
+
+    Now visualize the error across a range of frequencies, with various orders:
+
+    >>> import matplotlib.pyplot as plt
+    >>> freq_times_theta = np.linspace(0, 5, 1000)
+    >>> for order in range(4, 9):
+    >>>     plt.plot(freq_times_theta,
+    >>>              abs(pade_delay_error(freq_times_theta, order=order)),
+    >>>              label="order=%s" % order)
+    >>> plt.xlabel(r"Frequency $\\times \\, \\theta$ (Unitless)")
+    >>> plt.ylabel("Absolute Error")
+    >>> plt.legend()
+    >>> plt.show()
+    """
+
+    ttf = np.asarray(theta_times_freq)
+    # switch to a delay of 1 for simplicity
+    # this works due to the substitution of variables: theta*s <-> 1*s'
+    sys = PadeDelay(1., order, p=p)
+    return sys.evaluate(ttf) - np.exp(-2j*np.pi*ttf)
+
+
 def PadeDelay(theta, order, p=None):
     """A finite-order approximation of a pure time-delay.
+
+    Implements the transfer function:
+
+    .. math::
+
+       F(s) = e^{-\\theta s} + \\mathcal{O}(s^{\\texttt{order}+\\texttt{p}})
+
+    or :math:`y(t) \\approx u(t - \\theta)` in the time-domain (for
+    slowly changing inputs).
 
     This is the optimal approximation for a time-delay system given
     low-frequency inputs implemented using a finite-dimensional state.
     This is achieved via Padé approximants. The state-space of the
     system encodes a rolling window of input history
     (see :class:`.RollingWindow`). This can be used to approximate
-    FIR filters and window functions in continuous time. [#]_
+    FIR filters and window functions in continuous time.
 
     Parameters
     ----------
@@ -334,9 +408,14 @@ def PadeDelay(theta, order, p=None):
 
     See Also
     --------
+    :func:`.pade_delay_error`
     :class:`.RollingWindow`
     :func:`.DiscreteDelay`
     :func:`scipy.misc.pade`
+
+    Notes
+    -----
+    Closed-form derivations are found in [#]_.
 
     References
     ----------

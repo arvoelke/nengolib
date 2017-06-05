@@ -33,6 +33,7 @@ Theory
    :toctree:
 
    ss2sim
+   pade_delay_error
 
 Components
 ----------

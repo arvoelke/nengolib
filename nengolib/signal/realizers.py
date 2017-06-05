@@ -65,6 +65,9 @@ class AbstractRealizer(object):
     The given radii should be with respect to the realized state-space.
     """
 
+    def __repr__(self):
+        return "%s()" % (type(self).__name__)
+
     def __call__(self, sys, radii=1):
         """Produces a :class:`.RealizerResult`."""
         raise NotImplementedError("realizer must be callable")
@@ -110,16 +113,17 @@ class Balanced(AbstractRealizer):
 class Hankel(AbstractRealizer):
     """Scaled realization given by the Hankel singular values.
 
-    This (generously) bounds the worst-case state vector by the given radii.
-    Thus, the radii that are given should be much smaller than the actual
-    desired radius in order to compensate.
+    This (generously) bounds the worst-case state vector by the given
+    ``radii``. Thus, the ``radii`` that are given should be much smaller than
+    the actual desired radius in order to compensate.
 
-    The worst-case output is given by the L1-norm of a system which in turn is
-    bounded by 2 times the sum of the Hankel singular values [#]_.
+    The worst-case output is given by the :func:`.l1_norm` of a system which
+    in turn is bounded by 2 times the sum of the Hankel singular values. [#]_
 
     See Also
     --------
     :func:`.hsvd`
+    :class:`.L1Norm`
     :class:`.Balanced`
     :class:`.LinearNetwork`
 
@@ -163,6 +167,10 @@ class L1Norm(AbstractRealizer):
         self.rtol = rtol
         self.max_length = max_length
         super(L1Norm, self).__init__()
+
+    def __repr__(self):
+        return "%s(rtol=%r, max_length=%r)" % (
+            type(self).__name__, self.rtol, self.max_length)
 
     def __call__(self, sys, radii=1):
         """Produces a :class:`.RealizerResult` scaled by the ``radii``."""
