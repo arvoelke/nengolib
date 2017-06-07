@@ -48,15 +48,14 @@ def test_linear_network(Simulator, plt, seed, rng, neuron_type, atol, atol_x):
         assert subnet.output_synapse is None
 
         p_input = nengo.Probe(subnet.input, synapse=tau_probe)
-        p_x = nengo.Probe(subnet.x.output, synapse=tau_probe)
+        p_x = nengo.Probe(subnet.state.output, synapse=tau_probe)
         p_output = nengo.Probe(subnet.output, synapse=tau_probe)
 
     with Simulator(model, dt=dt) as sim:
         sim.run(T)
 
     ideal_output = shift(sys.filt(sim.data[p_input]))
-    ideal_x = shift(subnet.realizer_result.realization.X.filt(
-        sim.data[p_input]))
+    ideal_x = shift(subnet.realization.X.filt(sim.data[p_input]))
 
     plt.plot(sim.trange(), sim.data[p_input], label="Input", alpha=0.5)
     plt.plot(sim.trange(), sim.data[p_output], label="Actual y", alpha=0.5)
@@ -200,7 +199,7 @@ def test_radii(Simulator, seed, plt):
                                radii=radii, realizer=Identity(),
                                neuron_type=nengo.neurons.Direct())
         nengo.Connection(stim, subnet.input, synapse=None)
-        p = nengo.Probe(subnet.x.output, synapse=None)
+        p = nengo.Probe(subnet.state.output, synapse=None)
 
     with Simulator(model, dt=dt) as sim:
         sim.run(T)

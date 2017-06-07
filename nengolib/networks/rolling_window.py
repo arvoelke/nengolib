@@ -79,6 +79,9 @@ class RollingWindow(LinearNetwork):
         Defaults to :class:`nengo.solvers.LstsqL2` (with ``reg=1e-3``).
     **kwargs : ``dictionary``, optional
         Additional keyword arguments passed to :class:`.LinearNetwork`.
+        Those that fall under the heading of ``**ens_kwargs`` will be
+        passed to the :class:`nengo.Ensemble` that represents the
+        :attr:`.state`.
 
     See Also
     --------
@@ -229,11 +232,6 @@ class RollingWindow(LinearNetwork):
         output = nengo.Node(size_in=self.size_state)
         nengo.Connection(self.state, output, synapse=None, solver=solver)
         return self.state, output
-
-    @property
-    def state(self):
-        """Ensemble representing the low-dimensional state of the window."""
-        return self._state
 
     def canonical_basis(self, t=t_default):
         """Temporal basis functions for PadeDelay in canonical form."""

@@ -37,8 +37,8 @@ Types
 
         .. math::
 
-           \dot{{\bf x}} &= A{\bf x} + B{\bf u} \\
-                 {\bf y} &= C{\bf x} + D{\bf u}
+           \dot{{\bf x}}(t) &= A{\bf x}(t) + B{\bf u}(t) \\
+                 {\bf y}(t) &= C{\bf x}(t) + D{\bf u}(t)
 
         This has the transfer function :math:`F(s) = C (sI - A)^{-1} B + D`.
 

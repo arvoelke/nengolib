@@ -110,7 +110,7 @@ def _test_normalization(Simulator, sys, rng, realizer, l1_lower,
                                radii=radius, realizer=realizer,
                                neuron_type=nengo.neurons.Direct())
         nengo.Connection(stim, subnet.input, synapse=None)
-        p = nengo.Probe(subnet.x.output, synapse=None)
+        p = nengo.Probe(subnet.state.output, synapse=None)
 
         assert np.allclose(inv(subnet.realizer_result.T),
                            subnet.realizer_result.Tinv)
