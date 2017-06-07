@@ -19,10 +19,9 @@ Installation
 
 `Nengolib <https://github.com/arvoelke/nengolib/>`_
 is tested against Python 2.7, 3.4, 3.5, and 3.6, and `Nengo`_
-2.1.0, 2.2.0, 2.3.0, 2.4.0, and its development branch.
+2.1.0, 2.2.0, 2.3.0, and 2.4.0.
 The `Nengo GUI <https://github.com/nengo/nengo_gui>`_ is not officially
 supported.
-
 To install::
 
     pip install nengolib
