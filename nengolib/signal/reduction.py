@@ -9,8 +9,6 @@ from nengolib.signal.system import sys2zpk, LinearSystem
 
 __all__ = ['pole_zero_cancel', 'modred', 'balance', 'balred']
 
-# TODO: reference linear_model_reduction.ipynb in auto-generated docs
-
 
 def pole_zero_cancel(sys, tol=1e-8):
     """Pole/zero cancellation within a given tolerance.
@@ -37,6 +35,9 @@ def pole_zero_cancel(sys, tol=1e-8):
 
     Examples
     --------
+    See :doc:`notebooks.research.linear_model_reduction` for a notebook
+    example.
+
     >>> from nengolib.signal import pole_zero_cancel, s
     >>> sys = (s - 1) / ((s - 1) * (s + 1))
     >>> assert pole_zero_cancel(sys) == 1 / (s + 1)
@@ -85,6 +86,11 @@ def modred(sys, keep_states, method='del'):
     References
     ----------
     .. [#] http://www.mathworks.com/help/control/ref/modred.html
+
+    Examples
+    --------
+    See :doc:`notebooks.research.linear_model_reduction` for a notebook
+    example.
     """
 
     sys = LinearSystem(sys)
@@ -155,6 +161,9 @@ def balance(sys):
 
     Examples
     --------
+    See :doc:`notebooks.research.linear_model_reduction` for a notebook
+    example.
+
     >>> from nengolib.signal import balance, s
     >>> before = 10 / ((s + 10) * (s + 20) * (s + 30) * (s + 40))
     >>> after = balance(before)
@@ -203,6 +212,11 @@ def balred(sys, order, method='del'):
     References
     ----------
     .. [#] https://www.mathworks.com/help/control/ref/balred.html
+
+    Examples
+    --------
+    See :doc:`notebooks.research.linear_model_reduction` for a notebook
+    example.
     """
 
     sys = LinearSystem(sys)

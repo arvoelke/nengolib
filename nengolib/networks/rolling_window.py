@@ -54,8 +54,8 @@ class RollingWindow(LinearNetwork):
         Used to optimize the lengths of axis-aligned ``encoders`` and
         the distribution of ``eval_points``.
         If ``None``, then will use the defaults of uniform unit-length
-        ``encoders`` and uniformly distributed ``eval_points``, which is
-        strongly ill-advised unless you know what you are doing!
+        ``encoders`` and uniformly distributed ``eval_points``, which
+        usually gives sub-optimal performance.
     dimensions : ``integer``, optional
         Order of :func:`.PadeDelay`, or dimensionality of the state vector.
         Defaults to ``6``, which has an approximation error of less than
@@ -99,6 +99,11 @@ class RollingWindow(LinearNetwork):
     and :class:`.Encoders`), with support for decoding nonlinear functions
     from the state of the network. [#]_
 
+    Function are decoded from the window by evaluating the state-space
+    at arbitrary points (as usual in Nengo), and linearly projecting them onto
+    basis functions to express each point as a sampled window representation.
+    See :func:`.add_output` for details.
+
     References
     ----------
     .. [#] A. R. Voelker and C. Eliasmith, "Improving spiking dynamical
@@ -107,6 +112,8 @@ class RollingWindow(LinearNetwork):
 
     Examples
     --------
+    See :doc:`notebooks.examples.rolling_window` for a notebook example.
+
     >>> from nengolib.networks import RollingWindow, t_default
 
     Approximate the maximum of a window of width 50 ms, as well as a sampling

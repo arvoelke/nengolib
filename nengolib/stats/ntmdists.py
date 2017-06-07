@@ -322,6 +322,9 @@ class ScatteredHypersphere(UniformHypersphere):
     squared, making this useful as a means for sampling ``eval_points`` and
     ``encoders`` in Nengo.
 
+    See :doc:`notebooks.research.sampling_high_dimensional_vectors` for
+    mathematical details.
+
     Parameters
     ----------
     surface : ``boolean``

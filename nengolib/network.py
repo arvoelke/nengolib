@@ -32,6 +32,10 @@ class Network(BaseNetwork):
     :attr:`.ball`
     :attr:`.sphere`
     :class:`.PerfectLIF`
+
+    Examples
+    --------
+    See :doc:`notebooks.examples.network` for a notebook example.
     """
 
     def __init__(self, *args, **kwargs):

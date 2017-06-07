@@ -68,6 +68,8 @@ def ss2sim(sys, synapse, dt):
 
     Examples
     --------
+    See :doc:`notebooks.research.discrete_comparison` for a notebook example.
+
     >>> from nengolib.synapses import ss2sim, PadeDelay
 
     Map the state of a balanced :func:`PadeDelay` onto a lowpass synapse:
@@ -101,7 +103,6 @@ def ss2sim(sys, synapse, dt):
     >>> import matplotlib.pyplot as plt
     >>> plt.plot(sim.trange(), target, linestyle='--', lw=4)
     >>> plt.plot(sim.trange(), sim.data[p_actual], alpha=.5)
-    >>> plt.legend()
     >>> plt.show()
     """
 

@@ -8,7 +8,7 @@ Additional extensions and tools for modelling dynamical systems in
 .. toctree::
    :maxdepth: 2
 
-   examples
+   notebooks
    reference
    success
    license

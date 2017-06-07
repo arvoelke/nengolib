@@ -8,7 +8,8 @@ from nengo.utils.ipython import export_py, load_notebook
 from nengo.utils.stdlib import execfile
 
 _notebookdir = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), os.pardir, os.pardir, 'doc', 'notebooks'))
+    os.path.dirname(__file__), os.pardir, os.pardir, 'docs', 'notebooks'))
+assert os.path.isdir(_notebookdir)
 
 _nbfiles = []
 for root, dirs, fnames in os.walk(_notebookdir, topdown=True):

@@ -46,7 +46,7 @@ class HeteroSynapse(object):
 
     Examples
     --------
-    TODO: see notebook example.
+    See :doc:`notebooks.examples.hetero_synapse` for a notebook example.
     """
 
     def __init__(self, systems, dt=None, elementwise=False, method='zoh'):

@@ -3,6 +3,7 @@
 # NengoLib documentation build configuration file, created by
 # sphinx-quickstart on Mon May 22 13:35:46 2017.
 
+import nengo
 import nengolib
 
 import inspect
@@ -32,7 +33,8 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.linkcode',
     'sphinx.ext.mathjax',
-    'sphinx.ext.githubpages'
+    'sphinx.ext.githubpages',
+    'nengo.utils.docutils',
 ]
 
 # -- sphinx.ext.autodoc
