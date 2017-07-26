@@ -27,3 +27,11 @@ table.docutils td {
 div.figure {
     margin-right: 250px;
 }
+
+div#notebook p, div#notebook li {
+    font-size: 17px;
+}
+
+div#notebook code, div#notebook pre {
+    font-size: 15.3px;
+}
