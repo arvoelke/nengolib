@@ -1,6 +1,8 @@
+import warnings
+
 import numpy as np
 from scipy.linalg import (solve_lyapunov, solve_discrete_lyapunov, eig,
-                          cholesky, svd)
+                          cholesky, svd, eigvalsh)
 from scipy.optimize import fminbound
 
 from nengolib.signal.discrete import cont2discrete
@@ -175,6 +177,22 @@ def balanced_transformation(sys):
 
     R = control_gram(sys)
     O = observe_gram(sys)
+
+    def force_positive_definite(M, neg_tol=1e-9, eps=1e-19):
+        eig = np.min(eigvalsh(M))
+        if -neg_tol < eig < 0:
+            cond = eps - eig
+            warnings.warn("Conditioning matrix by adding %s to diagonal due "
+                          "to rounding errors" % cond)
+            M += np.eye(len(M)) * cond
+        return M
+
+    # Mathematically R and O should be positive definite.
+    # However, due to possible rounding errors in control_gram
+    # and observe_gram this will not always be the case.
+    # Also see https://github.com/scikit-learn/scikit-learn/issues/8252
+    R = force_positive_definite(R)
+    O = force_positive_definite(O)
 
     LR = cholesky(R, lower=True)
     LO = cholesky(O, lower=True)
