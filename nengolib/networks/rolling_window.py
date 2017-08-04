@@ -316,7 +316,7 @@ class RollingWindow(LinearNetwork):
 
         .. math::
 
-           f({\\bf w}) = \\sum_{i=1}^{d} f_i ({\\bf v}_i \\cdot {\\bf w})
+           f({\\bf w}) = \\sum_{i=0}^{q-1} f_i ({\\bf v}_i \\cdot {\\bf w})
 
         where :math:`{\\bf w}` is some history, :math:`{\\bf v}_i` are the
         columns of :func:`.inverse_basis`, and each :math:`f_i` is some
