@@ -191,3 +191,5 @@ html_sidebars = {
 }
 
 html_static_path = ['static']
+
+html_favicon = 'logo.ico'
