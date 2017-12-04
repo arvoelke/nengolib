@@ -31,6 +31,14 @@ matrix:
         PYTHON="2.7"
         NENGO=""
         PIP_DEPS="$PIP_DEPS nengo==2.4.0"
+    - env:
+        PYTHON="2.7"
+        NENGO=""
+        PIP_DEPS="$PIP_DEPS nengo==2.5.0"
+    - env:
+        PYTHON="2.7"
+        NENGO=""
+        PIP_DEPS="$PIP_DEPS nengo==2.6.0"
         NUMPY="1.12.0"
         SCIPY="0.19.0"
     - env:
@@ -55,10 +63,12 @@ matrix:
         PYTHON="3.4"
     - env:
         PYTHON="3.5"
-    - env:
-        PYTHON="3.6"
         NUMPY="1.12.0"
         SCIPY="0.19.0"
+    - env:
+        PYTHON="3.6"
+        NUMPY="1.13.3"
+        SCIPY="1.0.0"
 
 # Setup Miniconda
 before_install:

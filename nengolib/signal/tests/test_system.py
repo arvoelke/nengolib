@@ -113,7 +113,7 @@ def test_canonical():
 
     assert sys_equal(osys, sys)
     assert ss_equal(osys,
-                    ([[-20, 1], [-100, 0]], [[0], [100]], [[1, 0]],  [[0]]))
+                    ([[-20, 1], [-100, 0]], [[0], [100]], [[1, 0]], [[0]]))
 
 
 def test_is_stable():
