@@ -1,6 +1,9 @@
 import numpy as np
-from scipy.linalg import (solve_lyapunov, solve_discrete_lyapunov, eig,
-                          cholesky, svd)
+try:
+    from scipy.linalg import solve_lyapunov as solve_continuous_lyapunov
+except ImportError:  # pragma: no cover; github.com/scipy/scipy/pull/8082
+    from scipy.linalg import solve_continuous_lyapunov
+from scipy.linalg import solve_discrete_lyapunov, eig, cholesky, svd
 from scipy.optimize import fminbound
 
 from nengolib.signal.discrete import cont2discrete
@@ -14,7 +17,7 @@ __all__ = ['state_norm', 'control_gram', 'observe_gram',
 def _H2P(A, B, analog):
     """Computes the positive-definite P matrix for determining the H2-norm."""
     if analog:
-        P = solve_lyapunov(A, -np.dot(B, B.T))  # AP + PA^T = -BB^T
+        P = solve_continuous_lyapunov(A, -np.dot(B, B.T))  # AP + PA^T = -BB^T
     else:
         # Note: discretization is not performed for the user
         P = solve_discrete_lyapunov(A, np.dot(B, B.T))  # APA^T - P = -BB^T
@@ -306,7 +309,7 @@ def l1_norm(sys, rtol=1e-6, max_length=2**18):
     # Note this should be tighter than 2*sum(abs(hankel(sys)))
     def _normtail(sig, A, x, C):
         # observability gramiam when A perturbed by sig
-        W = solve_lyapunov(A.T + sig*np.eye(len(A)), -C.T.dot(C))
+        W = solve_continuous_lyapunov(A.T + sig*np.eye(len(A)), -C.T.dot(C))
         return np.sqrt(x.dot(W).dot(x.T) / 2 / sig)  # eq (39)
 
     xtol = -alpha * 1e-4
@@ -337,11 +340,13 @@ def l1_norm(sys, rtol=1e-6, max_length=2**18):
         x = _state_impulse(Phi, x0=B, k=N, delay=0)  # eq (38)
         abs_e = np.squeeze(abs(C.dot(x.T)))
         x = x[:-1]  # compensate for computing where thresholds crossed
+        abs_y = abs_y[:-1]  # compensate for computing where thresholds crossed
 
         # find intervals that could have zero-crossings and adjust their
         # upper bounds (the lower bound is exact for the other intervals)
         CTC = C.T.dot(C)
-        W = solve_lyapunov(A.T, Phi.T.dot(CTC).dot(Phi) - CTC)  # eq (36)
+        W = solve_continuous_lyapunov(
+            A.T, Phi.T.dot(CTC).dot(Phi) - CTC)  # eq (36)
         AWA = A.T.dot(W.dot(A))
         thresh = np.squeeze(  # eq (41)
             np.sqrt(dt * np.sum(x.dot(AWA) * x, axis=1)))
