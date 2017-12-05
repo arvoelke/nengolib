@@ -1,0 +1,23 @@
+global-include *.py
+
+# Ensure that we can recreate source distributions and documentation
+include MANIFEST.in
+include *.rst
+
+# Directories to include
+graft docs
+graft docs/notebooks
+graft docs/notebooks/examples
+graft docs/notebooks/research
+graft docs/static
+
+# Subdirectories to exclude, if they exist
+prune docs/build
+prune dist
+
+# Patterns to exclude from any directory
+global-exclude *.git*
+global-exclude *-checkpoint.ipynb
+
+# Exclude all bytecode
+global-exclude *.pyc *.pyo *.pyd
