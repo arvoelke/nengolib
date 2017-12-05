@@ -3,7 +3,7 @@ License
 *******
 
 Nengolib inherits the
-`license of Nengo <https://pythonhosted.org/nengo/license.html>`_,
+`license of Nengo <https://www.nengo.ai/nengo/license.html>`_,
 which is "made available under a proprietary license that permits
 using, copying, sharing, and making derivative works
 from Nengo and its source code for any non-commercial purpose".

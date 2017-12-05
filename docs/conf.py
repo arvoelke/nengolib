@@ -47,7 +47,7 @@ intersphinx_mapping = {
     'numpy': ('https://docs.scipy.org/doc/numpy', None),
     'python': ('https://docs.python.org/3/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
-    'nengo': ('https://pythonhosted.org/nengo', None),
+    'nengo': ('https://www.nengo.ai/nengo/', None),
 }
 
 # -- numpydoc

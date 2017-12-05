@@ -5,7 +5,7 @@
 Thanks
 ======
 
-.. include:: ../THANKS.txt
+.. include:: ../THANKS.rst
 
 Disclaimer
 ==========
