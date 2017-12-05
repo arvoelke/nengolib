@@ -18,6 +18,7 @@ prune dist
 # Patterns to exclude from any directory
 global-exclude *.git*
 global-exclude *-checkpoint.ipynb
+global-exclude *.swp
 
 # Exclude all bytecode
 global-exclude *.pyc *.pyo *.pyd
