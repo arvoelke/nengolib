@@ -1,7 +1,7 @@
 Building the documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-From the root directory of ``nengolib`` run:
+From the root directory of ``nengolib`` run::
 
     pip install -r docs/requirements.txt
     python setup.py build_sphinx

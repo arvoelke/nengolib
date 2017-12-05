@@ -5,6 +5,8 @@ Release History
 0.4.1 (unreleased)
 ==================
 
+Tested against Nengo versions 2.1.0-2.6.0.
+
 **Fixed**
 
 - Compatible with newest SciPy release (1.0.0).
@@ -14,3 +16,4 @@ Release History
 =====================
 
 Initial beta release of nengolib.
+Tested against Nengo versions 2.1.0-2.4.0.
