@@ -1,14 +1,21 @@
-### Building the documentation
+Building the documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-From the root directory of `nengolib` run:
-```
-python setup.py build_sphinx
-```
+From the root directory of ``nengolib`` run:
 
-### Uploading the documentation
+    pip install -r docs/requirements.txt
+    python setup.py build_sphinx
 
-Clone `https://github.com/arvoelke/nengolib-docs`.
+To render the Jupyter notebooks, you may also need to install ``Pandoc``,
+e.g., by running::
 
-Copy the contents of `nengolib/docs/build/html/*` to `nengolib-docs/*`.
+    sudo apt-get install pandoc
 
-Within `nengolib-docs`, commit and push the changes.
+Uploading the documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Clone ``https://github.com/arvoelke/nengolib-docs``.
+
+Copy the contents of ``nengolib/docs/build/html/*`` to ``nengolib-docs/*``.
+
+Within ``nengolib-docs``, commit and push the changes.
