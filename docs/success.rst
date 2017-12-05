@@ -5,6 +5,14 @@ Success stories
 Nengolib has been used successfully for several peer-reviewed publications and
 self-published projects. We highlight these applications below:
 
+* Aaron R. Voelker and Chris Eliasmith, "Methods for applying the Neural
+  Engineering Framework to neuromorphic hardware", arXiv preprint
+  arXiv:1708.08133, 2017.
+
+    [`Paper <https://arxiv.org/abs/1708.08133>`__]
+    Provides a theoretical overview of the math leveraged by :func:`.ss2sim`
+    and its related extensions.
+
 * Travis DeWolf. "Improving neural models by compensating for discrete rather
   than continuous filter dynamics when simulating on digital systems", 05 2017.
 
@@ -24,9 +32,10 @@ self-published projects. We highlight these applications below:
     a mixed-analog-digital neuromorphic architecture.
 
 * Aaron R. Voelker and Chris Eliasmith, "Improving spiking dynamical networks:
-  Accurate delays, higher-order synapses, and time cells", 2017, Submitted.
+  Accurate delays, higher-order synapses, and time cells", Neural Computation
+  (preprint), accepted 09 2017.
 
-    [`PDF <https://github.com/arvoelke/delay2017/raw/master/delay2017.compressed.pdf>`__]
+    [`PDF <https://github.com/arvoelke/delay2017/raw/master/NECO-04-17-2838-Source.pdf>`__]
     [`Code <https://github.com/arvoelke/delay2017>`_]
     Used :class:`.RollingWindow`, :func:`.PadeDelay`,
     and :func:`.ss2sim` to model time cell activity in rodents and

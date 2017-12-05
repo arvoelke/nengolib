@@ -108,7 +108,8 @@ class RollingWindow(LinearNetwork):
     ----------
     .. [#] A. R. Voelker and C. Eliasmith, "Improving spiking dynamical
        networks: Accurate delays, higher-order synapses, and time cells",
-       2017, Submitted. [`URL <https://github.com/arvoelke/delay2017>`__]
+       Neural Computation (preprint), accepted 09 2017.
+       [`URL <https://github.com/arvoelke/delay2017>`__]
 
     Examples
     --------
