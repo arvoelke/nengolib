@@ -2,8 +2,8 @@
 Release History
 ***************
 
-0.4.1 (unreleased)
-==================
+0.4.1 (December 5, 2017)
+========================
 
 Tested against Nengo versions 2.1.0-2.6.0.
 
