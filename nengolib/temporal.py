@@ -46,6 +46,7 @@ class Temporal(Solver, SupportDefaultsMixin):
 
     See Also
     --------
+    :class:`.RLS`
     :class:`nengo.Connection`
     :class:`nengo.solvers.Solver`
     :mod:`.synapses`

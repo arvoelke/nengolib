@@ -13,6 +13,14 @@ Extensions
    Network
    Connection
 
+Learning
+--------
+
+.. autosummary::
+   :toctree:
+
+   learning.RLS
+
 Processes
 ---------
 
@@ -33,6 +41,7 @@ Solvers
 from .version import version as __version__
 
 from .connection import Connection
+from .learning import RLS
 from .monkeypatch import patch, unpatch
 from .network import Network
 from .neurons import PerfectLIF
