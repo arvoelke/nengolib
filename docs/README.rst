@@ -16,6 +16,6 @@ Uploading the documentation
 
 Clone ``https://github.com/arvoelke/nengolib-docs``.
 
-Copy the contents of ``nengolib/docs/build/html/*`` to ``nengolib-docs/*``.
+Replace the contents of ``nengolib-docs/*`` with the contents of ``nengolib/docs/build/html/*``. However, don't remove the files ``README.md`` or ``LICENSE`` from ``nengolib-docs``!
 
 Within ``nengolib-docs``, commit and push the changes.
