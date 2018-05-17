@@ -3,10 +3,10 @@ import pytest
 
 from nengo.dists import Uniform, UniformHypersphere
 from nengo.utils.numpy import norm
-from nengo.utils.testing import warns
 
 from nengolib.stats.ntmdists import (
     SphericalCoords, Sobol, ScatteredCube, cube, sphere, ball)
+from nengolib.compat import warns
 
 
 @pytest.mark.parametrize("m", [1, 2, 4, 16])

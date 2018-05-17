@@ -2,10 +2,10 @@ import numpy as np
 import pytest
 
 from nengo.utils.numpy import rmse
-from nengo.utils.testing import warns
 
 from nengolib.signal.reduction import pole_zero_cancel, modred, balred
 from nengolib import Lowpass, Alpha
+from nengolib.compat import warns
 from nengolib.signal import LinearSystem, balanced_transformation, shift
 
 

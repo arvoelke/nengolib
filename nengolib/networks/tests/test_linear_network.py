@@ -2,10 +2,10 @@ import numpy as np
 import pytest
 
 import nengo
-from nengo.utils.testing import warns
 
 from nengolib.networks.linear_network import LinearNetwork
 from nengolib import Network, Lowpass
+from nengolib.compat import warns
 from nengolib.signal import s, z, canonical, Identity, shift, nrmse
 from nengolib.synapses import PadeDelay, Bandpass
 

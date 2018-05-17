@@ -4,9 +4,9 @@ import numpy as np
 
 import nengo
 from nengo.utils.numpy import rmse
-from nengo.utils.testing import warns
 
 from nengolib import Connection, Network
+from nengolib.compat import warns
 from nengolib.solvers import BiasedSolver
 
 

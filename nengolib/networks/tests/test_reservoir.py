@@ -5,11 +5,11 @@ import nengo
 from nengo.exceptions import NetworkContextError
 from nengo.processes import WhiteSignal
 from nengo.utils.numpy import rmse
-from nengo.utils.testing import warns
 
 from nengolib.networks.reservoir import Reservoir
 
 from nengolib import Network, Lowpass
+from nengolib.compat import warns
 
 
 def test_basic(Simulator, seed, plt):

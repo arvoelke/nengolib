@@ -1,5 +1,11 @@
 import numpy as np
 
+try:
+    from nengo.utils.testing import warns  # noqa: F401
+except ImportError:  # nengo>=2.7.0
+    # https://github.com/nengo/nengo/pull/1381
+    from pytest import warns  # noqa: F401
+
 __all__ = ['get_activities']
 
 
