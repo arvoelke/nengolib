@@ -79,12 +79,12 @@ def test_invalid_highpass(order):
 
 @pytest.mark.parametrize("c", [0.1, 0.4, 0.8, 1])
 def test_pade_delay(c):
-    dt = 0.001
+    dt = c / 100.0
     length = int(2*c / dt)
 
     # Note: the discretization has numerical issues
-    # for larger orders here.
-    sys = PadeDelay(c, order=7)
+    # for smaller dt and larger orders, given an impulse.
+    sys = PadeDelay(c, order=12)
     response = sys.impulse(length, dt)
 
     offset = int(0.1*c/dt)  # start at 10% of delay
