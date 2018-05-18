@@ -1,8 +1,19 @@
 #!/usr/bin/env python
 
 import imp
+import io
 import os
 from setuptools import setup, find_packages
+
+
+def read(*filenames, **kwargs):
+    encoding = kwargs.get("encoding", "utf-8")
+    sep = kwargs.get("sep", "\n")
+    buf = []
+    for filename in filenames:
+        with io.open(filename, encoding=encoding) as f:
+            buf.append(f.read())
+    return sep.join(buf)
 
 name = 'nengolib'
 root = os.path.dirname(os.path.realpath(__file__))
@@ -25,6 +36,7 @@ setup(
     author="Aaron R. Voelker",
     author_email="arvoelke@gmail.com",
     description="Tools for robust dynamics in Nengo",
+    long_description=read("README.rst", "CHANGES.rst"),
     url="https://github.com/arvoelke/nengolib/",
     download_url=download_url,
     license="Free for non-commercial use (see Nengo license)",
