@@ -5,6 +5,16 @@ Release History
 0.4.2 (unreleased)
 ==================
 
+Tested against Nengo versions 2.1.0-2.7.0.
+
+**Added**
+
+- Solving for connection weights by accounting for the neural
+  dynamics. To use, pass in ``nengolib.Temporal()`` to
+  ``nengo.Connection`` for the ``solver`` parameter.
+  Requires ``nengo>=2.5.0``.
+  (`#137 <https://github.com/arvoelke/nengolib/pull/137>`_)
+
 0.4.1 (December 5, 2017)
 ========================
 
