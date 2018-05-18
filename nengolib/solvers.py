@@ -3,6 +3,14 @@ import warnings
 import numpy as np
 
 from nengo.solvers import Solver, LstsqL2
+from nengo.version import version_info
+
+if version_info < (2, 5, 0):  # pragma: no cover
+    Temporal = None  # not supported (requires nengo PR #1313)
+else:
+    from nengolib.temporal import Temporal
+
+__all__ = ['Temporal']
 
 
 class BiasedSolver(Solver):

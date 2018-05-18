@@ -20,6 +20,14 @@ Processes
    :toctree:
 
    processes.Callable
+
+Solvers
+-------
+
+.. autosummary::
+   :toctree:
+
+   solvers.Temporal
 """
 
 from .version import version as __version__
@@ -28,6 +36,7 @@ from .connection import Connection
 from .monkeypatch import patch, unpatch
 from .network import Network
 from .neurons import PerfectLIF
+from .solvers import Temporal
 
 from . import compat
 from . import networks
