@@ -110,6 +110,7 @@ class Temporal(Solver, SupportDefaultsMixin):
     def __init__(self, synapse=Default, solver=Default):
         # We can't use super here because we need the defaults mixin
         # in order to determine self.solver.weights.
+        SupportDefaultsMixin.__init__(self)
         self.synapse = synapse
         self.solver = solver
         Solver.__init__(self, weights=self.solver.weights)
