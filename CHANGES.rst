@@ -5,6 +5,14 @@ Release History
 0.4.3 (unreleased)
 ==================
 
+**Added**
+
+- Added the ``nengolib.RLS()`` recursive least-squares (RLS)
+  learning rule. This can be substituted for ``nengo.PES()``.
+  See ``notebooks/examples/full_force_learning.ipynb`` for an
+  example that uses this to implement spiking FORCE in Nengo.
+  (`#133 <https://github.com/arvoelke/nengolib/pull/133>`_)
+
 0.4.2 (May 18, 2018)
 ====================
 
