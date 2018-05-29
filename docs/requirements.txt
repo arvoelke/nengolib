@@ -1,5 +1,6 @@
 nengolib
-sphinx>=1.6.5
+sphinx<1.7
 seaborn>=0.8.1
-numpydoc>=0.7.0
-ipython==2.4.1
+numpydoc>=0.8.0
+ipython>=5.7.0
+nbsphinx

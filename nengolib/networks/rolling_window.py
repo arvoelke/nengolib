@@ -113,7 +113,7 @@ class RollingWindow(LinearNetwork):
 
     Examples
     --------
-    See :doc:`notebooks.examples.rolling_window` for a notebook example.
+    See :doc:`notebooks/examples/rolling_window` for a notebook example.
 
     >>> from nengolib.networks import RollingWindow, t_default
 

@@ -35,7 +35,7 @@ class Network(BaseNetwork):
 
     Examples
     --------
-    See :doc:`notebooks.examples.network` for a notebook example.
+    See :doc:`notebooks/examples/network` for a notebook example.
     """
 
     def __init__(self, *args, **kwargs):

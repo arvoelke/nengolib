@@ -35,7 +35,7 @@ def pole_zero_cancel(sys, tol=1e-8):
 
     Examples
     --------
-    See :doc:`notebooks.research.linear_model_reduction` for a notebook
+    See :doc:`notebooks/research/linear_model_reduction` for a notebook
     example.
 
     >>> from nengolib.signal import pole_zero_cancel, s
@@ -89,7 +89,7 @@ def modred(sys, keep_states, method='del'):
 
     Examples
     --------
-    See :doc:`notebooks.research.linear_model_reduction` for a notebook
+    See :doc:`notebooks/research/linear_model_reduction` for a notebook
     example.
     """
 
@@ -161,7 +161,7 @@ def balance(sys):
 
     Examples
     --------
-    See :doc:`notebooks.research.linear_model_reduction` for a notebook
+    See :doc:`notebooks/research/linear_model_reduction` for a notebook
     example.
 
     >>> from nengolib.signal import balance, s
@@ -215,7 +215,7 @@ def balred(sys, order, method='del'):
 
     Examples
     --------
-    See :doc:`notebooks.research.linear_model_reduction` for a notebook
+    See :doc:`notebooks/research/linear_model_reduction` for a notebook
     example.
     """
 

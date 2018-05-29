@@ -18,7 +18,7 @@ sns.set_style('white')
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #
-# needs_sphinx = '1.0'
+needs_sphinx = '1.3'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -28,13 +28,13 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'matplotlib.sphinxext.plot_directive',
+    'nbsphinx',
     'numpydoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.coverage',
     'sphinx.ext.linkcode',
     'sphinx.ext.mathjax',
     'sphinx.ext.githubpages',
-    'nengo.utils.docutils',
 ]
 
 # -- sphinx.ext.autodoc
@@ -49,6 +49,9 @@ intersphinx_mapping = {
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
     'nengo': ('https://www.nengo.ai/nengo/', None),
 }
+
+# -- nbsphinx
+nbsphinx_timeout = 180
 
 # -- numpydoc
 numpydoc_use_plots = True
@@ -107,7 +110,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
