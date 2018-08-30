@@ -58,7 +58,7 @@ matrix:
         SCIPY=""
         NENGO=""
     - env:
-        TEST_CMD="py.test nengolib -k nengolib/tests/test_notebooks.py -rw --slow"
+        TEST_CMD="py.test nengolib/tests/test_notebooks.py --slow"
         PYTHON="2.7"
         CONDA_DEPS="matplotlib jupyter ipython pygments"
     - env:
