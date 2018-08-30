@@ -10,7 +10,7 @@ from nengolib.stats.ortho import random_orthogonal
 from nengolib.stats._sobol_seq import i4_sobol_generate
 
 __all__ = [
-    'spherical_transform', 'SphericalCoords', 'Sobol', 'ScatteredCube',
+    'spherical_transform', 'SphericalCoords', 'Sobol', 'Rd', 'ScatteredCube',
     'ScatteredHypersphere', 'cube', 'sphere', 'ball']
 
 
@@ -34,6 +34,7 @@ def spherical_transform(samples):
 
     See Also
     --------
+    :class:`.Rd`
     :class:`.Sobol`
     :class:`.ScatteredHypersphere`
     :class:`.SphericalCoords`
@@ -193,6 +194,7 @@ class Sobol(Distribution):
 
     See Also
     --------
+    :class:`.Rd`
     :class:`.ScatteredCube`
     :func:`.spherical_transform`
     :class:`.ScatteredHypersphere`
@@ -213,7 +215,6 @@ class Sobol(Distribution):
     >>> sobol = Sobol().sample(10000, 2)
 
     >>> import matplotlib.pyplot as plt
-    >>> from mpl_toolkits.mplot3d import Axes3D
     >>> plt.figure(figsize=(6, 6))
     >>> plt.scatter(*sobol.T, c=np.arange(len(sobol)), cmap='Blues', s=7)
     >>> plt.show()
@@ -237,6 +238,77 @@ class Sobol(Distribution):
         return i4_sobol_generate(d, n, skip=0)
 
 
+def _rd_generate(n, d, seed=0.5):
+    """Generates the first ``n`` points in the ``R_d`` sequence."""
+
+    # http://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences/
+    def gamma(d, n_iter=20):
+        """Newton-Raphson-Method to calculate g = phi_d."""
+        x = 1.0
+        for _ in range(n_iter):
+            x -= (x**(d + 1) - x - 1) / ((d + 1) * x**d - 1)
+        return x
+
+    g = gamma(d)
+    alpha = np.zeros(d)
+    for j in range(d):
+        alpha[j] = (1/g) ** (j + 1) % 1
+
+    z = np.zeros((n, d))
+    z[0] = (seed + alpha) % 1
+    for i in range(1, n):
+        z[i] = (z[i-1] + alpha) % 1
+
+    return z
+
+
+class Rd(Distribution):
+    """Rd sequence for quasi Monte Carlo sampling the ``[0, 1]``--cube.
+
+    This is similar to ``np.random.uniform(0, 1, size=(num, d))``, but with
+    the additional property that each ``d``--dimensional point is `uniformly
+    scattered`.
+
+    This is based on the tutorial and code from [#]_. For `d=2` this is often
+    called the Padovan sequence. [#]_
+
+    See Also
+    --------
+    :class:`.Sobol`
+    :class:`.ScatteredCube`
+    :func:`.spherical_transform`
+    :class:`.ScatteredHypersphere`
+
+    References
+    ----------
+    .. [#] http://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences/
+    .. [#] http://oeis.org/A000931
+
+    Examples
+    --------
+    >>> from nengolib.stats import Rd
+    >>> rd = Rd().sample(10000, 2)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(6, 6))
+    >>> plt.scatter(*rd.T, c=np.arange(len(rd)), cmap='Blues', s=7)
+    >>> plt.show()
+    """  # noqa: E501
+
+    def __repr__(self):
+        return "%s()" % (type(self).__name__)
+
+    def sample(self, n, d=1, rng=np.random):
+        """Samples ``n`` points in ``d`` dimensions."""
+        if d == 1:
+            # Tile the points optimally. TODO: refactor
+            return np.linspace(1./n, 1, n)[:, None]
+        if d is None or not is_integer(d) or d < 1:
+            # TODO: this should be raised when the ensemble is created
+            raise ValueError("d (%d) must be positive integer" % d)
+        return _rd_generate(n, d)
+
+
 class ScatteredCube(Distribution):
     """Number-theoretic distribution over the hypercube.
 
@@ -255,18 +327,19 @@ class ScatteredCube(Distribution):
     ----------------
     base : :class:`nengo.dists.Distribution`, optional
         The base distribution from which to draw `quasi Monte Carlo` samples.
-        Defaults to :class:`.Sobol` and should not be changed unless
+        Defaults to :class:`.Rd` and should not be changed unless
         you have some alternative `number-theoretic sequence` over ``[0, 1]``.
 
     See Also
     --------
     :attr:`.cube`
+    :class:`.Rd`
     :class:`.Sobol`
     :class:`.ScatteredHypersphere`
 
     Notes
     -----
-    The :class:`.Sobol` distribution is deterministic.
+    The :class:`.Rd` and :class:`.Sobol` distributions are deterministic.
     Nondeterminism comes from a random ``d``--dimensional shift (with
     wrap-around).
 
@@ -287,7 +360,7 @@ class ScatteredCube(Distribution):
     >>> plt.show()
     """
 
-    def __init__(self, low=-1, high=+1, base=Sobol()):
+    def __init__(self, low=-1, high=+1, base=Rd()):
         super(ScatteredCube, self).__init__()
         self.low = np.atleast_1d(low)
         self.high = np.atleast_1d(high)
@@ -312,7 +385,7 @@ class ScatteredHypersphere(UniformHypersphere):
     """Number--theoretic distribution over the hypersphere and hyperball.
 
     Applies the :func:`.spherical_transform` to the number-theoretic
-    sequence :class:`.Sobol` to obtain uniformly scattered samples.
+    sequence :class:`.Rd` to obtain uniformly scattered samples.
 
     This distribution has the nice mathematical property that the
     `discrepancy` between the `empirical distribution` and :math:`n` samples
@@ -337,7 +410,7 @@ class ScatteredHypersphere(UniformHypersphere):
     ----------------
     base : :class:`nengo.dists.Distribution`, optional
         The base distribution from which to draw `quasi Monte Carlo` samples.
-        Defaults to :class:`.Sobol` and should not be changed unless
+        Defaults to :class:`.Rd` and should not be changed unless
         you have some alternative `number-theoretic sequence` over ``[0, 1]``.
 
     See Also
@@ -345,21 +418,18 @@ class ScatteredHypersphere(UniformHypersphere):
     :attr:`.sphere`
     :attr:`.ball`
     :class:`nengo.dists.UniformHypersphere`
+    :class:`.Rd`
     :class:`.Sobol`
     :func:`.spherical_transform`
     :class:`.ScatteredCube`
 
     Notes
     -----
-    The :class:`.Sobol` distribution is deterministic.
+    The :class:`.Rd` and :class:`.Sobol` distributions are deterministic.
     Nondeterminism comes from a random ``d``--dimensional rotation
     (see :func:`.random_orthogonal`).
 
-    This class (currently) only supports dimensions up to ``40``, although
-    it should in theory work up to ``1111``. For higher dimensions, this
-    approach will fall back to :class:`nengo.dists.UniformHypersphere`.
-
-    The nengolib logo was created using this class.
+    The nengolib logo was created using this class with the Sobol sequence.
 
     References
     ----------
@@ -388,7 +458,7 @@ class ScatteredHypersphere(UniformHypersphere):
     >>> plt.show()
     """
 
-    def __init__(self, surface, base=Sobol()):
+    def __init__(self, surface, base=Rd()):
         super(ScatteredHypersphere, self).__init__(surface)
         self.base = base
 

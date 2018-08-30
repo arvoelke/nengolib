@@ -5,7 +5,8 @@ from nengo.dists import Uniform, UniformHypersphere
 from nengo.utils.numpy import norm
 
 from nengolib.stats.ntmdists import (
-    SphericalCoords, Sobol, ScatteredCube, cube, sphere, ball)
+    SphericalCoords, Sobol, Rd,
+    ScatteredCube, ScatteredHypersphere, cube, sphere, ball)
 from nengolib.compat import warns
 
 
@@ -33,25 +34,28 @@ def test_spherical_coords(m, rng):
                            dist.cdf(b+width) - dist.cdf(b), atol=1e-2)
 
 
-def test_sobol():
+@pytest.mark.parametrize("ntm", [Sobol(), Rd()])
+def test_ntm_properties(ntm):
     # check derministic
-    s1 = Sobol().sample(3, 4)
-    s2 = Sobol().sample(3, 4)
+    s1 = ntm.sample(3, 4)
+    s2 = ntm.sample(3, 4)
     assert np.allclose(s1, s2)
 
     # check shape
     assert s1.shape == (3, 4)
 
 
-def test_sobol_invalid_dims():
+@pytest.mark.parametrize("ntm", [Sobol(), Rd()])
+def test_ntm_invalid_dims(ntm):
     with pytest.raises(ValueError):
-        Sobol().sample(1, d=0)
+        ntm.sample(1, d=0)
 
     with pytest.raises(ValueError):
-        Sobol().sample(1, d=1.5)
+        ntm.sample(1, d=1.5)
 
-    with warns(UserWarning):
-        Sobol().sample(2, d=41)
+    if isinstance(ntm, Sobol):
+        with warns(UserWarning):
+            ntm.sample(2, d=41)
 
 
 def _furthest(x):
@@ -92,7 +96,10 @@ def test_cube_bounds(rng):
 
 
 @pytest.mark.parametrize("d", [1, 2, 4, 16, 64])
-def test_cube(d, rng):
+@pytest.mark.parametrize("ntm", [Sobol(), Rd()])
+def test_cube(d, ntm, rng):
+    cube = ScatteredCube(base=ntm)
+
     n = 1000
     x = cube.sample(n, d, rng)
     assert x.shape == (n, d)
@@ -107,12 +114,15 @@ def test_cube(d, rng):
     assert (x >= -1).all()
     assert (x <= 1).all()
 
-    assert (low <= -0.97).all()
-    assert (high >= 0.97).all()
+    assert (low <= -0.96).all(), np.max(low)
+    assert (high >= 0.96).all(), np.min(high)
 
 
 @pytest.mark.parametrize("d", [1, 2, 4, 16, 64])
-def test_ball(d, rng):
+@pytest.mark.parametrize("ntm", [Sobol(), Rd()])
+def test_ball(d, ntm, rng):
+    ball = ScatteredHypersphere(surface=False, base=ntm)
+
     n = 1000
     x = ball.sample(n, d, rng)
     assert x.shape == (n, d)
@@ -128,7 +138,10 @@ def test_ball(d, rng):
 
 
 @pytest.mark.parametrize("d", [1, 2, 4, 16, 64])
-def test_sphere(d, rng):
+@pytest.mark.parametrize("ntm", [Sobol(), Rd()])
+def test_sphere(d, ntm, rng):
+    sphere = ScatteredHypersphere(surface=True, base=ntm)
+
     n = 1000
     x = sphere.sample(n, d, rng)
     assert x.shape == (n, d)
@@ -145,7 +158,8 @@ def test_sphere(d, rng):
 def test_dist_repr():
     assert repr(SphericalCoords(4)) == "SphericalCoords(4)"
     assert repr(Sobol()) == "Sobol()"
+    assert repr(Rd()) == "Rd()"
     assert (repr(cube) ==
-            "ScatteredCube(low=array([-1]), high=array([1]), base=Sobol())")
-    assert repr(sphere) == "ScatteredHypersphere(surface=True, base=Sobol())"
-    assert repr(ball) == "ScatteredHypersphere(surface=False, base=Sobol())"
+            "ScatteredCube(low=array([-1]), high=array([1]), base=Rd())")
+    assert repr(sphere) == "ScatteredHypersphere(surface=True, base=Rd())"
+    assert repr(ball) == "ScatteredHypersphere(surface=False, base=Rd())"
