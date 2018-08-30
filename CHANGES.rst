@@ -12,6 +12,11 @@ Release History
   See ``notebooks/examples/full_force_learning.ipynb`` for an
   example that uses this to implement spiking FORCE in Nengo.
   (`#133 <https://github.com/arvoelke/nengolib/pull/133>`_)
+- Added the ``nengolib.stats.Rd()`` method for quasi-random sampling of
+  arbitrarily high-dimensional vectors. It is now the default method for
+  scattered sampling of encoders and evaluation points.
+  The method can be manually switched back to ``nengolib.stats.Sobol()``.
+  (`#153 <https://github.com/arvoelke/nengolib/pull/153>`_)
 
 0.4.2 (May 18, 2018)
 ====================
