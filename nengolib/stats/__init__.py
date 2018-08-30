@@ -23,6 +23,7 @@ Distributions
    SphericalCoords
    ScatteredCube
    Sobol
+   Rd
 
 Sphere-packing
 --------------
