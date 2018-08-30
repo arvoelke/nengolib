@@ -5,6 +5,8 @@ Release History
 0.4.3 (unreleased)
 ==================
 
+Tested against Nengo versions 2.1.0-2.8.0.
+
 **Added**
 
 - Added the ``nengolib.RLS()`` recursive least-squares (RLS)
