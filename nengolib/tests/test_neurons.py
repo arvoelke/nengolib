@@ -6,7 +6,37 @@ from nengo.utils.numpy import rmse
 
 from nengolib import Network, PerfectLIF
 from nengolib.compat import get_activities
-from nengolib.neurons import Tanh
+from nengolib.neurons import init_lif, Tanh
+
+
+@pytest.mark.parametrize("do_initialize", [True, False])
+@pytest.mark.noassertions
+def test_lif_initialize(Simulator, plt, seed, do_initialize):
+
+    with nengo.Network(seed=seed) as model:
+        stim = nengo.Node(0)
+        x = nengo.Ensemble(2000, 1, max_rates=nengo.dists.Uniform(10, 20))
+
+        nengo.Connection(stim, x, synapse=None)
+
+        p_v = nengo.Probe(x.neurons, 'voltage', synapse=None)
+        p_x = nengo.Probe(x, synapse=None)
+
+    with Simulator(model, seed=seed) as sim:
+        if do_initialize:
+            init_lif(sim, x)
+        sim.run(0.3)
+
+    plt.subplot(2, 1, 1)
+    plt.title("Initialized x0" if do_initialize else
+              "Uninitialized (v0=0)")
+    plt.plot(sim.trange(), sim.data[p_x])
+    plt.ylabel("Decoded Spikes")
+
+    plt.subplot(2, 1, 2)
+    plt.plot(sim.trange(), sim.data[p_v][:, :50])
+    plt.xlabel("Time (s)")
+    plt.ylabel("Voltage")
 
 
 def _test_lif(Simulator, seed, neuron_type, u, dt, n=500, t=2.0):
