@@ -7,9 +7,9 @@ notifications:
 env:
   global:
     - TEST_CMD="py.test nengolib"
-    - PIP_DEPS="pytest"
     - NUMPY="1.10"
     - SCIPY="0.17.0"
+    - PIP_DEPS=""
     - NENGO="https://github.com/nengo/nengo/archive/master.tar.gz"
     - CONDA_DEPS="matplotlib"
 
@@ -18,46 +18,45 @@ matrix:
     - env:
         PYTHON="2.7"
         NENGO=""
-        PIP_DEPS="$PIP_DEPS nengo==2.1.0"
+        PIP_DEPS="nengo==2.1.0 pytest==3.2"
     - env:
         PYTHON="2.7"
         NENGO=""
-        PIP_DEPS="$PIP_DEPS nengo==2.2.0"
+        PIP_DEPS="nengo==2.2.0 pytest==3.2"
     - env:
         PYTHON="2.7"
         NENGO=""
-        PIP_DEPS="$PIP_DEPS nengo==2.3.0"
+        PIP_DEPS="nengo==2.3.0 pytest==3.2"
     - env:
         PYTHON="2.7"
         NENGO=""
-        PIP_DEPS="$PIP_DEPS nengo==2.4.0"
+        PIP_DEPS="nengo==2.4.0 pytest==3.2"
     - env:
         PYTHON="2.7"
         NENGO=""
-        PIP_DEPS="$PIP_DEPS nengo==2.5.0"
+        PIP_DEPS="nengo==2.5.0 pytest==3.2"
     - env:
         PYTHON="2.7"
         NENGO=""
-        PIP_DEPS="$PIP_DEPS nengo==2.6.0"
+        PIP_DEPS="nengo==2.6.0 pytest==3.2"
     - env:
         PYTHON="2.7"
         NENGO=""
-        PIP_DEPS="$PIP_DEPS nengo==2.7.0"
+        PIP_DEPS="nengo==2.7.0 pytest==3.2"
     - env:
         PYTHON="2.7"
         NENGO=""
-        PIP_DEPS="$PIP_DEPS nengo==2.8.0"
+        PIP_DEPS="nengo==2.8.0 pytest==3.2"
     - env:
         CODE_COV="True"
         TEST_CMD="py.test nengolib --cov=nengolib"
         PYTHON="2.7"
-        PIP_DEPS="$PIP_DEPS codecov pytest-cov"
+        PIP_DEPS="codecov pytest pytest-cov"
     - env: >
         EXTRA_CMD="flake8 -v nengolib"
         CONDA_DEPS="flake8"
         PYTHON="2.7"
         TEST_CMD=""
-        PIP_DEPS=""
         NUMPY=""
         SCIPY=""
         NENGO=""
@@ -65,16 +64,20 @@ matrix:
         TEST_CMD="py.test nengolib/tests/test_notebooks.py --slow"
         PYTHON="2.7"
         CONDA_DEPS="matplotlib jupyter ipython pygments"
+        PIP_DEPS="pytest"
     - env:
         PYTHON="3.4"
+        PIP_DEPS="pytest"
     - env:
         PYTHON="3.5"
         NUMPY="1.12.0"
         SCIPY="0.19.0"
+        PIP_DEPS="pytest"
     - env:
         PYTHON="3.6"
         NUMPY="1.13.3"
         SCIPY="1.0.0"
+        PIP_DEPS="pytest"
 
 # Setup Miniconda
 before_install:
