@@ -8,8 +8,8 @@ from nengo import Alpha as BaseAlpha
 from nengolib.synapses.analog import (
     Bandpass, Highpass, pade_delay_error, PadeDelay, Lowpass, Alpha, DoubleExp,
     _pade_delay, _passthrough_delay, _proper_delay)
-from nengolib.compat import warns
 from nengolib.signal import sys_equal, s, LinearSystem
+from nengolib.testing import warns
 
 
 def test_nengo_analogs():

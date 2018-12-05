@@ -5,9 +5,9 @@ import nengo
 
 from nengolib.networks.linear_network import LinearNetwork
 from nengolib import Network, Lowpass
-from nengolib.compat import warns
 from nengolib.signal import s, z, canonical, Identity, shift, nrmse
 from nengolib.synapses import PadeDelay, Bandpass
+from nengolib.testing import warns
 
 
 _mock_solver_calls = 0  # global to keep solver's fingerprint static

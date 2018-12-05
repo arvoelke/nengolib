@@ -9,7 +9,7 @@ from nengo.utils.numpy import rmse
 from nengolib.networks.reservoir import Reservoir
 
 from nengolib import Network, Lowpass
-from nengolib.compat import warns
+from nengolib.testing import warns
 
 
 def test_basic(Simulator, seed, plt):

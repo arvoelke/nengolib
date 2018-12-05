@@ -5,8 +5,8 @@ from nengo.utils.numpy import rmse
 
 from nengolib.signal.reduction import pole_zero_cancel, modred, balred
 from nengolib import Lowpass, Alpha
-from nengolib.compat import warns
 from nengolib.signal import LinearSystem, balanced_transformation, shift
+from nengolib.testing import warns
 
 
 def test_minreal():

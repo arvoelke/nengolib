@@ -6,8 +6,8 @@ import nengo
 from nengo.utils.numpy import rmse
 
 from nengolib import Connection, Network
-from nengolib.compat import warns
 from nengolib.solvers import BiasedSolver
+from nengolib.testing import warns
 
 
 @pytest.mark.parametrize("d", [1, 2])

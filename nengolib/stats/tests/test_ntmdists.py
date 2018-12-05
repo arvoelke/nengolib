@@ -7,7 +7,7 @@ from nengo.utils.numpy import norm
 from nengolib.stats.ntmdists import (
     SphericalCoords, Sobol, Rd,
     ScatteredCube, ScatteredHypersphere, cube, sphere, ball)
-from nengolib.compat import warns
+from nengolib.testing import warns
 
 
 @pytest.mark.parametrize("m", [1, 2, 4, 16])

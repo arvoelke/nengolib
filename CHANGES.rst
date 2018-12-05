@@ -20,6 +20,11 @@ Tested against Nengo versions 2.1.0-2.8.0.
   The method can be manually switched back to ``nengolib.stats.Sobol()``.
   (`#153 <https://github.com/arvoelke/nengolib/pull/153>`_)
 
+**Fixed**
+
+- Release no longer requires ``pytest``.
+  (`#156 <https://github.com/arvoelke/nengolib/pull/156>`_)
+
 0.4.2 (May 18, 2018)
 ====================
 

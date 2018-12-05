@@ -12,9 +12,9 @@ from nengolib.signal.system import (
     sys2ss, sys2zpk, sys2tf, canonical, sys_equal, ss_equal, LinearSystem,
     s, z)
 from nengolib import Network, Lowpass, Alpha
-from nengolib.compat import warns
 from nengolib.signal import cont2discrete, shift
 from nengolib.synapses import PadeDelay
+from nengolib.testing import warns
 
 
 def test_sys_conversions():
