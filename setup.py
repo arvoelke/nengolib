@@ -22,8 +22,8 @@ version_module = imp.load_source(
 
 deps = [  # https://github.com/nengo/nengo/issues/508
     "nengo>=2.1.0",
-    "numpy>=1.10",
-    "scipy>=0.17.0",
+    "numpy>=1.13",
+    "scipy>=0.19.0",
 ]
 
 download_url = (

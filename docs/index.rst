@@ -29,8 +29,8 @@ To install::
 
 This requires
 `nengo>=2.1.0 <https://github.com/nengo/nengo/releases/tag/v2.1.0>`_
-`numpy>=1.10 <https://github.com/numpy/numpy/releases/tag/v1.10.0>`_, and
-`scipy>=0.17.0 <https://github.com/scipy/scipy/releases/tag/v0.17.0>`_.
+`numpy>=1.13 <https://github.com/numpy/numpy/releases/tag/v1.13.0>`_, and
+`scipy>=0.19.0 <https://github.com/scipy/scipy/releases/tag/v0.19.0>`_.
 If you are having difficulty installing SciPy or NumPy, we recommend the
 `Anaconda <https://www.continuum.io/downloads>`_ installer.
 

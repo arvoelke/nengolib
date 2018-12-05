@@ -107,8 +107,9 @@ def sys2tf(sys):
 def _is_ccf(A, B, C, D):
     """Returns true iff (A, B, C, D) is in controllable canonical form."""
     n = len(A)
-    if A.size == 0 and B.size == 0 and C.size == 0:  # scipy 0.17.0
-        return True  # TODO: assumes SISO?
+    if A.size == 0 and B.size == 0 and C.size == 0:  # pragma: no cover
+        # this occurs on scipy 0.17.0 which is unsupported
+        return True
     if not np.allclose(B[0], 1.0):
         return False
     if n <= 1:

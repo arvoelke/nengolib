@@ -6,6 +6,7 @@ Release History
 ==================
 
 Tested against Nengo versions 2.1.0-2.8.0.
+We now require ``numpy>=1.13.0`` and ``scipy>=0.19.0``.
 
 **Added**
 
