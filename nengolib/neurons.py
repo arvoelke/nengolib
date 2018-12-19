@@ -24,10 +24,12 @@ def _sample_lif_state(sim, ens, x0, rng):
     t_isi = np.zeros_like(a)
     t_isi[is_active] = rng.rand(np.count_nonzero(is_active)) / a[is_active]
 
-    # dt is immediately subtracted from the refractory
+    # work backwards through the LIF solution to find the corresponding voltage
+    # since the refractory period is at the beginning of the ISI, we must
+    # set that first, then subtract and use the remaining delta
     refractory_time = np.where(
         is_active & (t_isi < lif.tau_ref),
-        sim.dt + (lif.tau_ref - t_isi), 0)
+        sim.dt + (lif.tau_ref - t_isi), 0)  # dt immediately subtracted
     delta_t = (t_isi - lif.tau_ref).clip(0)
     voltage = -J * np.expm1(-delta_t / lif.tau_rc)
 
@@ -39,7 +41,59 @@ def _sample_lif_state(sim, ens, x0, rng):
 
 
 def init_lif(sim, ens, x0=None, rng=None):
-    """Initialize an ensemble of LIF Neurons to represent ``x0``."""
+    """Initialize an ensemble of LIF Neurons to represent ``x0``.
+
+    Must be called from within a simulator context block, and before
+    the simulation (see example below).
+
+    Parameters
+    ----------
+    sim : :class:`nengo.Simulator`
+       The created simulator, from whose context the call is within.
+    ens : :class:`nengo.Ensemble`
+       The ensemble of LIF neurons to be initialized.
+    x0 : ``(d,) array_like``, optional
+       A ``d``-dimensional state-vector that the
+       ensemble should be initialized to represent, where
+       ``d = ens.dimensions``. Defaults to the zero vector.
+    rng : :class:`numpy.random.RandomState` or ``None``, optional
+        Random number generator state.
+
+    Returns
+    -------
+    v : ``(n,) np.array``
+       Array of initialized voltages, where ``n = ens.n_neurons``.
+    r : ``(n,) np.array``
+       Array of initialized refractory times, where ``n = ens.n_neurons``.
+
+    Notes
+    -----
+    This will not initialize the synapses.
+
+    Examples
+    --------
+    >>> import nengo
+    >>> from nengolib import Network
+    >>> from nengolib.neurons import init_lif
+    >>>
+    >>> with Network() as model:
+    >>>      u = nengo.Node(0)
+    >>>      x = nengo.Ensemble(100, 1)
+    >>>      nengo.Connection(u, x)
+    >>>      p_v = nengo.Probe(x.neurons, 'voltage')
+    >>>
+    >>> with nengo.Simulator(model, dt=1e-4) as sim:
+    >>>      init_lif(sim, x)
+    >>>      sim.run(0.01)
+    >>>
+    >>> import matplotlib.pyplot as plt
+    >>> plt.title("Initialized LIF Voltage Traces")
+    >>> plt.plot(1e3 * sim.trange(), sim.data[p_v])
+    >>> plt.xlabel("Time (ms)")
+    >>> plt.ylabel("Voltage (Unitless)")
+    >>> plt.show()
+    """
+
     if rng is None:
         rng = sim.rng
 

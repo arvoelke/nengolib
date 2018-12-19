@@ -21,6 +21,14 @@ Learning
 
    learning.RLS
 
+Neurons
+-------
+
+.. autosummary::
+   :toctree:
+
+   neurons.init_lif
+
 Processes
 ---------
 
