@@ -20,6 +20,10 @@ We now require ``numpy>=1.13.0`` and ``scipy>=0.19.0``.
   scattered sampling of encoders and evaluation points.
   The method can be manually switched back to ``nengolib.stats.Sobol()``.
   (`#153 <https://github.com/arvoelke/nengolib/pull/153>`_)
+- Added the ``nengolib.neuron.init_lif(sim, ens)`` helper function
+  for initializing the neural state of a ``LIF`` ensemble, from within
+  a simulator block, to represent ``0`` uniformly at the start.
+  (`#156 <https://github.com/arvoelke/nengolib/pull/156>`_)
 
 **Fixed**
 
