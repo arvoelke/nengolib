@@ -129,7 +129,15 @@ def test_pade_versions(p, c):
     assert LegendreDelay(c, order=p+1) == PadeDelay(c, order=p+1)
 
 
+@pytest.mark.parametrize("theta", [0.1, 1, 3])
+def test_1d_legendre_delay(theta):
+    assert LegendreDelay(theta, order=1) == Lowpass(theta)
+
+
 def test_delay_invalid():
+    with warns(UserWarning):
+        PadeDelay(1, order=10, p=8)
+
     with pytest.raises(ValueError):
         PadeDelay(1, order=0)
 
@@ -150,9 +158,6 @@ def test_delay_invalid():
 
     with pytest.raises(ValueError):
         LegendreDelay(1, order=-1)
-
-    with warns(UserWarning):
-        PadeDelay(1, order=10, p=8)
 
 
 def test_equivalent_defs():
