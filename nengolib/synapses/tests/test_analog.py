@@ -6,7 +6,8 @@ from nengo import Lowpass as BaseLowpass
 from nengo import Alpha as BaseAlpha
 
 from nengolib.synapses.analog import (
-    Bandpass, Highpass, pade_delay_error, PadeDelay, Lowpass, Alpha, DoubleExp,
+    Bandpass, Highpass, pade_delay_error,
+    PadeDelay, LegendreDelay, Lowpass, Alpha, DoubleExp,
     _pade_delay, _passthrough_delay, _proper_delay)
 from nengolib.signal import sys_equal, s, LinearSystem
 from nengolib.testing import warns
@@ -112,8 +113,9 @@ def test_pade_error(plt):
         assert np.all(np.diff(error) > -1e-13), order
 
 
-@pytest.mark.parametrize("p", [1, 2, 3])
-def test_pade_versions(p):
+@pytest.mark.parametrize("p", range(1, 9))
+@pytest.mark.parametrize("c", [0.5, 1, 3])
+def test_pade_versions(p, c):
     c = 1
     # make sure all of the delay methods do the same thing
     assert _pade_delay(p, p+1, c) == _proper_delay(p+1, c)
@@ -123,6 +125,8 @@ def test_pade_versions(p):
     assert _proper_delay(p+1, c) == PadeDelay(c, order=p+1)
     assert _passthrough_delay(p, c) == PadeDelay(c, order=p, p=p)
     assert _pade_delay(p, p+2, c) == PadeDelay(c, order=p+2, p=p)
+
+    assert LegendreDelay(c, order=p+1) == PadeDelay(c, order=p+1)
 
 
 def test_delay_invalid():
@@ -140,6 +144,12 @@ def test_delay_invalid():
 
     with pytest.raises(ValueError):
         PadeDelay(1, order=2, p=1.5)
+
+    with pytest.raises(ValueError):
+        LegendreDelay(1, order=3.5)
+
+    with pytest.raises(ValueError):
+        LegendreDelay(1, order=-1)
 
     with warns(UserWarning):
         PadeDelay(1, order=10, p=8)

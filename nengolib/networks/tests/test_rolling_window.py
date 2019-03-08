@@ -8,20 +8,26 @@ from nengo.processes import WhiteSignal
 from nengo.utils.numpy import rms
 
 from nengolib.networks.rolling_window import (
-    readout, t_default, RollingWindow)
+    _pade_readout, _legendre_readout, t_default, RollingWindow)
 from nengolib import Network
 from nengolib.signal import (LinearSystem, shift, nrmse, Identity,
                              EvalPoints, Encoders)
 from nengolib.stats import cube
-from nengolib.synapses import PadeDelay
+from nengolib.synapses import PadeDelay, LegendreDelay
 
 
+@pytest.mark.parametrize("legendre", [True, False])
 @pytest.mark.parametrize("d,tol", [
     (2, 0.5), (3, 0.2), (4, 0.05), (5, 1e-2), (7, 1e-4), (12, 1e-9)])
-def test_readout(d, tol):
+def test_readout(legendre, d, tol):
     theta = 0.1
-    sys = PadeDelay(theta, d)
 
+    if legendre:
+        sys = LegendreDelay(theta, d)
+        readout = _legendre_readout
+    else:
+        sys = PadeDelay(theta, d)
+        readout = _pade_readout
     # decoding at r=1 (t=-theta) is equivalent to decoding a delay of theta
     C = readout(d, 1)
     assert np.allclose(sys.C, C)
@@ -40,7 +46,8 @@ def test_readout(d, tol):
         assert 0 < rms(error) < tol, r
 
 
-def test_direct_window(Simulator, seed, plt):
+@pytest.mark.parametrize("legendre", [True, False])
+def test_direct_window(legendre, Simulator, seed, plt):
     theta = 1.0
     T = theta
 
@@ -49,7 +56,8 @@ def test_direct_window(Simulator, seed, plt):
     with Network() as model:
         stim = nengo.Node(output=lambda t: t)
         rw = RollingWindow(theta, n_neurons=1, dimensions=12,
-                           neuron_type=nengo.Direct(), process=None)
+                           neuron_type=nengo.Direct(), process=None,
+                           legendre=legendre)
         assert rw.theta == theta
         assert rw.dt == 0.001
         assert rw.process is None
@@ -75,12 +83,13 @@ def test_direct_window(Simulator, seed, plt):
     assert nrmse(actual, ideal) < 0.005
 
 
-def test_basis(plt):
+@pytest.mark.parametrize("legendre", [True, False])
+def test_basis(legendre, plt):
     theta = 0.1
     d = 12
 
     rw = RollingWindow(theta=theta, n_neurons=1, dimensions=d, radii=2,
-                       realizer=Identity(), process=None)
+                       realizer=Identity(), legendre=legendre, process=None)
 
     B = rw.basis()
     assert B.shape == (len(t_default), d)
@@ -102,7 +111,8 @@ def test_basis(plt):
     plt.plot(Binv.T)
 
 
-def test_window_example(Simulator, seed, plt):
+@pytest.mark.parametrize("legendre", [True, False])
+def test_window_example(legendre, Simulator, seed, plt):
     theta = 0.1
     n_neurons = 1000
     d = 6
@@ -121,13 +131,15 @@ def test_window_example(Simulator, seed, plt):
 
         rw_rate = RollingWindow(
             theta=theta, n_neurons=n_neurons, dimensions=d, radii=radii,
-            neuron_type=nengo.LIFRate(), dt=dt, process=stim.output)
+            neuron_type=nengo.LIFRate(), dt=dt, process=stim.output,
+            legendre=legendre)
         assert isinstance(rw_rate.state.eval_points, EvalPoints)
         assert isinstance(rw_rate.state.encoders, Encoders)
 
         rw_drct = RollingWindow(
             theta=theta, n_neurons=1, dimensions=d, radii=radii,
-            neuron_type=nengo.Direct(), dt=dt, process=None)
+            neuron_type=nengo.Direct(), dt=dt, process=None,
+            legendre=legendre)
 
         def function(w):
             return -np.max(np.abs(w)), abs(w[0]*w[-1])

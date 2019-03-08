@@ -14,15 +14,15 @@ from nengo.utils.stdlib import checked_call
 from nengolib.networks.linear_network import LinearNetwork
 from nengolib.signal.dists import EvalPoints, Encoders
 from nengolib.signal.realizers import Balanced
-from nengolib.synapses.analog import PadeDelay
+from nengolib.synapses.analog import PadeDelay, LegendreDelay
 
-__all__ = ['t_default', 'readout', 'RollingWindow']
+__all__ = ['t_default', 'RollingWindow']
 
 t_default = np.linspace(0, 1, 1000)  # default window time points (normalized)
 
 
-def readout(q, r):
-    """C matrix to decode a delay of r*theta from the delay state for theta.
+def _pade_readout(q, r):
+    """C matrix to decode a delay of r*theta from PadeDelay.
 
     ``r`` is a ratio between 0 (``t=0``) and 1 (``t=-theta``).
     """
@@ -33,6 +33,16 @@ def readout(q, r):
         c[q-1-i] += 1 / binom(q, i) * np.sum(
             binom(q, j) * binom(2*q - 1 - j, i - j) * (-r)**(i - j))
     return c
+
+
+def _legendre_readout(q, r):
+    """C matrix to decode a delay of r*theta from LegendreDelay.
+
+    ``r`` is a ratio between 0 (``t=0``) and 1 (``t=-theta``).
+    """
+
+    from scipy.special import legendre
+    return np.asarray([legendre(i)(2*r - 1) for i in range(q)])
 
 
 class RollingWindow(LinearNetwork):
@@ -183,13 +193,23 @@ class RollingWindow(LinearNetwork):
 
     def __init__(self, theta, n_neurons, process, dimensions=6,
                  synapse=0.1, input_synapse=0.1, dt=0.001, realizer=Balanced(),
-                 solver=nengo.solvers.LstsqL2(reg=1e-3), **kwargs):
+                 solver=nengo.solvers.LstsqL2(reg=1e-3), legendre=False,
+                 **kwargs):
         self.theta = theta
         self.process = process
         self.dimensions = dimensions
+        self.legendre = legendre
+
+        if self.legendre:
+            self._readout = _legendre_readout
+            sys = LegendreDelay(theta, order=dimensions)
+
+        else:
+            self._readout = _pade_readout
+            sys = PadeDelay(theta, order=dimensions)
 
         super(RollingWindow, self).__init__(
-            sys=PadeDelay(theta, order=dimensions),
+            sys=sys,
             n_neurons_per_ensemble=n_neurons,
             input_synapse=input_synapse,
             synapse=synapse,
@@ -244,7 +264,7 @@ class RollingWindow(LinearNetwork):
     def canonical_basis(self, t=t_default):
         """Temporal basis functions for PadeDelay in canonical form."""
         t = np.atleast_1d(t)
-        B = np.asarray([readout(self.dimensions, r) for r in t])
+        B = np.asarray([self._readout(self.dimensions, r) for r in t])
         return B
 
     def basis(self, t=t_default):

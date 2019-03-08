@@ -9,7 +9,7 @@ from nengolib.signal.system import LinearSystem, s
 
 __all__ = [
     'Lowpass', 'Alpha', 'DoubleExp', 'Bandpass', 'Highpass',
-    'pade_delay_error', 'PadeDelay']
+    'pade_delay_error', 'PadeDelay', 'LegendreDelay']
 
 
 def Lowpass(tau):
@@ -302,7 +302,7 @@ def _pade_delay(p, q, c):
     i = np.arange(1, p+q+1, dtype=np.float64)
     taylor = np.append([1.0], (-c)**i / factorial(i))
     num, den = pade(taylor, q)
-    return LinearSystem((num, den))
+    return LinearSystem((num, den), analog=True)
 
 
 def pade_delay_error(theta_times_freq, order, p=None):
@@ -367,6 +367,12 @@ def pade_delay_error(theta_times_freq, order, p=None):
     # this works due to the substitution of variables: theta*s <-> 1*s'
     sys = PadeDelay(1., order, p=p)
     return sys.evaluate(ttf) - np.exp(-2j*np.pi*ttf)
+
+
+def _check_order(order):
+    if order < 1 or not is_integer(order):
+        raise ValueError("order (%s) must be integer >= 1" % order)
+    return order
 
 
 def PadeDelay(theta, order, p=None):
@@ -446,12 +452,10 @@ def PadeDelay(theta, order, p=None):
     >>> plt.show()
     """
 
-    q = order
+    q = _check_order(order)
     if p is None:
         p = q - 1
 
-    if order < 1 or not is_integer(order):
-        raise ValueError("order (%s) must be integer >= 1" % order)
     if p < 1 or not is_integer(p):
         raise ValueError("p (%s) must be integer >= 1" % p)
 
@@ -464,3 +468,20 @@ def PadeDelay(theta, order, p=None):
             warnings.warn("For large values of q (>= 10), p should either be "
                           "None, q - 1, or q.")
         return _pade_delay(p, q, theta)
+
+
+def LegendreDelay(theta, order):
+    """PadeDelay(theta, order) realizing the shifted Legendre basis."""
+
+    q = _check_order(order)
+
+    Q = np.arange(q, dtype=np.float64)
+    R = (2*Q + 1)[:, None] / theta
+    j, i = np.meshgrid(Q, Q)
+
+    A = np.where(i < j, -1, (-1.)**(i-j+1)) * R
+    B = (-1.)**Q[:, None] * R
+    C = np.ones((1, q))
+    D = np.zeros((1,))
+
+    return LinearSystem((A, B, C, D), analog=True)
