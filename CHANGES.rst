@@ -24,6 +24,14 @@ We now require ``numpy>=1.13.0``, ``scipy>=0.19.0``, and ``nengo>=2.2.0``.
   for initializing the neural state of a ``LIF`` ensemble, from within
   a simulator block, to represent ``0`` uniformly at the start.
   (`#156 <https://github.com/arvoelke/nengolib/pull/156>`_)
+- Added ``nengolib.synapses.LegendreDelay`` as an alternative to
+  ``nengolib.synapses.PadeDelay`` -- it has an equivalent transfer function
+  but a state-space realization corresponding to the shifted
+  Legendre basis.
+  The network ``nengolib.networks.RollingWindow`` support ``legendre=True``
+  to make this system the default realization.
+  (`#161 <https://github.com/arvoelke/nengolib/pull/161>`_)
+
 
 **Fixed**
 

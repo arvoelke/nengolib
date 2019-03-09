@@ -87,6 +87,11 @@ class RollingWindow(LinearNetwork):
     solver : :class:`nengo.solvers.Solver`, optional
         Solver to use for connections from the state ensemble.
         Defaults to :class:`nengo.solvers.LstsqL2` (with ``reg=1e-3``).
+    legendre : ``boolean``, optional
+        Changes the canonical realization to that of :func:`.LegendreDelay`,
+        the shifted Legendre polynomials,
+        :math:`P_i(2 \\theta' \\theta^{-1} - 1)`.
+        Defaults to ``False``.
     **kwargs : ``dictionary``, optional
         Additional keyword arguments passed to :class:`.LinearNetwork`.
         Those that fall under the heading of ``**ens_kwargs`` will be
@@ -138,8 +143,7 @@ class RollingWindow(LinearNetwork):
     >>>     process = nengo.processes.WhiteSignal(100., high=25, y0=0)
     >>>     stim = nengo.Node(output=process)
     >>>     rw = RollingWindow(theta=.05, n_neurons=2500, process=process,
-    >>>                        neuron_type=nengo.LIFRate(),
-    >>>                        realizer=Hankel())
+    >>>                        neuron_type=nengo.LIFRate(), legendre=True)
     >>>     nengo.Connection(stim, rw.input, synapse=None)
     >>>     p_stim = nengo.Probe(stim)
     >>>     p_delay = nengo.Probe(rw.output)
@@ -161,8 +165,8 @@ class RollingWindow(LinearNetwork):
     >>> plt.show()
 
     Visualizing the canonical basis functions. The state of the
-    :func:`PadeDelay` system takes a linear combination of these to
-    represent the current window of history:
+    :func:`LegendreDelay` system takes a linear combination of these
+    shifted Legendre polynomials to represent the current window of history:
 
     >>> plt.title("canonical_basis()")
     >>> plt.plot(t_default, rw.canonical_basis())

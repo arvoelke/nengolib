@@ -16,6 +16,7 @@ Analog
    Bandpass
    Highpass
    PadeDelay
+   LegendreDelay
 
 Digital
 -------
