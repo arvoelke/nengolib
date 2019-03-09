@@ -3,7 +3,6 @@ from nengo import Connection as NengoConnection, Network as NengoNetwork
 
 from nengolib.monkeypatch import patch, unpatch
 from nengolib import Network, Connection
-from nengolib.neurons import PerfectLIF
 from nengolib.stats import ScatteredHypersphere
 
 
@@ -71,6 +70,5 @@ def test_model():
     for ens in model.all_ensembles:
         assert isinstance(ens.eval_points, ScatteredHypersphere)
         assert isinstance(ens.encoders, ScatteredHypersphere)
-        assert isinstance(ens.neuron_type, PerfectLIF)
 
     reload(nengo)

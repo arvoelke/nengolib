@@ -6,7 +6,7 @@ from scipy.stats import kstest
 import nengo
 from nengo.utils.numpy import rmse
 
-from nengolib.neurons import init_lif, Tanh, PerfectLIF
+from nengolib.neurons import init_lif, Tanh
 from nengolib import Network
 from nengolib.compat import get_activities
 
@@ -21,7 +21,6 @@ def test_init_lif(Simulator, seed, x0):
         dimensions=1,
         max_rates=nengo.dists.Uniform(10, 100),
         seed=seed,
-        neuron_type=PerfectLIF(),  # for nengo<2.1.1 tests
     )
 
     with nengo.Network(seed=seed) as model:
@@ -159,7 +158,7 @@ def _test_lif(Simulator, seed, neuron_type, u, dt, n=500, t=2.0):
 def test_perfect_lif_performance(Simulator, seed):
     for dt in np.linspace(0.0005, 0.002, 3):
         for u in np.linspace(-1, 1, 6):
-            error_perfect_lif = _test_lif(Simulator, seed, PerfectLIF(), u, dt)
+            error_perfect_lif = _test_lif(Simulator, seed, nengo.LIF(), u, dt)
             assert error_perfect_lif < 1
             seed += 1
 
@@ -171,7 +170,7 @@ def test_perfect_lif_invariance(Simulator, seed):
     errors = []
     for dt in (0.0001, 0.0005, 0.001, 0.002):
         assert np.allclose(int(t / dt), t / dt)
-        error = _test_lif(Simulator, seed, PerfectLIF(), 0, dt, t=t)
+        error = _test_lif(Simulator, seed, nengo.LIF(), 0, dt, t=t)
         errors.append(error)
     assert np.allclose(errors, errors[0])
 

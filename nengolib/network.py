@@ -1,7 +1,6 @@
 from nengo import Network as BaseNetwork
 from nengo import Ensemble
 
-from nengolib.neurons import PerfectLIF
 from nengolib.stats.ntmdists import ball, sphere
 
 _all__ = ['Network']
@@ -16,8 +15,6 @@ class Network(BaseNetwork):
 
     * ``eval_points=``:attr:`.ball`
 
-    * ``neuron_type=``:class:`.PerfectLIF()`
-
     Parameters
     ----------
     *args : ``list``, optional
@@ -31,7 +28,6 @@ class Network(BaseNetwork):
     :class:`nengo.Ensemble`
     :attr:`.ball`
     :attr:`.sphere`
-    :class:`.PerfectLIF`
 
     Examples
     --------
@@ -43,4 +39,4 @@ class Network(BaseNetwork):
         self.config[Ensemble].update({
             'encoders': sphere,
             'eval_points': ball,
-            'neuron_type': PerfectLIF()})
+        })

@@ -52,7 +52,6 @@ from .connection import Connection
 from .learning import RLS
 from .monkeypatch import patch, unpatch
 from .network import Network
-from .neurons import PerfectLIF
 from .solvers import Temporal
 
 from . import compat

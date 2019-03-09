@@ -18,10 +18,6 @@ matrix:
     - env:
         PYTHON="2.7"
         NENGO=""
-        PIP_DEPS="nengo==2.1.0 pytest==3.2"
-    - env:
-        PYTHON="2.7"
-        NENGO=""
         PIP_DEPS="nengo==2.2.0 pytest==3.2"
     - env:
         PYTHON="2.7"

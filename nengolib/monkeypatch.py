@@ -15,8 +15,6 @@ def patch(network=True, connection=True):
         nengo.Network = Network
     if connection:
         nengo.Connection = Connection
-    # note: nengolib.PerfectLIF is not substituted for nengo.LIF, but it will
-    # become the default due to the Network substitution
 
 
 def unpatch():

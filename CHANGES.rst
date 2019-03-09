@@ -5,8 +5,8 @@ Release History
 0.4.3 (unreleased)
 ==================
 
-Tested against Nengo versions 2.1.0-2.8.0.
-We now require ``numpy>=1.13.0`` and ``scipy>=0.19.0``.
+Tested against Nengo versions 2.2.0-2.8.0.
+We now require ``numpy>=1.13.0``, ``scipy>=0.19.0``, and ``nengo>=2.2.0``.
 
 **Added**
 
