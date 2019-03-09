@@ -15,9 +15,13 @@ _mock_solver_calls = 0  # global to keep solver's fingerprint static
 
 class MockSolver(nengo.solvers.LstsqL2):
 
-    def __call__(self, A, Y, rng=None, E=None):
+    def __call__(self, A, Y, __hack__=None, **kwargs):
+        assert __hack__ is None
+        # __hack__ is necessary prior to nengo PR #1359 (<2.6.1)
+        # and following nengo PR #1507 (>2.8.0)
+
         globals()['_mock_solver_calls'] += 1
-        return super(MockSolver, self).__call__(A, Y, rng=rng, E=E)
+        return super(MockSolver, self).__call__(A, Y, **kwargs)
 
 
 @pytest.mark.parametrize("neuron_type,atol,atol_x", [

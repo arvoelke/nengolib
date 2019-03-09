@@ -117,10 +117,14 @@ class Temporal(Solver, SupportDefaultsMixin):
         self.solver = solver
         Solver.__init__(self, weights=self.solver.weights)
 
-    def __call__(self, A, Y, rng=None, E=None):  # nengo issue #1358
+    def __call__(self, A, Y, __hack__=None, **kwargs):
+        assert __hack__ is None
+        # __hack__ is necessary prior to nengo PR #1359 (<2.6.1)
+        # and following nengo PR #1507 (>2.8.0)
+
         # Note: mul_encoders is never called directly on self.
         # It is invoked on the sub-solver through the following call.
-        return self.solver.__call__(A, Y, rng=rng, E=E)
+        return self.solver.__call__(A, Y, **kwargs)
 
 
 @Builder.register(Temporal)
