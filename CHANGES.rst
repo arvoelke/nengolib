@@ -2,8 +2,8 @@
 Release History
 ***************
 
-0.4.3 (unreleased)
-==================
+0.5.0 (March 9, 2019)
+=====================
 
 Tested against Nengo versions 2.2.0-2.8.0.
 We now require ``numpy>=1.13.0``, ``scipy>=0.19.0``, and ``nengo>=2.2.0``.
