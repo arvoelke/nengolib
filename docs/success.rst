@@ -2,8 +2,19 @@
 Success stories
 ***************
 
-Nengolib has been used successfully for several peer-reviewed publications and
+NengoLib has been used successfully for several peer-reviewed publications and
 self-published projects. We highlight these applications below:
+
+* Alexander Neckar, Sam Fok, Ben V. Benjamin, Terrence C. Stewart,
+  Nick N. Oza, Aaron R. Voelker, Chris Eliasmith, Rajit Manohar, and
+  Kwabena Boahen. Braindrop: A mixed-signal neuromorphic architecture with a
+  dynamical systems-based programming model.
+  Proceedings of the IEEE, 107:144–164, 2019.
+
+    [`Paper <https://ieeexplore.ieee.org/document/8591981>`__]
+    Synthesized :class:`.RollingWindow` and an integrator in a
+    mixed-analog-digital neuromorphic architecture while accounting for
+    mismatch in synaptic time-constants.
 
 * Aaron R. Voelker and Chris Eliasmith, "Improving spiking dynamical networks:
   Accurate delays, higher-order synapses, and time cells", Neural Computation,
