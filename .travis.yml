@@ -6,73 +6,58 @@ notifications:
 
 env:
   global:
+    - PYTHON="3.6"
     - TEST_CMD="py.test nengolib"
     - NUMPY="1.13"
     - SCIPY="0.19.0"
     - PIP_DEPS=""
-    - NENGO="https://github.com/nengo/nengo/archive/master.tar.gz"
     - CONDA_DEPS="matplotlib"
 
 matrix:
   include:
     - env:
         PYTHON="2.7"
-        NENGO=""
         PIP_DEPS="nengo==2.2.0 pytest==3.2"
     - env:
         PYTHON="2.7"
-        NENGO=""
         PIP_DEPS="nengo==2.3.0 pytest==3.2"
     - env:
         PYTHON="2.7"
-        NENGO=""
         PIP_DEPS="nengo==2.4.0 pytest==3.2"
     - env:
         PYTHON="2.7"
-        NENGO=""
         PIP_DEPS="nengo==2.5.0 pytest==3.2"
     - env:
         PYTHON="2.7"
-        NENGO=""
         PIP_DEPS="nengo==2.6.0 pytest==3.2"
     - env:
         PYTHON="2.7"
-        NENGO=""
         PIP_DEPS="nengo==2.7.0 pytest==3.2"
-    - env:
-        PYTHON="2.7"
-        NENGO=""
-        PIP_DEPS="nengo==2.8.0 pytest==3.2"
     - env:
         CODE_COV="True"
         TEST_CMD="py.test nengolib --cov=nengolib"
-        PYTHON="2.7"
-        PIP_DEPS="codecov pytest pytest-cov"
+        PIP_DEPS="nengo==2.8.0 pytest==3.6 pytest-cov codecov"
     - env: >
         EXTRA_CMD="flake8 -v nengolib"
         CONDA_DEPS="flake8"
-        PYTHON="2.7"
         TEST_CMD=""
         NUMPY=""
         SCIPY=""
-        NENGO=""
     - env:
         TEST_CMD="py.test nengolib/tests/test_notebooks.py --slow"
-        PYTHON="2.7"
         CONDA_DEPS="matplotlib jupyter ipython pygments"
-        PIP_DEPS="pytest"
+        PIP_DEPS="nengo==2.8.0 pytest==3.6"
     - env:
         PYTHON="3.4"
-        PIP_DEPS="pytest numpy==1.13.0 scipy==0.19.0"
+        PIP_DEPS="nengo==2.8.0 pytest==3.6 numpy==1.13.0 scipy==0.19.0"
         NUMPY=""
         SCIPY=""
     - env:
         PYTHON="3.5"
-        PIP_DEPS="pytest"
+        PIP_DEPS="nengo==2.8.0 pytest==3.6"
     - env:
-        PYTHON="3.6"
         SCIPY="1.0.0"
-        PIP_DEPS="pytest"
+        PIP_DEPS="nengo==2.8.0 pytest==3.6"
 
 # Setup Miniconda
 before_install:
@@ -91,13 +76,6 @@ install:
   - if [[ -n $SCIPY ]]; then export CONDA_DEPS="$CONDA_DEPS scipy=$SCIPY"; fi
   - if [[ -n $CONDA_DEPS ]]; then conda install $CONDA_DEPS; fi
   - if [[ -n $PIP_DEPS ]]; then eval pip install "$PIP_DEPS"; fi
-  - if [[ -n $NENGO ]]; then
-      wget $NENGO;
-      tar -xzvf master.tar.gz;
-      cd nengo-master;
-      python setup.py -q install;
-      cd ../;
-    fi
 
 # Run the tests
 script:
