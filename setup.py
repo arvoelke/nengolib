@@ -52,13 +52,14 @@ setup(
     ],
     classifiers=[  # https://pypi.python.org/pypi?%3Aaction=list_classifiers
         'Development Status :: 5 - Production/Stable',
+        'Framework :: Nengo',
         'Intended Audience :: Science/Research',
-        'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'License :: Free for non-commercial use',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Topic :: Scientific/Engineering :: Artificial Intelligence',
     ]
 )
