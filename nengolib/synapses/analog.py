@@ -22,7 +22,7 @@ def Lowpass(tau):
 
     Returns
     -------
-    :class:`.LinearSystem`
+    sys : :class:`.LinearSystem`
         First-order lowpass.
 
     See Also
@@ -59,7 +59,7 @@ def Alpha(tau):
 
     Returns
     -------
-    :class:`.LinearSystem`
+    sys : :class:`.LinearSystem`
         Second-order lowpass with identical time-constants.
 
     See Also
@@ -100,7 +100,7 @@ def DoubleExp(tau1, tau2):
 
     Returns
     -------
-    :class:`.LinearSystem`
+    sys : :class:`.LinearSystem`
         Second-order lowpass with potentially different time-constants.
 
     See Also
@@ -139,7 +139,7 @@ def Bandpass(freq, Q):
 
     Returns
     -------
-    :class:`.LinearSystem`
+    sys : :class:`.LinearSystem`
         Second-order lowpass with complex poles.
 
     See Also
@@ -217,7 +217,7 @@ def Highpass(tau, order=1):
 
     Returns
     -------
-    :class:`.LinearSystem`
+    sys : :class:`.LinearSystem`
         Highpass filter with time-constant ``tau`` and dimension ``order``.
 
     See Also
@@ -324,7 +324,7 @@ def pade_delay_error(theta_times_freq, order, p=None):
 
     Returns
     -------
-    ``np.array`` of ``np.complex``
+    error : ``np.array`` of ``np.complex``
         Shaped like ``theta_times_freq``, with each element corresponding
         to the complex error term
 

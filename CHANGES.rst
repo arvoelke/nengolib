@@ -7,8 +7,10 @@ Release History
 
 **Fixed**
 
-- The ``nengolib.networks.RollingWindow`` documentation references the
+- A variety of miscellaneous fixes were made to the documentation.
+  The ``nengolib.networks.RollingWindow`` documentation references the
   shifted Legendre polynomial equations for ``legendre == True``.
+  (`#176 <https://github.com/arvoelke/nengolib/pull/176>`_)
 
 0.5.0 (March 9, 2019)
 =====================

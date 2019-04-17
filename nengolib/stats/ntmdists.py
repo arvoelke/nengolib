@@ -28,7 +28,7 @@ def spherical_transform(samples):
 
     Returns
     -------
-    ``(n, d+1) np.array``
+    mapped_samples : ``(n, d+1) np.array``
         ``n`` uniform samples from the ``d``--dimensional sphere
         (Euclidean dimension of ``d+1``).
 

@@ -17,7 +17,7 @@ def DiscreteDelay(steps):
 
     Returns
     -------
-    :class:`.LinearSystem`
+    sys : :class:`.LinearSystem`
         Digital filter implementing the pure delay exactly.
 
     See Also
@@ -76,7 +76,7 @@ def BoxFilter(width, normalized=True):
 
     Returns
     -------
-    :class:`.LinearSystem`
+    sys : :class:`.LinearSystem`
         Digital system implementing the box-filter.
 
     See Also

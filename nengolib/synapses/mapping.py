@@ -36,7 +36,7 @@ def ss2sim(sys, synapse, dt):
 
     Returns
     -------
-    :class:`.LinearSystem`
+    mapped_sys : :class:`.LinearSystem`
         Linear system whose state-space matrices yield the desired
         dynamics when using the synapse model instead of an integrator.
 

@@ -23,6 +23,11 @@ def nrmse(actual, target, **kwargs):
         Additional keyword arguments passed to
         :func:`nengo.utils.numpy.rmse` and :func:`nengo.utils.numpy.rms`.
 
+    Returns
+    -------
+    error : ``np.array``
+        RMSE(s) normalized against the target RMS(s).
+
     Notes
     -----
     This function is not symmetric. That is, ``nrmse(x, y)`` may differ from
@@ -54,7 +59,7 @@ def shift(signal, amount=1, value=0):
 
     Returns
     -------
-    ``np.array``
+    shifted_signal : ``np.array``
         Shifted signal, shaped according to ``signal``.
 
     Examples

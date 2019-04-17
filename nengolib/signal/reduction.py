@@ -26,7 +26,7 @@ def pole_zero_cancel(sys, tol=1e-8):
 
     Returns
     -------
-    :class:`.LinearSystem`
+    reduced_sys : :class:`.LinearSystem`
        Reduced linear system in zero-pole-gain form.
 
     References
@@ -76,7 +76,7 @@ def modred(sys, keep_states, method='del'):
 
     Returns
     -------
-    :class:`.LinearSystem`
+    reduced_sys : :class:`.LinearSystem`
        Reduced linear system in state-space form.
 
     See Also
@@ -146,7 +146,7 @@ def balance(sys):
 
     Returns
     -------
-    :class:`.LinearSystem`
+    balanced_sys : :class:`.LinearSystem`
        Balanced linear system in state-space form.
 
     See Also
@@ -201,7 +201,7 @@ def balred(sys, order, method='del'):
 
     Returns
     -------
-    :class:`.LinearSystem`
+    reduced_sys : :class:`.LinearSystem`
        Balanced and reduced linear system in state-space form.
 
     See Also

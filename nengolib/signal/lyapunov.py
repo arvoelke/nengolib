@@ -40,7 +40,7 @@ def state_norm(sys, norm='H2'):
 
     Returns
     -------
-    ``(len(sys),) np.array``
+    norms : ``(len(sys),) np.array``
        The norm of each dimension in ``sys``.
 
     See Also
@@ -92,7 +92,7 @@ def control_gram(sys):
 
     Returns
     -------
-    ``(len(sys), len(sys)) np.array``
+    W : ``(len(sys), len(sys)) np.array``
        The controllability/reachability gramiam matrix.
 
     See Also
@@ -120,7 +120,7 @@ def observe_gram(sys):
 
     Returns
     -------
-    ``(len(sys), len(sys)) np.array``
+    W : ``(len(sys), len(sys)) np.array``
        The observability gramiam matrix.
 
     See Also
@@ -148,11 +148,11 @@ def balanced_transformation(sys):
 
     Returns
     -------
-    ``(len(sys), len(sys)) np.array``
+    T : ``(len(sys), len(sys)) np.array``
        Similarity transformation matrix.
-    ``(len(sys), len(sys)) np.array``
+    Tinv : ``(len(sys), len(sys)) np.array``
        Inverse of similarity transformation matrix.
-    ``(len(sys),) np.array``
+    s : ``(len(sys),) np.array``
        Hankel singular values (see :func:`.hsvd`).
 
     See Also
@@ -200,7 +200,7 @@ def hsvd(sys):
 
     Returns
     -------
-    ``(len(sys),) np.array``
+    s : ``(len(sys),) np.array``
        Hankel singular values.
 
     See Also
@@ -265,7 +265,7 @@ def l1_norm(sys, rtol=1e-6, max_length=2**18):
 
     Returns
     -------
-    ``float``
+    norm : ``float``
        L1-norm of the output.
 
     See Also

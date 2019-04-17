@@ -28,7 +28,7 @@ def cont2discrete(sys, dt, method='zoh', alpha=None):
 
     Returns
     -------
-    :class:`.LinearSystem`
+    discrete_sys : :class:`.LinearSystem`
        Discretized linear system (``analog=False``).
 
     See Also
@@ -96,7 +96,7 @@ def discrete2cont(sys, dt, method='zoh', alpha=None):
 
     Returns
     -------
-    :class:`.LinearSystem`
+    continuous_sys : :class:`.LinearSystem`
        Continuous linear system (``analog=True``).
 
     See Also

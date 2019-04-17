@@ -25,7 +25,7 @@ def leech_kissing(cache_file=None):
 
     Returns
     -------
-    ``(196560, 24) np.array``
+    points : ``(196560, 24) np.array``
         The kissing points in 24 dimensions.
 
     See Also

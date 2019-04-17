@@ -19,7 +19,7 @@ def random_orthogonal(d, rng=None):
 
     Returns
     -------
-    ``(d, d) np.array``
+    samples : ``(d, d) np.array``
         Random orthogonal matrix (an orthonormal basis);
         linearly transforms any vector into a uniformly sampled
         vector on the ``d``--ball with the same L2 norm.
