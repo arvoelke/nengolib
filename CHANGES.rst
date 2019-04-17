@@ -5,6 +5,11 @@ Release History
 0.5.1 (unreleased)
 ==================
 
+**Fixed**
+
+- The ``nengolib.networks.RollingWindow`` documentation references the
+  shifted Legendre polynomial equations for ``legendre == True``.
+
 0.5.0 (March 9, 2019)
 =====================
 

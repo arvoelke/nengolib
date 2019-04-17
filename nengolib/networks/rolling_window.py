@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import warnings
 
 import numpy as np
@@ -322,9 +324,9 @@ class RollingWindow(LinearNetwork):
         window representation to the given ``function``. Then we solve for
         the decoders with respect to the state-vector as usual in Nengo.
 
-        Disregarding the linear change of basis from the ``realizer``, the
-        :func:`.canonical_basis` functions are polynomials of increasing
-        order (from ``0`` up to ``q-1``, where ``q=dimensions``):
+        The :func:`.canonical_basis` functions are polynomials of increasing
+        order (from ``0`` up to ``q-1``, where ``q=dimensions``).
+        If ``legendre == False``, then:
 
         .. math::
 
@@ -332,6 +334,18 @@ class RollingWindow(LinearNetwork):
                 \\sum_{j=0}^i \\begin{pmatrix}q \\\\ j\\end{pmatrix}
                 \\begin{pmatrix}2q - 1 - j \\\\ i - j\\end{pmatrix}
                 \\left( -t \\right)^{i - j}
+                \\text{,} \\quad 0 \\le t \\le 1
+                \\text{,} \\quad i = 0 \\ldots q - 1 \\text{.}
+
+        If ``legendre == True``, then these are the shifted Legendre
+        polynomials: [#]_
+
+        .. math::
+
+            P_i(t) = (-1)^i
+                \\sum_{j=0}^i \\begin{pmatrix}i \\\\ j\\end{pmatrix}
+                \\begin{pmatrix}i + j \\\\ j\\end{pmatrix}
+                \\left( -t \\right)^{j}
                 \\text{,} \\quad 0 \\le t \\le 1
                 \\text{,} \\quad i = 0 \\ldots q - 1 \\text{.}
 
@@ -346,6 +360,13 @@ class RollingWindow(LinearNetwork):
         where :math:`{\\bf w}` is some history, :math:`{\\bf v}_i` are the
         columns of :func:`.inverse_basis`, and each :math:`f_i` is some
         unknown low-degree nonlinearity.
+
+        References
+        ----------
+        .. [#] Rodrigues, Olinde. De l'attraction des sphéroïdes,
+           Correspondence sur l'É-cole Impériale Polytechnique.
+           Diss. Thesis for the Faculty of Science of the University of Paris)
+           3 (3): 361–385, 1816.
         """
 
         if t is None:
