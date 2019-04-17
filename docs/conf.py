@@ -84,7 +84,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'nengolib'
-copyright = u'2017-2018, Aaron Voelker'
+copyright = u'2017-2019, Aaron Voelker'
 author = u'Aaron Voelker'
 title = "{0} Documentation".format(project)
 
