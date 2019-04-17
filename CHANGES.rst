@@ -2,8 +2,10 @@
 Release History
 ***************
 
-0.5.1 (unreleased)
-==================
+0.5.1 (April 17, 2019)
+======================
+
+Tested against Nengo versions 2.2.0-2.8.0. Requires ``nengo<3.0``.
 
 **Fixed**
 
