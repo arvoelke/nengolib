@@ -12,7 +12,6 @@ from nengo.config import SupportDefaultsMixin
 from nengo.params import Default
 from nengo.solvers import Solver, LstsqL2, SolverParam
 from nengo.synapses import SynapseParam, Lowpass
-from nengo.version import version_info
 
 
 class Temporal(Solver, SupportDefaultsMixin):
@@ -179,13 +178,8 @@ def build_temporal_solver(model, solver, conn, rng, transform=None):
         # ignores the solver and considers only the conn. The only point of
         # passing solver.solver here is to invoke its corresponding builder
         # function in case something custom happens to be registered.
-        if version_info >= (2, 8, 1):
-            # https://github.com/nengo/nengo/pull/1481
-            assert transform is None
-            return model.build(solver.solver, conn, rng)
-
-        else:  # pragma: no cover
-            return model.build(solver.solver, conn, rng, transform)
+        # Note: in nengo>2.8.0 the transform parameter is dropped
+        return model.build(solver.solver, conn, rng, transform)
 
     finally:
         neuron_type.rates = save_rates_method
