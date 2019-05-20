@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import warnings
-from scipy.misc import pade, factorial
+from scipy.interpolate import pade
+from scipy.special import factorial
 
 from nengo.utils.compat import is_integer
 
@@ -418,7 +419,7 @@ def PadeDelay(theta, order, p=None):
     :func:`.pade_delay_error`
     :class:`.RollingWindow`
     :func:`.DiscreteDelay`
-    :func:`scipy.misc.pade`
+    :func:`scipy.interpolate.pade`
 
     Notes
     -----

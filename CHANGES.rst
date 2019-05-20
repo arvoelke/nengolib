@@ -5,6 +5,11 @@ Release History
 0.5.2 (unreleased)
 ==================
 
+**Fixed**
+
+- Solved an issue where scipy.misc imports were relocated.
+  (`#182 <https://github.com/arvoelke/nengolib/pull/182>`_)
+
 0.5.1 (April 17, 2019)
 ======================
 
