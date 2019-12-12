@@ -21,7 +21,7 @@ version_module = imp.load_source(
     'version', os.path.join(root, name, 'version.py'))
 
 deps = [  # https://github.com/nengo/nengo/issues/508
-    "nengo>=2.2.0,<3.0",
+    "nengo>=3.0",
     "numpy>=1.13",
     "scipy>=0.19.0",
 ]
