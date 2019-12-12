@@ -14,9 +14,10 @@ def _sample_lif_state(sim, ens, x0, rng):
     lif = ens.neuron_type
     params = sim.model.params
 
-    eval_points = x0[None, :]
-    x = np.dot(eval_points, params[ens].encoders.T / ens.radius)[0]
-    a = ens.neuron_type.rates(x, params[ens].gain, params[ens].bias)
+    eval_points = x0
+    x = np.dot(eval_points, params[ens].encoders.T / ens.radius)
+    a = ens.neuron_type.rates(
+        x[None, :], params[ens].gain, params[ens].bias).squeeze(axis=0)
     J = params[ens].gain * x + params[ens].bias
 
     # fast-forward to a random time within the ISI for any active neurons
