@@ -1,4 +1,4 @@
-from nengo.utils.compat import is_integer
+from nengo.utils.numpy import is_integer
 
 from nengolib.signal.system import z
 

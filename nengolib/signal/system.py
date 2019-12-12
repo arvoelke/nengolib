@@ -7,7 +7,7 @@ from scipy.signal import (
     cont2discrete, zpk2ss, ss2tf, ss2zpk, tf2ss, tf2zpk, zpk2tf, normalize)
 
 from nengo.synapses import LinearFilter
-from nengo.utils.compat import is_integer, is_number, with_metaclass
+from nengo.utils.numpy import is_integer, is_number
 
 __all__ = [
     'sys2ss', 'sys2tf', 'sys2zpk', 'canonical', 'sys_equal', 'ss_equal',
@@ -240,7 +240,7 @@ class LinearSystemType(type):
         return super(LinearSystemType, self).__call__(sys, analog)
 
 
-class LinearSystem(with_metaclass(LinearSystemType, NengoLinearFilterMixin)):
+class LinearSystem(NengoLinearFilterMixin, metaclass=LinearSystemType):
     """Generic linear system representation.
 
     This extends :class:`nengo.LinearFilter` to unify a variety of
