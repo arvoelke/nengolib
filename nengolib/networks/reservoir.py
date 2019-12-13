@@ -8,7 +8,7 @@ from nengo.ensemble import Neurons
 from nengo.exceptions import NetworkContextError
 from nengo.solvers import LstsqL2
 from nengo.synapses import SynapseParam
-from nengo.utils.compat import is_iterable
+from nengo.utils.numpy import is_iterable
 
 __all__ = ['Reservoir']
 

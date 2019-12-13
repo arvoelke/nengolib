@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.linalg import block_diag
 
-from nengo.utils.compat import is_iterable
+from nengo.utils.numpy import is_iterable
 
 from nengolib.signal.discrete import cont2discrete
 from nengolib.signal.system import LinearSystem
