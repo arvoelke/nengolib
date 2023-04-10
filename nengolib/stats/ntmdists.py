@@ -250,14 +250,8 @@ def _rd_generate(n, d, seed=0.5):
         return x
 
     g = gamma(d)
-    alpha = np.zeros(d)
-    for j in range(d):
-        alpha[j] = (1/g) ** (j + 1) % 1
-
-    z = np.zeros((n, d))
-    z[0] = (seed + alpha) % 1
-    for i in range(1, n):
-        z[i] = (z[i-1] + alpha) % 1
+    alpha = (1 / g) ** (np.arange(d) + 1) % 1
+    z = (np.arange(1, n + 1)[:, None] * alpha + seed) % 1
 
     return z
 
